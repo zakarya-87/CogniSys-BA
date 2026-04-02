@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { TaskQueue } from '../services/TaskQueue';
 import { InitiativeService } from '../services/InitiativeService';
+import { safeError } from '../utils/errorHandler';
 
 const initiativeService = new InitiativeService();
 
@@ -17,7 +18,7 @@ export class AIController {
       const taskId = await TaskQueue.addTask(orgId, 'GENERATE_WBS', { initiative: target });
       res.status(202).json({ taskId, message: 'WBS generation queued' });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      safeError(res, error, 'AIController.triggerWBS');
     }
   }
 
@@ -33,7 +34,7 @@ export class AIController {
       const taskId = await TaskQueue.addTask(orgId, 'ASSESS_RISKS', { initiative: target, wbs: target.wbs });
       res.status(202).json({ taskId, message: 'Risk assessment queued' });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      safeError(res, error, 'AIController.triggerRiskAssessment');
     }
   }
 }
