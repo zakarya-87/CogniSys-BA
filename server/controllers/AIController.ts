@@ -8,10 +8,9 @@ export class AIController {
   static async triggerWBS(req: Request, res: Response) {
     try {
       const { initiativeId, orgId } = req.params as { initiativeId: string; orgId: string };
-      const initiative = await initiativeService.getInitiativesByOrg(orgId);
-      const target = initiative.find(i => i.id === initiativeId);
-      
-      if (!target) {
+      const target = await initiativeService.getInitiativeById(initiativeId);
+
+      if (!target || target.orgId !== orgId) {
         return res.status(404).json({ error: 'Initiative not found' });
       }
 
@@ -25,10 +24,9 @@ export class AIController {
   static async triggerRiskAssessment(req: Request, res: Response) {
     try {
       const { initiativeId, orgId } = req.params as { initiativeId: string; orgId: string };
-      const initiative = await initiativeService.getInitiativesByOrg(orgId);
-      const target = initiative.find(i => i.id === initiativeId);
-      
-      if (!target) {
+      const target = await initiativeService.getInitiativeById(initiativeId);
+
+      if (!target || target.orgId !== orgId) {
         return res.status(404).json({ error: 'Initiative not found' });
       }
 
