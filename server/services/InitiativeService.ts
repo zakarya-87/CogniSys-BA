@@ -10,6 +10,10 @@ export class InitiativeService {
     await AuditLogService.logAction(initiative.orgId, userId, `Created initiative: ${initiative.title}`);
   }
 
+  async getInitiativeById(id: string): Promise<TInitiative | null> {
+    return this.repo.getById(id);
+  }
+
   async getInitiativesByProject(projectId: string): Promise<TInitiative[]> {
     return this.repo.getByProjectId(projectId);
   }
