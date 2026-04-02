@@ -379,8 +379,9 @@ export const ProjectHub: React.FC<ProjectHubProps> = ({ initiatives, onSaveWbs, 
             const updatedTasks = await autoPrioritizeTasks(Array.isArray(advancedVitals?.tasks) ? advancedVitals.tasks : [], selectedInitiative.title, selectedInitiative.sector);
             
             // Merge updated tasks back into advancedVitals
+            const updatedTasksMap = new Map(updatedTasks.map((ut: any) => [ut.id, ut]));
             const mergedTasks = (Array.isArray(advancedVitals?.tasks) ? advancedVitals.tasks : []).map(t => {
-                const updated = updatedTasks.find((ut: any) => ut.id === t.id);
+                const updated = updatedTasksMap.get(t.id);
                 return updated ? { ...t, ...updated } : t;
             });
 
