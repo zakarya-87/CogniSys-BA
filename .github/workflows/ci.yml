@@ -33,6 +33,10 @@ jobs:
 
       - name: Generate JSON schemas
         run: node generate_all_schemas.cjs
+        env:
+          NODE_OPTIONS: --max-old-space-size=5120
 
       - name: Build
         run: npm run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=5120

@@ -26,11 +26,31 @@ if (!generator) {
     process.exit(1);
 }
 
-// Get all symbols
+// Only generate schemas for types actually used in geminiService.ts.
+// Previously used startsWith('T') which swept up 400+ node_module types → 427 MB file.
+const TARGET_SYMBOLS = [
+    'TSuggestedKpi', 'TWireframeElement', 'TValidationResult', 'TElicitationAnalysis',
+    'TGapAnalysisResult', 'TPerformanceAnalysis', 'TPortfolioFinancials', 'TPortfolioRisks',
+    'TWorkBreakdown', 'TProjectVitalsAdvanced', 'TStrategicRecommendation', 'TKpiForecast',
+    'TDecisionMatrix', 'TDomainSpecificArtifact', 'TImpactAnalysis', 'TRisk', 'TPersona',
+    'TUatTestCase', 'TReleaseChecklistItem', 'TReadinessAssessment', 'TRetroItem',
+    'TStakeholderProfile', 'TDecisionTable', 'TRuleAudit', 'TKnowledgeArticle', 'TNfr',
+    'TRbacMatrix', 'TApiEndpoint', 'TStateModel', 'TJourneyMap', 'TVendorAssessment',
+    'TOCMPlan', 'TGapReport', 'TIdea', 'TVSMAnalysis', 'TGlossaryTerm', 'TServiceBlueprint',
+    'TPrioritizationAnalysis', 'TCapability', 'TBalancedScorecard', 'TDFDModel',
+    'TSequenceDiagram', 'TComplianceMatrix', 'TADR', 'TEstimationReport', 'TReleaseNote',
+    'TDailyBriefing', 'TRoadmap', 'TMigrationPlan', 'TScenarioEvent', 'TThreat',
+    'TTechniqueGuide', 'TRequirementPackage', 'TStoryMap', 'TC4Model', 'TAPMAnalysis',
+    'TPersonalBriefing', 'TScopeStatement', 'TDPIA', 'TSplitSuggestion', 'TRootCauseAnalysis',
+    'TSurvey', 'TWorkshopPlan', 'TDMNModel', 'TForceFieldAnalysis', 'TMindMapNode',
+    'TUserPersona', 'TDecompositionNode', 'TOrgNode', 'TCBA', 'TSimulationRun',
+    'TFocusGroupResult', 'TDocumentAnalysis', 'TObservationPlan', 'TIssue', 'THatAnalysis',
+    'TSIPOC', 'TConceptModel', 'TConflictAnalysis',
+];
+
 const allSymbols = generator.getUserSymbols();
-const targetSymbols = allSymbols.filter(symbol => 
-    symbol.startsWith('T') || symbol.endsWith('Analysis') || symbol.endsWith('Result')
-);
+const availableSet = new Set(allSymbols);
+const targetSymbols = TARGET_SYMBOLS.filter(s => availableSet.has(s));
 
 console.log(`Generating schemas for ${targetSymbols.length} target symbols...`);
 
