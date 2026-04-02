@@ -20,7 +20,7 @@ import {
     Settings, 
     HelpCircle, 
     LogOut,
-    Github,
+    GitBranch,
     Briefcase,
     BrainCircuit
 } from 'lucide-react';
@@ -112,14 +112,14 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({ activeView, onNavig
         ) : (
           isCollapsed ? (
             <button onClick={login} className="w-full flex items-center justify-center p-2 rounded-xl bg-primary dark:bg-accent-purple text-white transition-all hover:shadow-lg" title="Connect GitHub">
-              <Github className="h-4 w-4" />
+              <GitBranch className="h-4 w-4" />
             </button>
           ) : (
             <button 
               onClick={login}
               className="w-full flex items-center justify-center gap-2 bg-primary dark:bg-accent-purple text-white py-2.5 px-4 rounded-xl transition-all hover:shadow-lg active:scale-[0.98] text-sm font-bold shadow-md"
             >
-              <Github className="h-4 w-4" />
+              <GitBranch className="h-4 w-4" />
               <span>Connect GitHub</span>
             </button>
           )
