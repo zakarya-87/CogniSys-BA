@@ -61,12 +61,13 @@ export const CortexView: React.FC<CortexViewProps> = ({ initiatives, onSelectIni
         const others = graphData.nodes.filter(n => n.type !== 'Initiative');
 
         const nodesWithPos = graphData.nodes.map(n => ({...n, x: center.x, y: center.y}));
+        const nodeMap = new Map<string, typeof nodesWithPos[0]>(nodesWithPos.map(n => [n.id, n]));
 
         // Place Initiatives in inner circle
         initiatives.forEach((n, i) => {
             const angle = (i / initiatives.length) * 2 * Math.PI;
             const radius = 150;
-            const targetNode = nodesWithPos.find(x => x.id === n.id);
+            const targetNode = nodeMap.get(n.id);
             if (targetNode) {
                 targetNode.x = center.x + radius * Math.cos(angle);
                 targetNode.y = center.y + radius * Math.sin(angle);
@@ -77,7 +78,7 @@ export const CortexView: React.FC<CortexViewProps> = ({ initiatives, onSelectIni
         others.forEach((n, i) => {
             const angle = (i / others.length) * 2 * Math.PI;
             const radius = 280;
-            const targetNode = nodesWithPos.find(x => x.id === n.id);
+            const targetNode = nodeMap.get(n.id);
             if (targetNode) {
                 targetNode.x = center.x + radius * Math.cos(angle);
                 targetNode.y = center.y + radius * Math.sin(angle);
