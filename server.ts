@@ -4,6 +4,7 @@ config({ path: '.env.local' });
 config();
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
+import helmet from 'helmet';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { authorize } from './server/middleware/rbac';
@@ -17,6 +18,63 @@ import { TaskWorker } from './server/services/TaskWorker';
 async function startServer() {
   const app = express();
   const PORT = 5000;
+
+  const isDev = process.env.NODE_ENV !== 'production';
+
+  // Security headers — must be first middleware
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          // Firebase SDK loads scripts from these origins
+          'https://www.gstatic.com',
+          'https://apis.google.com',
+          // Dev-only: Vite HMR uses new Function() and inline scripts
+          ...(isDev ? ["'unsafe-eval'", "'unsafe-inline'"] : []),
+        ],
+        styleSrc: [
+          "'self'",
+          "'unsafe-inline'",  // TailwindCSS 4 injects styles at runtime — unavoidable
+          'https://fonts.googleapis.com',
+        ],
+        fontSrc: [
+          "'self'",
+          'https://fonts.gstatic.com',
+        ],
+        imgSrc: [
+          "'self'",
+          'data:',   // base64 images (Vision Board, charts)
+          'blob:',   // Blob URLs (generated diagrams, exports)
+          'https://*.googleapis.com',
+          'https://*.firebaseapp.com',
+          'https://*.web.app',
+        ],
+        connectSrc: [
+          "'self'",
+          'https://*.googleapis.com',      // Firestore, Firebase Auth, Gemini
+          'https://*.firebaseio.com',      // Firebase Realtime DB
+          'https://*.cloudfunctions.net',  // Cloud Functions
+          ...(isDev ? ['ws://localhost:*', 'wss://localhost:*'] : []),  // Vite HMR
+        ],
+        frameSrc: ["'none'"],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        ...(isDev ? {} : { upgradeInsecureRequests: [] }),
+      },
+    },
+    hsts: {
+      maxAge: 31536000,       // 1 year
+      includeSubDomains: true,
+      preload: true,
+    },
+    frameguard: { action: 'deny' },
+    noSniff: true,
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    permittedCrossDomainPolicies: false,
+  }));
 
   // Allowed origins: localhost dev + all authorized Cloud Run environments
   const allowedOrigins = [
