@@ -18,6 +18,10 @@ export class InitiativeService {
     return this.repo.getByOrgId(orgId);
   }
 
+  async getInitiativeById(id: string): Promise<TInitiative | null> {
+    return this.repo.getById(id);
+  }
+
   async updateInitiative(id: string, data: Partial<TInitiative>, orgId: string, userId: string): Promise<void> {
     await this.repo.update(id, data);
     await AuditLogService.logAction(orgId, userId, `Updated initiative: ${id}`);
