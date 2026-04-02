@@ -54,7 +54,7 @@ describe('Dashboard Component', () => {
             />
         );
 
-        expect(screen.getByText('No Initiatives Yet')).toBeDefined();
+        expect(screen.getByText('No Initiatives Found')).toBeDefined();
         expect(screen.getByText('Create First Initiative')).toBeDefined();
     });
 
@@ -94,10 +94,9 @@ describe('Dashboard Component', () => {
             />
         );
 
-        // There are multiple buttons that might trigger create (Quick Create vs New Initiative)
-        // We target the main "New Initiative" button typically found in the header
-        const newButtons = screen.getAllByText('New Initiative');
-        fireEvent.click(newButtons[0]);
+        // The create button uses t('common:create') which translates to 'Create'
+        const createButtons = screen.getAllByText('Create');
+        fireEvent.click(createButtons[0]);
         
         expect(handleCreate).toHaveBeenCalled();
     });
