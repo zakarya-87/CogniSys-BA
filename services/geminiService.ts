@@ -283,7 +283,11 @@ async function repairJson<T>(malformedJson: string, errorMsg: string, schema?: a
     throw lastError || new Error("Failed to repair JSON data.");
 }
 
-import generatedSchemas from '../generated_schemas.json';
+// Cast to a permissive shape so .required access doesn't error when TypeScript
+// infers the exact JSON structure rather than using the generated_schemas.d.ts.
+import _generatedSchemas from '../generated_schemas.json';
+type JsonSchema = { required?: string[]; [key: string]: unknown };
+const generatedSchemas = _generatedSchemas as Record<string, JsonSchema>;
 import { callMistral, callAzureOpenAI } from './llmProxyService';
 
 // --- Core AI Caller ---
