@@ -25,11 +25,11 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Run tests
-        run: npm run test
-
       - name: Generate JSON schemas
         run: node generate_all_schemas.cjs
+
+      - name: Run tests
+        run: npm run test
 
       - name: Build
         run: npm run build
