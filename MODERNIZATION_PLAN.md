@@ -16,7 +16,7 @@ Track completion of each quick win before moving to Phase 1.
 | QW7 | Add `correlationId` middleware | `feat/correlation-id` | ⬜ Pending |
 | QW8 | Add Husky + lint-staged pre-commit hooks | `dx/pre-commit-hooks` | ⬜ Pending |
 | QW9 | Add Dependabot (`.github/dependabot.yml`) | `chore/dependabot` | ⬜ Pending |
-| QW10 | Validate `event.origin` in OAuth postMessage | `fix/postmessage-origin` | ⬜ Pending |
+| QW10 | Validate `event.origin` in OAuth postMessage | `fix/postmessage-origin` | ✅ Done |
 
 > Update status to ✅ Done as each branch is merged into `main`.
 
