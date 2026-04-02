@@ -1,5 +1,5 @@
 
-import { GoogleGenAI } from "@google/genai";
+import { callGeminiProxy, resolveModelTier } from './geminiProxy';
 import { THiveMessage, THiveAgent, IAgent, IAgentResponse, TInitiative } from '../types';
 import { safeParseJSON, withRetry } from '../utils/aiUtils';
 import { MockExternalServices } from './mockExternalServices';
@@ -8,20 +8,8 @@ import { MemoryService } from './memoryService';
 import { MathService } from './mathService';
 import { callMistral, callAzureOpenAI } from './llmProxyService';
 
-const API_KEY = process.env.GEMINI_API_KEY || process.env.API_KEY;
-let _msAi: GoogleGenAI | null = null;
-const getAi = () => {
-  if (!_msAi) {
-    if (!API_KEY) throw new Error("GEMINI_API_KEY not configured");
-    _msAi = new GoogleGenAI({ apiKey: API_KEY });
-  }
-  return _msAi;
-};
-const ai = { models: { generateContent: (...a: any[]) => getAi().models.generateContent(...a as any) } };
 const MODEL = 'gemini-3-flash-preview';
 const FALLBACK_MODEL = 'gemini-2.5-flash';
-
-// Global flag to track if the primary model is exhausted (quota reached)
 let isPrimaryModelExhausted = false;
 
 // --- BASE AGENT IMPLEMENTATION ---
@@ -76,19 +64,10 @@ ${history.map(m => `${m.agent || 'User'}: ${m.content}`).join('\n')}
                     });
                     return { text: response.choices[0].message.content, grounding: null };
                 } else {
-                    const response = await ai.models.generateContent({
-                        model: modelId,
-                        contents: prompt,
-                        config: {
-                            tools,
-                            // Only enforce JSON if NOT using search
-                            responseMimeType: shouldEnforceJson ? 'application/json' : undefined
-                        }
-                    });
-                    return {
-                        text: response.text || "{}",
-                        grounding: response.candidates?.[0]?.groundingMetadata
-                    };
+                    // Route through server-side proxy (key never leaves server)
+                    const proxyConfig = tools ? { tools } : undefined;
+                    const text = await callGeminiProxy(prompt, resolveModelTier(modelId), proxyConfig);
+                    return { text: text || '{}', grounding: null };
                 }
             };
 
@@ -127,17 +106,14 @@ ${history.map(m => `${m.agent || 'User'}: ${m.content}`).join('\n')}
                     if (shouldEnforceJson && isNetworkOrServerError && (modelId === MODEL || modelId === FALLBACK_MODEL)) {
                         console.warn(`[${this.name}] JSON mode failed with RPC error on ${modelId}. Retrying with text mode...`);
                         try {
-                            const response = await ai.models.generateContent({
-                                model: modelId,
-                                contents: prompt,
-                                config: {
-                                    tools,
-                                    responseMimeType: undefined 
-                                }
-                            });
+                            const text = await callGeminiProxy(
+                                prompt,
+                                resolveModelTier(modelId),
+                                tools ? { tools } : undefined
+                            );
                             return {
-                                text: response.text || "{}",
-                                grounding: response.candidates?.[0]?.groundingMetadata
+                                text: text || "{}",
+                                grounding: null
                             };
                         } catch (retryError) {
                             console.error(`[${this.name}] Text mode retry also failed on ${modelId}`);
@@ -373,7 +349,7 @@ class IntegromatService extends BaseAgent {
                     content: `I've generated a video based on your prompt: "${prompt}".`,
                     metadata: { 
                         type: 'video', 
-                        data: { uri: `${uri}&key=${process.env.API_KEY}`, prompt } 
+                        data: { uri, prompt } // Key never appended — video served via server proxy
                     }
                 };
             } else if (toolName === 'generate_bpmn') {

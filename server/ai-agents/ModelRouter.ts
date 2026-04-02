@@ -32,6 +32,32 @@ export class ModelRouter {
     }
   }
 
+  async generateContentWithImage(prompt: string, type: ModelType = ModelType.SPEED, image: { mimeType: string; data: string }): Promise<string> {
+    const response = await this.getAi().models.generateContent({
+      model: type === ModelType.REASONING ? type : ModelType.SPEED,
+      contents: {
+        role: 'user',
+        parts: [
+          { text: prompt },
+          { inlineData: { mimeType: image.mimeType, data: image.data } }
+        ]
+      } as any,
+    });
+    return response.text ?? '';
+  }
+
+  async generateContentWithConfig(prompt: string, type: ModelType = ModelType.SPEED, config: Record<string, unknown>): Promise<string> {
+    // Only Gemini supports extended config (e.g. Google Search Grounding tools)
+    if (type === ModelType.MISTRAL) return this.callMistral(prompt);
+    if (type === ModelType.AZURE) return this.callAzure(prompt);
+    const response = await this.getAi().models.generateContent({
+      model: type,
+      contents: prompt,
+      ...config,
+    });
+    return response.text ?? '';
+  }
+
   private async callGemini(prompt: string, model: string): Promise<string> {
     const response = await this.getAi().models.generateContent({
       model,

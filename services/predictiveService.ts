@@ -1,11 +1,7 @@
 
 import { TInitiative, TPredictiveInsight } from '../types';
 import { withRetry, safeParseJSON } from '../utils/aiUtils';
-import { GoogleGenAI } from "@google/genai";
-
-const _getAi = () => { const key = process.env.API_KEY; if (!key) throw new Error("GEMINI_API_KEY not configured"); return new GoogleGenAI({ apiKey: key }); };
-const ai = { models: { generateContent: (...a: any[]) => _getAi().models.generateContent(...a as any), embedContent: (...a: any[]) => _getAi().models.embedContent(...a as any) } };
-const MODEL = 'gemini-2.5-flash';
+import { callGeminiProxy } from './geminiProxy';
 
 export const PredictiveService = {
     /**
@@ -53,12 +49,8 @@ export const PredictiveService = {
 
         return withRetry(async () => {
             try {
-                const response = await ai.models.generateContent({
-                    model: MODEL,
-                    contents: prompt,
-                    config: { responseMimeType: 'application/json' }
-                });
-                return safeParseJSON<TPredictiveInsight[]>(response.text || "[]");
+                const text = await callGeminiProxy(prompt, 'flash');
+                return safeParseJSON<TPredictiveInsight[]>(text || "[]");
             } catch (e: any) {
                 console.error("PredictiveService failed:", e);
                 throw e;

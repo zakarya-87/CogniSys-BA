@@ -1,21 +1,18 @@
 import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
-export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, '.', '');
+export default defineConfig(() => {
     return {
       server: {
         port: 5000,
         host: '0.0.0.0',
-        allowedHosts: true,
+        allowedHosts: true as const,
       },
       plugins: [react(), tailwindcss()],
-      define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
-      },
+      // SECURITY: GEMINI_API_KEY must never be injected into the client bundle.
+      // All Gemini calls are proxied through POST /api/gemini/generate on the server.
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),

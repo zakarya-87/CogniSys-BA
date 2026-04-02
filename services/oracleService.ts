@@ -1,21 +1,10 @@
 
 import { TInitiative, TOracleResponse } from '../types';
 import { withRetry, safeParseJSON } from '../utils/aiUtils';
-import { GoogleGenAI } from "@google/genai";
-
-const _getAi = () => { const key = process.env.API_KEY; if (!key) throw new Error("GEMINI_API_KEY not configured"); return new GoogleGenAI({ apiKey: key }); };
-const ai = { models: { generateContent: (...a: any[]) => _getAi().models.generateContent(...a as any), embedContent: (...a: any[]) => _getAi().models.embedContent(...a as any) } };
-const MODEL = 'gemini-2.5-flash';
+import { callGeminiProxy } from './geminiProxy';
 
 export const OracleService = {
-    /**
-     * Performs a semantic search across all initiative artifacts using Gemini's long-context window.
-     * This acts as a RAG (Retrieval Augmented Generation) system without a vector DB.
-     */
     async ask(query: string, initiatives: TInitiative[]): Promise<TOracleResponse> {
-        
-        // 1. Serialize the Knowledge Base
-        // We strip unnecessary UI state to save tokens and focus on content.
         const knowledgeBase = initiatives.map(init => ({
             id: init.id,
             title: init.title,
@@ -61,12 +50,8 @@ export const OracleService = {
         `;
 
         return withRetry(async () => {
-            const response = await ai.models.generateContent({
-                model: MODEL,
-                contents: prompt,
-                config: { responseMimeType: 'application/json' }
-            });
-            return safeParseJSON<TOracleResponse>(response.text || "{}");
+            const text = await callGeminiProxy(prompt, 'flash');
+            return safeParseJSON<TOracleResponse>(text || "{}");
         });
     }
 };

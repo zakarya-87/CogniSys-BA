@@ -2,11 +2,7 @@
 import { TInitiative, TCortexGraph, TCortexNode, TCortexLink, Sector, TCortexInsight } from '../types';
 import { PromptFactory } from './promptFactory';
 import { withRetry, safeParseJSON } from '../utils/aiUtils';
-import { GoogleGenAI } from "@google/genai";
-
-const _getAi = () => { const key = process.env.API_KEY; if (!key) throw new Error("GEMINI_API_KEY not configured"); return new GoogleGenAI({ apiKey: key }); };
-const ai = { models: { generateContent: (...a: any[]) => _getAi().models.generateContent(...a as any), embedContent: (...a: any[]) => _getAi().models.embedContent(...a as any) } };
-const MODEL = 'gemini-2.5-flash';
+import { callGeminiProxy } from './geminiProxy';
 
 export const CortexService = {
     /**
@@ -107,26 +103,14 @@ export const CortexService = {
         try {
             return await withRetry(async () => {
                 try {
-                    const response = await ai.models.generateContent({
-                        model: MODEL,
-                        contents: prompt,
-                        config: { responseMimeType: 'application/json' }
-                    });
-                    return safeParseJSON<TCortexInsight[]>(response.text || "[]");
+                    const text = await callGeminiProxy(prompt, 'flash');
+                    return safeParseJSON<TCortexInsight[]>(text || "[]");
                 } catch (e: any) {
                     const errorMessage = e.message || e.error?.message || JSON.stringify(e);
-                    const errorCode = e.code || e.error?.code;
-                    const errorStatus = e.status || e.error?.status;
-
-                    // Specific fallback for RPC errors often seen with strictly structured output
-                    if (errorMessage.includes('Rpc') || errorCode === 500 || errorStatus === 500) {
-                        console.warn("Cortex JSON mode failed with RPC error. Retrying with text mode...");
-                         const response = await ai.models.generateContent({
-                            model: MODEL,
-                            contents: prompt + "\n\nRETURN ONLY RAW JSON. NO MARKDOWN.",
-                            // No responseMimeType
-                        });
-                        return safeParseJSON<TCortexInsight[]>(response.text || "[]");
+                    if (errorMessage.includes('Rpc') || e.code === 500 || e.status === 500) {
+                        console.warn("Cortex: retrying with explicit JSON instruction...");
+                        const text2 = await callGeminiProxy(prompt + "\n\nRETURN ONLY RAW JSON. NO MARKDOWN.", 'flash');
+                        return safeParseJSON<TCortexInsight[]>(text2 || "[]");
                     }
                     throw e;
                 }

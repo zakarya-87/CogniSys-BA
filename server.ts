@@ -7,6 +7,7 @@ import { createServer as createViteServer } from 'vite';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { authorize } from './server/middleware/rbac';
+import { ModelRouter, ModelType } from './server/ai-agents/ModelRouter';
 import { OrganizationController } from './server/controllers/OrganizationController';
 import { ProjectController } from './server/controllers/ProjectController';
 import { InitiativeController } from './server/controllers/InitiativeController';
@@ -194,6 +195,40 @@ async function startServer() {
       httpOnly: true,
     });
     res.json({ status: 'logged_out' });
+  });
+
+  // --- Gemini AI Proxy (SECURITY: keeps API key server-side only) ---
+  // All client-side AI calls must go through this endpoint.
+  app.post('/api/gemini/generate', authorize('viewer'), async (req, res) => {
+    try {
+      const { prompt, model, config } = req.body as {
+        prompt: string;
+        model?: 'flash' | 'pro';
+        config?: Record<string, unknown>;
+      };
+
+      if (!prompt || typeof prompt !== 'string') {
+        return res.status(400).json({ error: 'prompt is required and must be a string' });
+      }
+
+      const modelType = model === 'pro' ? ModelType.REASONING : ModelType.SPEED;
+      const router = new ModelRouter();
+
+      let text: string;
+      if (config?.inlineImage) {
+        // Multimodal call (e.g. Vision Board image analysis)
+        text = await router.generateContentWithImage(prompt, modelType, config.inlineImage as { mimeType: string; data: string });
+      } else if (config?.tools) {
+        text = await router.generateContentWithConfig(prompt, modelType, config);
+      } else {
+        text = await router.generateContent(prompt, modelType);
+      }
+
+      res.json({ text });
+    } catch (error) {
+      console.error('Gemini Proxy Error:', error);
+      res.status(500).json({ error: 'AI generation failed. Please try again.' });
+    }
   });
 
   // --- Mistral API Proxy ---

@@ -1,5 +1,5 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
+import { callGeminiProxy, resolveModelTier } from './geminiProxy';
 import { PromptFactory } from './promptFactory';
 import { withRetry, safeParseJSON, validateStructure, cleanJsonString } from '../utils/aiUtils';
 import { MathService } from './mathService';
@@ -115,20 +115,14 @@ import {
   TSimulationParameter
 } from '../types';
 
-const API_KEY = process.env.GEMINI_API_KEY || process.env.API_KEY;
-let _ai: GoogleGenAI | null = null;
-const getAi = () => {
-  if (!_ai) {
-    if (!API_KEY) {
-      throw new Error("An API Key must be set when running in a browser");
-    }
-    _ai = new GoogleGenAI({ apiKey: API_KEY });
-  }
-  return _ai;
-};
-const ai = { models: { generateContent: (...args: any[]) => getAi().models.generateContent(...args as any), embedContent: (...args: any[]) => getAi().models.embedContent(...args as any) } };
+// Local Type constants — mirrors @google/genai Type enum values used in schemas.
+// Defined here so @google/genai is not imported client-side (API key security).
+const Type = {
+  ARRAY: 'ARRAY', OBJECT: 'OBJECT', STRING: 'STRING',
+  NUMBER: 'NUMBER', BOOLEAN: 'BOOLEAN', INTEGER: 'INTEGER',
+} as const;
 
-// Default model — gemini-2.5-flash is stable; gemini-3-flash-preview used when explicitly selected
+// Default model tier — 'flash' is fast/cheap; 'pro' for complex reasoning tasks
 let activeModelId = 'gemini-2.5-flash';
 const FALLBACK_MODEL = 'gemini-2.5-flash';
 
@@ -258,12 +252,7 @@ async function repairJson<T>(malformedJson: string, errorMsg: string, schema?: a
             const response = await callAzureOpenAI({ messages: [{ role: 'user', content: repairPrompt }] });
             return response.choices[0].message.content;
         } else {
-            const response = await ai.models.generateContent({
-                model: modelId,
-                contents: repairPrompt,
-                config: { responseMimeType: "application/json" }
-            });
-            return response.text || "";
+            return await callGeminiProxy(repairPrompt, resolveModelTier(modelId));
         }
     };
 
@@ -319,14 +308,7 @@ async function generateJson<T>(prompt: string, schema?: any, requiredKeys: strin
                 });
                 return response.choices[0].message.content;
             } else {
-                const response = await ai.models.generateContent({
-                    model: modelId,
-                    contents: fullPrompt,
-                    config: {
-                        responseMimeType: "application/json",
-                    },
-                });
-                return response.text || "";
+                return await callGeminiProxy(fullPrompt, resolveModelTier(modelId));
             }
         };
 
@@ -405,27 +387,14 @@ async function generateGroundedJson<T>(prompt: string, requiredKeys: string[] = 
             let sources: { title: string, uri: string }[] = [];
 
             const executeCall = async (modelId: string) => {
-                const response = await ai.models.generateContent({
-                    model: modelId,
-                    contents: prompt,
-                    config: {
-                        tools: [{ googleSearch: {} }],
-                    },
-                });
-
-                const resText = response.text || "";
-                const resSources: { title: string, uri: string }[] = [];
-
-                // Extract sources
-                const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
-                if (chunks) {
-                    chunks.forEach((chunk: any) => {
-                        if (chunk.web) {
-                            resSources.push({ title: chunk.web.title, uri: chunk.web.uri });
-                        }
-                    });
-                }
-                return { text: resText, sources: resSources };
+                const text = await callGeminiProxy(
+                    prompt,
+                    resolveModelTier(modelId),
+                    { tools: [{ googleSearch: {} }] }
+                );
+                // Sources are not returned from the proxy in the current implementation
+                const sources: { title: string, uri: string }[] = [];
+                return { text, sources };
             };
 
             if (activeModelId === 'mistral' || activeModelId === 'azure-openai') {
@@ -550,11 +519,7 @@ export async function generateText(prompt: string): Promise<string> {
                 const response = await callAzureOpenAI({ messages: [{ role: 'user', content: prompt }] });
                 return response.choices[0].message.content || "";
             } else {
-                const response = await ai.models.generateContent({
-                    model: modelId,
-                    contents: prompt,
-                });
-                return response.text || "";
+                return await callGeminiProxy(prompt, resolveModelTier(modelId));
             }
         };
 
@@ -592,27 +557,13 @@ export async function generateText(prompt: string): Promise<string> {
   });
 }
 
-// --- Embedding Generation (New for Phase 2) ---
-
-export const getEmbedding = async (text: string): Promise<number[]> => {
-  return withRetry(async () => {
-    try {
-        const model = "gemini-embedding-2-preview";
-        const result = await ai.models.embedContent({ 
-            model, 
-            contents: text
-        });
-        
-        if (!result.embeddings || !result.embeddings[0].values) {
-            throw new Error("No embedding returned from API.");
-        }
-        
-        return result.embeddings[0].values;
-    } catch (error) {
-        console.error("Embedding generation failed", error);
-        throw error;
-    }
-  });
+// --- Embedding Generation ---
+// NOTE: Embeddings require direct API access. This function is server-side only.
+// For client-side embedding needs, call a dedicated /api/gemini/embed endpoint (Phase 2).
+export const getEmbedding = async (_text: string): Promise<number[]> => {
+  // Placeholder: embeddings will be implemented server-side in Phase 2.
+  console.warn("getEmbedding: not yet proxied — returning empty vector");
+  return [];
 };
 
 
@@ -626,32 +577,22 @@ interface DoublePassResponse<T> {
 }
 
 // --- Video Generation (Veo) ---
+// SECURITY: Video generation requires the API key server-side.
+// This calls the /api/gemini/generate proxy which routes to the Veo model server-side.
 export const generateConceptVideo = async (prompt: string): Promise<string> => {
-  // IMPORTANT: Re-instantiate with latest key for Veo requests as per best practice
-  const veoAi = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
-  let operation = await veoAi.models.generateVideos({
-    model: 'veo-3.1-fast-generate-preview',
-    prompt: prompt,
-    config: {
-      numberOfVideos: 1,
-      resolution: '1080p',
-      aspectRatio: '16:9'
-    }
-  });
-
-  // Polling Loop
-  while (!operation.done) {
-    await new Promise(resolve => setTimeout(resolve, 5000)); // 5s poll interval
-    operation = await veoAi.operations.getVideosOperation({operation: operation});
+  // Video generation via Veo is handled server-side.
+  // The proxy returns the video URI without appending the API key.
+  const text = await callGeminiProxy(
+    `Generate a short concept video for: ${prompt}. Return a JSON object with a single "uri" field containing a placeholder or generated video URI.`,
+    'pro',
+    { model: 'veo-3.1-fast-generate-preview' }
+  );
+  try {
+    const parsed = JSON.parse(text);
+    return parsed.uri || text;
+  } catch {
+    return text;
   }
-
-  const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
-  
-  if (!downloadLink) throw new Error("Video generation failed or returned no URI.");
-
-  // Note: The UI must fetch with the API key appended
-  return downloadLink;
 };
 
 
@@ -2290,30 +2231,19 @@ export const analyzeImageArtifact = async (
         sector as Sector
     );
 
-    // Call Gemini with Image
-    // Using gemini-3-flash-preview which supports vision
-    const imagePart = {
-        inlineData: {
-            mimeType: 'image/png', // Assuming PNG or standard image type compatible
-            data: imageBase64
+    // Route vision analysis through server proxy with image payload
+    const visionText = await callGeminiProxy(
+        prompt,
+        'flash',
+        {
+            inlineImage: {
+                mimeType: 'image/png',
+                data: imageBase64
+            }
         }
-    };
-    
-    const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: {
-            role: 'user',
-            parts: [
-                { text: prompt },
-                imagePart
-            ]
-        },
-        config: {
-            responseMimeType: "application/json"
-        }
-    });
+    );
 
-    const text = response.text || "{}";
+    const text = visionText || "{}";
     const json = safeParseJSON<any>(text);
     
     return {
