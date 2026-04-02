@@ -9,6 +9,7 @@ import { rateLimit } from 'express-rate-limit';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { authorize } from './server/middleware/rbac';
+import { correlationId } from './server/middleware/correlationId';
 import { safeError, safeErrorHtml } from './server/utils/errorHandler';
 import { ModelRouter, ModelType } from './server/ai-agents/ModelRouter';
 import { OrganizationController } from './server/controllers/OrganizationController';
@@ -103,6 +104,7 @@ async function startServer() {
     credentials: true,
   }));
   app.use(cookieParser());
+  app.use(correlationId);
   app.use(express.json());
 
   // Rate limiters — defined here, applied per route group below
