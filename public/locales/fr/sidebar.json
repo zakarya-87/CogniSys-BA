@@ -1,0 +1,16 @@
+{
+  "dashboard": "Tableau de bord",
+  "projectHub": "Centre de projet",
+  "intelligenceCenter": "Centre d'intelligence",
+  "reports": "Rapports",
+  "settings": "Paramètres",
+  "help": "Aide",
+  "myWorkspace": "Mon espace de travail",
+  "hive": "La Ruche",
+  "cortex": "Cortex",
+  "predictiveCore": "Noyau prédictif",
+  "pulse": "Pulsation",
+  "warRoom": "Salle de crise",
+  "construct": "Construction",
+  "visionBoard": "Tableau de vision"
+}

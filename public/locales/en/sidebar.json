@@ -1,0 +1,16 @@
+{
+  "dashboard": "Dashboard",
+  "projectHub": "Project Hub",
+  "intelligenceCenter": "Intelligence Center",
+  "reports": "Reports",
+  "settings": "Settings",
+  "help": "Help",
+  "myWorkspace": "My Workspace",
+  "hive": "The Hive",
+  "cortex": "Cortex",
+  "predictiveCore": "Predictive Core",
+  "pulse": "Pulse",
+  "warRoom": "War Room",
+  "construct": "Construct",
+  "visionBoard": "Vision Board"
+}

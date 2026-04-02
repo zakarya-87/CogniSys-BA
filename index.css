@@ -1,0 +1,98 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-primary: #050a1f;
+  --color-primary-dark: #030612;
+  --color-secondary: #00d4ff;
+
+  --color-background-light: #f8fafc;
+  --color-background-dark: #020617;
+
+  --color-surface-light: #ffffff;
+  --color-surface-dark: #0f172a;
+  --color-surface-darker: #020617;
+
+  --color-border-light: #e2e8f0;
+  --color-border-dark: #1e293b;
+
+  --color-text-light: #0f172a;
+  --color-text-dark: #f8fafc;
+  --color-text-muted-light: #64748b;
+  --color-text-muted-dark: #94a3b8;
+
+  --color-accent-pink: #ec4899;
+  --color-accent-cyan: #00d4ff;
+  --color-accent-amber: #f59e0b;
+  --color-accent-purple: #8b5cf6;
+  --color-accent-red: #ef4444;
+  --color-accent-emerald: #10b981;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark font-sans h-screen flex overflow-hidden selection:bg-primary selection:text-white;
+  }
+
+  /* Modern Scrollbar Styling */
+  ::-webkit-scrollbar {
+    @apply w-1.5 h-1.5;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-400/30 dark:bg-slate-600/30 rounded-full transition-colors;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400/50 dark:bg-slate-600/50;
+  }
+}
+
+@layer components {
+  .custom-scrollbar::-webkit-scrollbar {
+    @apply w-1 h-1;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-slate-400/20 dark:bg-slate-600/20 rounded-full;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400/40 dark:bg-slate-600/40;
+  }
+
+  /* Toggle Bar / Tab Bar Enhancement */
+  .toggle-bar-container {
+    @apply flex bg-slate-100/50 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200 dark:border-slate-700;
+  }
+  .toggle-item {
+    @apply flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2;
+  }
+  .toggle-item-active {
+    @apply bg-white dark:bg-slate-700 shadow-sm text-accent-purple dark:text-accent-purple;
+  }
+  .toggle-item-inactive {
+    @apply text-slate-500 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200;
+  }
+
+  .glow-node {
+    filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.5));
+  }
+  .glow-line {
+    filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.3));
+  }
+  .bg-grid-pattern {
+    background-image: linear-gradient(to right, #1e293b 1px, transparent 1px),
+                      linear-gradient(to bottom, #1e293b 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+}

@@ -1,0 +1,92 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.role == 'admin';
+    }
+
+    function isOrgMember(orgId) {
+      return isAuthenticated() && request.auth.token.orgId == orgId;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Collections
+    // ===============================================================
+
+    match /organizations/{orgId} {
+      allow read: if isOrgMember(orgId);
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /projects/{projectId} {
+      allow read: if isOrgMember(resource.data.orgId);
+      allow create: if isOrgMember(request.resource.data.orgId) &&
+                      hasRequiredFields(['orgId', 'name']) &&
+                      request.resource.data.name is string &&
+                      request.resource.data.name.size() > 0 &&
+                      request.resource.data.name.size() < 100;
+      allow update: if isOrgMember(resource.data.orgId) &&
+                      hasOnlyAllowedFields(['orgId', 'name', 'description']) &&
+                      request.resource.data.name is string &&
+                      request.resource.data.name.size() > 0 &&
+                      request.resource.data.name.size() < 100;
+      allow delete: if isAdmin();
+    }
+
+    match /initiatives/{initiativeId} {
+      allow read: if isOrgMember(resource.data.orgId);
+      allow create: if isOrgMember(request.resource.data.orgId) &&
+                      hasRequiredFields(['orgId', 'projectId', 'title']) &&
+                      request.resource.data.title is string &&
+                      request.resource.data.title.size() > 0 &&
+                      request.resource.data.title.size() < 200;
+      // Backend (Admin SDK) bypasses these rules entirely.
+      // Client updates are restricted to user-editable fields only.
+      // AI-generated fields (wbs, artifacts, readinessScore, lastUpdated)
+      // are written exclusively by the server via Admin SDK.
+      allow update: if isOrgMember(resource.data.orgId) &&
+                      hasOnlyAllowedFields(['orgId', 'projectId', 'title', 'description', 'status', 'sector', 'owner']) &&
+                      request.resource.data.title is string &&
+                      request.resource.data.title.size() > 0 &&
+                      request.resource.data.title.size() < 200;
+      allow delete: if isAdmin();
+    }
+
+    match /audit_logs/{logId} {
+      // Only admins can read audit logs; writes are handled exclusively
+      // by the backend Admin SDK (bypasses these rules).
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // task_queue and prompts are internal backend collections.
+    // All access goes through the Admin SDK which bypasses Firestore rules.
+    // Explicitly deny any direct client access as a safety net.
+    match /task_queue/{taskId} {
+      allow read, write: if false;
+    }
+
+    match /prompts/{promptId} {
+      allow read, write: if false;
+    }
+  }
+}
+

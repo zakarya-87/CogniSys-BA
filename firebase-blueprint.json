@@ -1,0 +1,71 @@
+{
+  "entities": {
+    "Organization": {
+      "title": "Organization",
+      "description": "A top-level organization entity.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["id", "name", "ownerId"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "A project within an organization.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "orgId": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["id", "orgId", "name"]
+    },
+    "Initiative": {
+      "title": "Initiative",
+      "description": "An initiative within a project.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "orgId": { "type": "string" },
+        "projectId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["id", "orgId", "projectId", "title"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "A record of system actions.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "orgId": { "type": "string" },
+        "userId": { "type": "string" },
+        "action": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "orgId", "userId", "action", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/organizations/{orgId}": {
+      "schema": { "$ref": "Organization" },
+      "description": "Organization documents."
+    },
+    "/projects/{projectId}": {
+      "schema": { "$ref": "Project" },
+      "description": "Project documents."
+    },
+    "/initiatives/{initiativeId}": {
+      "schema": { "$ref": "Initiative" },
+      "description": "Initiative documents."
+    },
+    "/audit_logs/{logId}": {
+      "schema": { "$ref": "AuditLog" },
+      "description": "Audit log documents."
+    }
+  }
+}
