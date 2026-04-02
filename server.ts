@@ -5,6 +5,7 @@ config();
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import helmet from 'helmet';
+import { rateLimit } from 'express-rate-limit';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { authorize } from './server/middleware/rbac';
@@ -103,6 +104,33 @@ async function startServer() {
   app.use(cookieParser());
   app.use(express.json());
 
+  // Rate limiters — defined here, applied per route group below
+  const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    limit: 100,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    message: { error: 'Too many requests, please try again later.' },
+  });
+
+  // Tighter limit for AI proxy — each call costs money and CPU
+  const aiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 20,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    message: { error: 'AI request limit reached, please try again later.' },
+  });
+
+  // Strict limit for auth endpoints to slow brute-force attempts
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    message: { error: 'Too many auth requests, please try again later.' },
+  });
+
   // API routes FIRST
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
@@ -111,27 +139,27 @@ async function startServer() {
   // --- Enterprise API Routes ---
   
   // Organizations
-  app.post('/api/organizations', OrganizationController.create);
-  app.get('/api/organizations/:orgId', authorize('viewer'), OrganizationController.get);
+  app.post('/api/organizations', apiLimiter, OrganizationController.create);
+  app.get('/api/organizations/:orgId', apiLimiter, authorize('viewer'), OrganizationController.get);
 
   // Projects
-  app.post('/api/organizations/:orgId/projects', authorize('member'), ProjectController.create);
-  app.get('/api/organizations/:orgId/projects', authorize('viewer'), ProjectController.list);
+  app.post('/api/organizations/:orgId/projects', apiLimiter, authorize('member'), ProjectController.create);
+  app.get('/api/organizations/:orgId/projects', apiLimiter, authorize('viewer'), ProjectController.list);
 
   // Initiatives
-  app.post('/api/organizations/:orgId/projects/:projectId/initiatives', authorize('member'), InitiativeController.create);
-  app.get('/api/organizations/:orgId/initiatives', authorize('viewer'), InitiativeController.listByOrg);
-  app.get('/api/organizations/:orgId/projects/:projectId/initiatives', authorize('viewer'), InitiativeController.listByProject);
-  app.put('/api/organizations/:orgId/projects/:projectId/initiatives/:initiativeId', authorize('member'), InitiativeController.update);
+  app.post('/api/organizations/:orgId/projects/:projectId/initiatives', apiLimiter, authorize('member'), InitiativeController.create);
+  app.get('/api/organizations/:orgId/initiatives', apiLimiter, authorize('viewer'), InitiativeController.listByOrg);
+  app.get('/api/organizations/:orgId/projects/:projectId/initiatives', apiLimiter, authorize('viewer'), InitiativeController.listByProject);
+  app.put('/api/organizations/:orgId/projects/:projectId/initiatives/:initiativeId', apiLimiter, authorize('member'), InitiativeController.update);
 
-  // AI Operations
-  app.post('/api/organizations/:orgId/initiatives/:initiativeId/wbs', authorize('member'), AIController.triggerWBS);
-  app.post('/api/organizations/:orgId/initiatives/:initiativeId/risks', authorize('member'), AIController.triggerRiskAssessment);
+  // AI Operations — tight limit (expensive calls)
+  app.post('/api/organizations/:orgId/initiatives/:initiativeId/wbs', aiLimiter, authorize('member'), AIController.triggerWBS);
+  app.post('/api/organizations/:orgId/initiatives/:initiativeId/risks', aiLimiter, authorize('member'), AIController.triggerRiskAssessment);
 
   // --- GitHub OAuth Flow ---
   
   // 1. Construct OAuth URL Endpoint
-  app.get('/api/auth/url', (req, res) => {
+  app.get('/api/auth/url', authLimiter, (req, res) => {
     // We use the referrer or origin to construct the redirect URI dynamically
     const origin = req.headers.origin || req.headers.referer || `http://localhost:${PORT}`;
     const baseUrl = new URL(origin).origin;
@@ -148,7 +176,7 @@ async function startServer() {
   });
 
   // 2. Callback Handler with postMessage
-  app.get(['/auth/callback', '/auth/callback/'], async (req, res) => {
+  app.get(['/auth/callback', '/auth/callback/'], authLimiter, async (req, res) => {
     const { code } = req.query;
     
     if (!code) {
@@ -257,7 +285,7 @@ async function startServer() {
 
   // --- Gemini AI Proxy (SECURITY: keeps API key server-side only) ---
   // All client-side AI calls must go through this endpoint.
-  app.post('/api/gemini/generate', authorize('viewer'), async (req, res) => {
+  app.post('/api/gemini/generate', aiLimiter, authorize('viewer'), async (req, res) => {
     try {
       const { prompt, model, config } = req.body as {
         prompt: string;
