@@ -16,14 +16,16 @@ export function safeError(
 
 /**
  * Same as safeError but for HTML responses (OAuth popup flow).
+ * Uses an external script via data-* attributes to satisfy CSP (no unsafe-inline).
  */
 export function safeErrorHtml(res: Response, error: unknown, context: string): void {
   console.error(`[${context}]`, error);
-  res.status(500).send(`
+  res.status(500).send(`<!DOCTYPE html>
     <html>
       <body>
+        <div id="oauth-data" data-status="error"></div>
         <p>Authentication failed. Please close this window and try again.</p>
-        <script>setTimeout(() => window.close(), 3000);</script>
+        <script src="/auth-callback.js"></script>
       </body>
     </html>
   `);

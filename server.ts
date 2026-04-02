@@ -227,26 +227,23 @@ async function startServer() {
         maxAge: 24 * 60 * 60 * 1000 // 1 day
       });
 
-      // Send success message to parent window and close popup
-      res.send(`
+      // Send success message to parent window and close popup.
+      // User data is passed via data-* attributes (not inline JS) to satisfy CSP.
+      const safeId = String(userData.id ?? '');
+      const safeName = (userData.name || userData.login || '').replace(/"/g, '&quot;');
+      const safeAvatar = String(userData.avatar_url ?? '').replace(/"/g, '&quot;');
+
+      res.send(`<!DOCTYPE html>
         <html>
           <body>
-            <script>
-              if (window.opener) {
-                window.opener.postMessage({ 
-                  type: 'OAUTH_AUTH_SUCCESS',
-                  user: {
-                    id: '${userData.id}',
-                    name: '${userData.name || userData.login}',
-                    avatarUrl: '${userData.avatar_url}'
-                  }
-                }, '*');
-                window.close();
-              } else {
-                window.location.href = '/';
-              }
-            </script>
+            <div id="oauth-data"
+              data-status="success"
+              data-user-id="${safeId}"
+              data-user-name="${safeName}"
+              data-user-avatar="${safeAvatar}"
+            ></div>
             <p>Authentication successful. This window should close automatically.</p>
+            <script src="/auth-callback.js"></script>
           </body>
         </html>
       `);
