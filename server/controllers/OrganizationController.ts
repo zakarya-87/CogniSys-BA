@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { OrganizationService } from '../services/OrganizationService';
 import { TOrganization } from '../../types';
+import { safeError } from '../utils/errorHandler';
 
 const orgService = new OrganizationService();
 
@@ -12,7 +13,7 @@ export class OrganizationController {
       await orgService.createOrganization(org, userId);
       res.status(201).json({ message: 'Organization created successfully' });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      safeError(res, error, 'OrganizationController.create');
     }
   }
 
@@ -25,7 +26,7 @@ export class OrganizationController {
       }
       res.json(org);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      safeError(res, error, 'OrganizationController.get');
     }
   }
 }

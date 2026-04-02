@@ -9,6 +9,7 @@ import { rateLimit } from 'express-rate-limit';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { authorize } from './server/middleware/rbac';
+import { safeError, safeErrorHtml } from './server/utils/errorHandler';
 import { ModelRouter, ModelType } from './server/ai-agents/ModelRouter';
 import { OrganizationController } from './server/controllers/OrganizationController';
 import { ProjectController } from './server/controllers/ProjectController';
@@ -226,41 +227,28 @@ async function startServer() {
         maxAge: 24 * 60 * 60 * 1000 // 1 day
       });
 
-      // Send success message to parent window and close popup
-      res.send(`
+      // Send success message to parent window and close popup.
+      // User data is passed via data-* attributes (not inline JS) to satisfy CSP.
+      const safeId = String(userData.id ?? '');
+      const safeName = (userData.name || userData.login || '').replace(/"/g, '&quot;');
+      const safeAvatar = String(userData.avatar_url ?? '').replace(/"/g, '&quot;');
+
+      res.send(`<!DOCTYPE html>
         <html>
           <body>
-            <script>
-              if (window.opener) {
-                window.opener.postMessage({ 
-                  type: 'OAUTH_AUTH_SUCCESS',
-                  user: {
-                    id: '${userData.id}',
-                    name: '${userData.name || userData.login}',
-                    avatarUrl: '${userData.avatar_url}'
-                  }
-                }, '*');
-                window.close();
-              } else {
-                window.location.href = '/';
-              }
-            </script>
+            <div id="oauth-data"
+              data-status="success"
+              data-user-id="${safeId}"
+              data-user-name="${safeName}"
+              data-user-avatar="${safeAvatar}"
+            ></div>
             <p>Authentication successful. This window should close automatically.</p>
+            <script src="/auth-callback.js"></script>
           </body>
         </html>
       `);
     } catch (error) {
-      console.error('OAuth Error:', error);
-      res.status(500).send(`
-        <html>
-          <body>
-            <p>Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}</p>
-            <script>
-              setTimeout(() => window.close(), 3000);
-            </script>
-          </body>
-        </html>
-      `);
+      safeErrorHtml(res, error, 'OAuth Callback');
     }
   });
 
@@ -336,13 +324,13 @@ async function startServer() {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(`Mistral API error: ${response.status} - ${JSON.stringify(data)}`);
+        console.error('Mistral API error:', response.status, JSON.stringify(data));
+        return res.status(502).json({ error: 'Upstream AI service error' });
       }
 
       res.json(data);
     } catch (error) {
-      console.error('Mistral Proxy Error:', error);
-      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      safeError(res, error, 'Mistral Proxy');
     }
   });
 
@@ -373,13 +361,13 @@ async function startServer() {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(`Azure OpenAI API error: ${response.status} - ${JSON.stringify(data)}`);
+        console.error('Azure OpenAI API error:', response.status, JSON.stringify(data));
+        return res.status(502).json({ error: 'Upstream AI service error' });
       }
 
       res.json(data);
     } catch (error) {
-      console.error('Azure OpenAI Proxy Error:', error);
-      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      safeError(res, error, 'Azure OpenAI Proxy');
     }
   });
 

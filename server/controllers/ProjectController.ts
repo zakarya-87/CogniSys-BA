@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { ProjectService } from '../services/ProjectService';
 import { TProject } from '../../types';
+import { safeError } from '../utils/errorHandler';
 
 const projectService = new ProjectService();
 
@@ -12,7 +13,7 @@ export class ProjectController {
       await projectService.createProject(project, userId);
       res.status(201).json({ message: 'Project created successfully' });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      safeError(res, error, 'ProjectController.create');
     }
   }
 
@@ -22,7 +23,7 @@ export class ProjectController {
       const projects = await projectService.getProjectsByOrg(orgId);
       res.json(projects);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      safeError(res, error, 'ProjectController.list');
     }
   }
 }
