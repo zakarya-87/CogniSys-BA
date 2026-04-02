@@ -15,6 +15,7 @@ const compilerOptions = {
     target: 'esnext',
     module: 'esnext',
     moduleResolution: 'node',
+    skipLibCheck: true,
 };
 
 const program = TJS.getProgramFromFiles([path.resolve('types.ts')], compilerOptions);
