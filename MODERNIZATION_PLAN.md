@@ -21,19 +21,33 @@ All 10 Quick Wins merged to `main`. CI pipeline green (33–56s). Dependabot act
 
 ---
 
-## Phase 1 — Foundation (In Progress)
+## Phase 1 — Foundation ✅ COMPLETE
 
-| Sprint | Item | Branch | Status |
+| Sprint | Item | PR | Status |
 |---|---|---|---|
-| S1-F1 | Fix `/api/*` 404 handler (JSON not HTML) | `fix/phase1-sprint1` | 🔄 In Progress |
-| S1-F2 | Remove stale importmap from `index.html` | `fix/phase1-sprint1` | 🔄 In Progress |
-| S1-F3 | Add `tsc --noEmit` to CI pipeline | `fix/phase1-sprint1` | 🔄 In Progress |
-| S1-F4 | Update this file to reflect Phase 0 complete | `fix/phase1-sprint1` | 🔄 In Progress |
-| S2 | Structured logging with `pino` + `pino-http` | `feat/structured-logging` | ⬜ Pending |
-| S3 | API test coverage ≥40% (`supertest` + CI gate) | `test/api-coverage` | ⬜ Pending |
-| S4 | Implement `/api/gemini/embed` route | `feat/gemini-embed` | ⬜ Pending |
-| S5 | Firestore persistence (replace localStorage) | `feat/firestore-persistence` | ⬜ Pending |
-| S6 | SSE streaming for real-time AI progress | `feat/sse-ai-progress` | ⬜ Pending |
+| S1-F1 | Fix `/api/*` 404 handler (JSON not HTML) | #21 | ✅ Done |
+| S1-F2 | Remove stale importmap from `index.html` | #21 | ✅ Done |
+| S1-F3 | Add `tsc --noEmit` to CI pipeline | #21 | ✅ Done |
+| S1-F4 | Update MODERNIZATION_PLAN.md | #21 | ✅ Done |
+| S2 | Structured logging with `pino` + `pino-http` | #22 | ✅ Done |
+| S3 | API test coverage (37→62 tests, supertest + app factory) | #23 | ✅ Done |
+| S4 | Implement `/api/gemini/embed` + fix `getEmbedding()` stub | #24 | ✅ Done → `dev` |
+| S5 | Firestore persistence (replace localStorage, onSnapshot) | #25 | ✅ Done → `dev` |
+| S6 | SSE streaming for real-time AI progress + `useAIStream()` | #26 | ✅ Done → `dev` |
+
+---
+
+## Phase 2 — Scale ✅ COMPLETE (sprints)
+
+All 5 sprints implemented. PRs open → `dev`.
+
+| Sprint | Item | PR | Status |
+|---|---|---|---|
+| P2-S1 | API versioning — `/api/v1/` router + backward compat `/api/` | #27 | ✅ Done → `dev` |
+| P2-S2 | Vector memory → Firestore (server-side, multi-tenant, cosine search) | #28 | ✅ Done → `dev` |
+| P2-S3 | Containerize — Dockerfile (multi-stage) + docker-compose + cloudbuild.yaml | #29 | ✅ Done → `dev` |
+| P2-S4 | OpenTelemetry tracing — OTLP/HTTP, auto-instrumentation, W3C traceparent | #30 | ✅ Done → `dev` |
+| P2-S5 | Real GitHub API — replace mock with live REST proxy using OAuth token | #31 | ✅ Done → `dev` |
 
 
 
