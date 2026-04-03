@@ -1,12 +1,20 @@
 import axios from 'axios';
+import { auth } from '../../firebase';
 import { TOrganization, TProject, TInitiative, UserRole } from '../../types';
 
 const api = axios.create({
   baseURL: '/api',
 });
 
-// Interceptor to add Auth Token (if needed, though Firebase Auth handles session cookies if configured)
-// For this applet, we'll assume the backend handles auth via Firebase Admin SDK and session/token verification.
+// Attach Firebase ID token as Bearer on every request so RBAC middleware can verify the caller.
+api.interceptors.request.use(async (config) => {
+  const user = auth.currentUser;
+  if (user) {
+    const token = await user.getIdToken();
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export const OrganizationAPI = {
   create: (org: Partial<TOrganization>) => api.post('/organizations', org),

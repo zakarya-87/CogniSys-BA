@@ -197,6 +197,51 @@ describe('API Server', () => {
     });
   });
 
+  // ── Auth — /api/auth/firebase-session ─────────────────────────────────────
+  describe('POST /api/auth/firebase-session', () => {
+    it('returns 400 when idToken is missing', async () => {
+      const res = await request(app)
+        .post('/api/auth/firebase-session')
+        .send({});
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty('error');
+    });
+
+    it('returns 401 when idToken is invalid (mocked Admin rejects)', async () => {
+      // The mock returns verifyIdToken that rejects — simulates expired/bad token
+      const res = await request(app)
+        .post('/api/auth/firebase-session')
+        .send({ idToken: 'invalid-token' });
+      expect(res.status).toBe(401);
+      expect(res.body).toHaveProperty('error');
+    });
+
+    it('returns 200 and sets auth_session cookie when token is valid', async () => {
+      // Override the mock for this test to return a valid decoded token
+      const { getAdminAuth } = await import('./lib/firebaseAdmin');
+      vi.mocked(getAdminAuth).mockReturnValueOnce({
+        verifyIdToken: vi.fn().mockResolvedValue({
+          uid: 'test-uid-123',
+          name: 'Test User',
+          email: 'test@example.com',
+          picture: 'https://example.com/avatar.jpg',
+          firebase: { sign_in_provider: 'github.com' },
+        }),
+      } as any);
+
+      const res = await request(app)
+        .post('/api/auth/firebase-session')
+        .send({ idToken: 'valid-firebase-id-token' });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ status: 'authenticated', uid: 'test-uid-123' });
+      const setCookie = res.headers['set-cookie'];
+      expect(setCookie).toBeDefined();
+      const cookieStr = Array.isArray(setCookie) ? setCookie.join(';') : setCookie;
+      expect(cookieStr).toContain('auth_session=test-uid-123');
+    });
+  });
+
   // ── RBAC — Protected routes return 401 without auth ───────────────────────
   describe('RBAC — protected routes reject unauthenticated requests', () => {
     it('GET /api/organizations/:id returns 401 without Authorization header', async () => {
@@ -251,7 +296,6 @@ describe('API Server', () => {
     });
   });
 
-<<<<<<< HEAD
   // ── /api/gemini/embed ─────────────────────────────────────────────────────
   describe('POST /api/gemini/embed', () => {
     it('returns 401 without Authorization header', async () => {
