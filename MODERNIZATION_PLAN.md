@@ -1,24 +1,41 @@
 # CogniSys BA — SaaS Modernization Plan
 > Generated: 2026-04-02 | Version: 1.0 | Status: Active
 
-## Phase 0 — Implementation Checklist (Quick Wins)
+## Phase 0 — Implementation Checklist (Quick Wins) ✅ COMPLETE
 
-Track completion of each quick win before moving to Phase 1.
+All 10 Quick Wins merged to `main`. CI pipeline green (33–56s). Dependabot active.
 
-| # | Task | Branch | Status |
+| # | Task | PR | Status |
 |---|---|---|---|
-| QW1 | Move `GEMINI_API_KEY` server-side — create `/api/ai/generate` proxy | `fix/api-key-exposure` | ✅ Done |
-| QW2 | Install + configure `helmet.js` | `fix/security-headers` | 🔄 In Progress |
-| QW3 | Install + configure `express-rate-limit` | `fix/rate-limiting` | ⬜ Pending |
-| QW4 | Sanitize OAuth error responses (no stack traces) | `fix/error-leakage` | ⬜ Pending |
-| QW5 | Add GitHub Actions CI pipeline | `ci/github-actions` | ⬜ Pending |
-| QW6 | Add Vite `lazy()` code splitting for all 14 views | `perf/code-splitting` | ⬜ Pending |
-| QW7 | Add `correlationId` middleware | `feat/correlation-id` | ⬜ Pending |
-| QW8 | Add Husky + lint-staged pre-commit hooks | `dx/pre-commit-hooks` | ⬜ Pending |
-| QW9 | Add Dependabot (`.github/dependabot.yml`) | `chore/dependabot` | ⬜ Pending |
-| QW10 | Validate `event.origin` in OAuth postMessage | `fix/postmessage-origin` | ✅ Done |
+| QW1 | Move `GEMINI_API_KEY` server-side — create `/api/gemini/generate` proxy | #1 | ✅ Done |
+| QW2 | Install + configure `helmet.js` | #3 | ✅ Done |
+| QW3 | Install + configure `express-rate-limit` (3 tiers: api/ai/auth) | #5 | ✅ Done |
+| QW4 | Sanitize OAuth error responses + fix CSP/XSS | #7 | ✅ Done |
+| QW5 | Add GitHub Actions CI pipeline (37 tests, 56s) | #12+#13 | ✅ Done |
+| QW6 | Add Vite `lazy()` code splitting for 18 views | #17 | ✅ Done |
+| QW7 | Add `correlationId` middleware (UUID per request) | #15 | ✅ Done |
+| QW8 | Add Husky + lint-staged pre-commit hooks | #16 | ✅ Done |
+| QW9 | Add Dependabot (`.github/dependabot.yml`) | #14 | ✅ Done |
+| QW10 | Validate `event.origin` in OAuth postMessage | #7 (QW4) | ✅ Done |
+| DEPS | Bump all dev+prod dependencies (lucide-react v1.x breaking fix) | #18+#20 | ✅ Done |
 
-> Update status to ✅ Done as each branch is merged into `main`.
+---
+
+## Phase 1 — Foundation (In Progress)
+
+| Sprint | Item | Branch | Status |
+|---|---|---|---|
+| S1-F1 | Fix `/api/*` 404 handler (JSON not HTML) | `fix/phase1-sprint1` | 🔄 In Progress |
+| S1-F2 | Remove stale importmap from `index.html` | `fix/phase1-sprint1` | 🔄 In Progress |
+| S1-F3 | Add `tsc --noEmit` to CI pipeline | `fix/phase1-sprint1` | 🔄 In Progress |
+| S1-F4 | Update this file to reflect Phase 0 complete | `fix/phase1-sprint1` | 🔄 In Progress |
+| S2 | Structured logging with `pino` + `pino-http` | `feat/structured-logging` | ⬜ Pending |
+| S3 | API test coverage ≥40% (`supertest` + CI gate) | `test/api-coverage` | ⬜ Pending |
+| S4 | Implement `/api/gemini/embed` route | `feat/gemini-embed` | ⬜ Pending |
+| S5 | Firestore persistence (replace localStorage) | `feat/firestore-persistence` | ⬜ Pending |
+| S6 | SSE streaming for real-time AI progress | `feat/sse-ai-progress` | ⬜ Pending |
+
+
 
 ---
 
