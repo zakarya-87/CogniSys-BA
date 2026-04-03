@@ -8,6 +8,8 @@ import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import pinoHttp from 'pino-http';
+import { logger } from './server/logger';
 import { authorize } from './server/middleware/rbac';
 import { correlationId } from './server/middleware/correlationId';
 import { safeError, safeErrorHtml } from './server/utils/errorHandler';
@@ -105,6 +107,15 @@ async function startServer() {
   }));
   app.use(cookieParser());
   app.use(correlationId);
+  // HTTP request/response logging — correlates with X-Correlation-ID
+  app.use(pinoHttp({
+    logger,
+    customProps: (req) => ({
+      correlationId: req.headers['x-correlation-id'],
+    }),
+    // Don't log health checks to reduce noise
+    autoLogging: { ignore: (req) => req.url === '/api/health' },
+  }));
   app.use(express.json());
 
   // Rate limiters — defined here, applied per route group below
@@ -302,7 +313,7 @@ async function startServer() {
 
       res.json({ text });
     } catch (error) {
-      console.error('Gemini Proxy Error:', error);
+      logger.error({ err: error }, 'Gemini Proxy Error');
       res.status(500).json({ error: 'AI generation failed. Please try again.' });
     }
   });
@@ -326,7 +337,7 @@ async function startServer() {
 
       const data = await response.json();
       if (!response.ok) {
-        console.error('Mistral API error:', response.status, JSON.stringify(data));
+        logger.error({ status: response.status, body: JSON.stringify(data) }, 'Mistral API error');
         return res.status(502).json({ error: 'Upstream AI service error' });
       }
 
@@ -363,7 +374,7 @@ async function startServer() {
 
       const data = await response.json();
       if (!response.ok) {
-        console.error('Azure OpenAI API error:', response.status, JSON.stringify(data));
+        logger.error({ status: response.status, body: JSON.stringify(data) }, 'Azure OpenAI API error');
         return res.status(502).json({ error: 'Upstream AI service error' });
       }
 
@@ -387,15 +398,15 @@ async function startServer() {
     app.use(vite.middlewares);
 
     const httpServer = app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+      logger.info(`Server running on http://localhost:${PORT}`);
       
       // Start Task Worker in the background
       try {
         const worker = new TaskWorker();
         worker.start();
-        console.log('TaskWorker initialized successfully.');
+        logger.info('TaskWorker initialized successfully.');
       } catch (error) {
-        console.error('Failed to start TaskWorker:', error);
+        logger.error({ err: error }, 'Failed to start TaskWorker');
       }
     });
 
@@ -408,21 +419,21 @@ async function startServer() {
     });
 
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+      logger.info(`Server running on http://localhost:${PORT}`);
       
       // Start Task Worker in the background
       try {
         const worker = new TaskWorker();
         worker.start();
-        console.log('TaskWorker initialized successfully.');
+        logger.info('TaskWorker initialized successfully.');
       } catch (error) {
-        console.error('Failed to start TaskWorker:', error);
+        logger.error({ err: error }, 'Failed to start TaskWorker');
       }
     });
   }
 }
 
 startServer().catch(err => {
-  console.error('CRITICAL: Server failed to start:', err);
+  logger.error({ err }, 'CRITICAL: Server failed to start');
   process.exit(1);
 });
