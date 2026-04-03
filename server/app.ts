@@ -205,6 +205,85 @@ export function createApp() {
     res.json({ status: 'logged_out' });
   });
 
+  // GitHub API Proxy — uses user's OAuth access token from auth_session cookie
+  // Routes: /api/github/repos, /api/github/commits/:owner/:repo, /api/github/repos/:owner/:repo
+  const ghHeaders = (token: string) => ({
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+  });
+
+  app.get('/api/github/repos', authLimiter, async (req, res) => {
+    const token = req.cookies.auth_session;
+    if (!token) return res.status(401).json({ error: 'Not authenticated' });
+    try {
+      const response = await fetch('https://api.github.com/user/repos?sort=pushed&per_page=30', {
+        headers: ghHeaders(token),
+      });
+      if (!response.ok) {
+        logger.warn({ status: response.status }, 'GitHub repos API error');
+        return res.status(response.status).json({ error: 'GitHub API error' });
+      }
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      safeError(res, error, 'GitHub Repos Proxy');
+    }
+  });
+
+  app.get('/api/github/commits/:owner/:repo', authLimiter, async (req, res) => {
+    const token = req.cookies.auth_session;
+    if (!token) return res.status(401).json({ error: 'Not authenticated' });
+    const { owner, repo } = req.params;
+    const perPage = Math.min(Number(req.query.per_page) || 20, 100);
+    try {
+      const response = await fetch(
+        `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits?per_page=${perPage}`,
+        { headers: ghHeaders(token) }
+      );
+      if (!response.ok) {
+        logger.warn({ status: response.status, owner, repo }, 'GitHub commits API error');
+        return res.status(response.status).json({ error: 'GitHub API error' });
+      }
+      const raw = await response.json() as Array<{
+        sha: string;
+        html_url: string;
+        commit: { message: string; author: { email: string; date: string } };
+        author: { login: string } | null;
+      }>;
+      // Normalise to TGitCommit shape
+      const commits = raw.map(c => ({
+        id: c.sha.slice(0, 7),
+        sha: c.sha,
+        message: c.commit.message.split('\n')[0], // first line only
+        author: c.author?.login ?? c.commit.author.email,
+        date: c.commit.author.date.slice(0, 10),
+        url: c.html_url,
+      }));
+      res.json(commits);
+    } catch (error) {
+      safeError(res, error, 'GitHub Commits Proxy');
+    }
+  });
+
+  app.get('/api/github/repos/:owner/:repo', authLimiter, async (req, res) => {
+    const token = req.cookies.auth_session;
+    if (!token) return res.status(401).json({ error: 'Not authenticated' });
+    const { owner, repo } = req.params;
+    try {
+      const response = await fetch(
+        `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
+        { headers: ghHeaders(token) }
+      );
+      if (!response.ok) {
+        return res.status(response.status).json({ error: 'GitHub API error' });
+      }
+      res.json(await response.json());
+    } catch (error) {
+      safeError(res, error, 'GitHub Repo Proxy');
+    }
+  });
+
   // Gemini AI Proxy
   app.post('/api/gemini/generate', aiLimiter, authorize('viewer'), async (req, res) => {
     try {
