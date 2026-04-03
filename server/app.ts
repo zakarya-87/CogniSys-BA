@@ -183,6 +183,17 @@ export function createApp() {
     }
   });
 
+  app.get('/api/auth/me', (req, res) => {
+    const session = req.cookies.auth_session;
+    if (!session) return res.status(401).json({ error: 'Not authenticated' });
+    res.json({ status: 'authenticated' });
+  });
+
+  app.post('/api/auth/logout', (req, res) => {
+    res.clearCookie('auth_session', { secure: true, sameSite: 'none', httpOnly: true });
+    res.json({ status: 'logged_out' });
+  });
+
   // Legacy GitHub OAuth routes — kept for backward compatibility during migration
   const PORT = process.env.PORT || 5000;
   app.get('/api/auth/url', authLimiter, (req, res) => {

@@ -296,7 +296,6 @@ describe('API Server', () => {
     });
   });
 
-<<<<<<< HEAD
   // ── /api/gemini/embed ─────────────────────────────────────────────────────
   describe('POST /api/gemini/embed', () => {
     it('returns 401 without Authorization header', async () => {
