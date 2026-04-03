@@ -18,6 +18,7 @@ import { OrganizationController } from './controllers/OrganizationController';
 import { ProjectController } from './controllers/ProjectController';
 import { InitiativeController } from './controllers/InitiativeController';
 import { AIController } from './controllers/AIController';
+import { ServerMemoryService } from './services/MemoryService';
 
 export function createApp() {
   const app = express();
@@ -109,6 +110,42 @@ export function createApp() {
   // AI Operations
   app.post('/api/organizations/:orgId/initiatives/:initiativeId/wbs', aiLimiter, authorize('member'), AIController.triggerWBS);
   app.post('/api/organizations/:orgId/initiatives/:initiativeId/risks', aiLimiter, authorize('member'), AIController.triggerRiskAssessment);
+
+  // Vector Memory — multi-tenant Firestore-backed semantic memory
+  // POST /api/organizations/:orgId/memory        → store a memory (content + embedding)
+  // POST /api/organizations/:orgId/memory/search → semantic search by query vector
+  app.post('/api/organizations/:orgId/memory', apiLimiter, authorize('member'), async (req, res) => {
+    try {
+      const { orgId } = req.params;
+      const { content, vector, type, metadata } = req.body as {
+        content?: string;
+        vector?: number[];
+        type?: 'fact' | 'decision' | 'insight';
+        metadata?: Record<string, unknown>;
+      };
+      if (!content || typeof content !== 'string') return res.status(400).json({ error: 'content is required' });
+      if (!vector || !Array.isArray(vector) || vector.length === 0) return res.status(400).json({ error: 'vector (number[]) is required' });
+      if (!type || !['fact', 'decision', 'insight'].includes(type)) return res.status(400).json({ error: 'type must be fact | decision | insight' });
+
+      const memory = await ServerMemoryService.addMemory(orgId, content, vector, type, metadata);
+      res.status(201).json({ memory });
+    } catch (error) {
+      safeError(res, error, 'Memory Store');
+    }
+  });
+
+  app.post('/api/organizations/:orgId/memory/search', apiLimiter, authorize('viewer'), async (req, res) => {
+    try {
+      const { orgId } = req.params;
+      const { vector, limit } = req.body as { vector?: number[]; limit?: number };
+      if (!vector || !Array.isArray(vector) || vector.length === 0) return res.status(400).json({ error: 'vector (number[]) is required' });
+
+      const results = await ServerMemoryService.search(orgId, vector, limit ?? 5);
+      res.json({ results });
+    } catch (error) {
+      safeError(res, error, 'Memory Search');
+    }
+  });
 
   // GitHub OAuth
   const PORT = process.env.PORT || 5000;
