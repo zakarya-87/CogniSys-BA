@@ -15,7 +15,10 @@ RUN npm run build
 FROM node:20-alpine AS runtime
 
 # Security: run as non-root
-RUN addgroup -g 1001 -S nodejs && adduser -S cognisys -u 1001 -G nodejs
+# wget needed for HEALTHCHECK
+RUN addgroup -g 1001 -S nodejs && adduser -S cognisys -u 1001 -G nodejs \
+  && apk add --no-cache wget
+
 WORKDIR /app
 
 # Only install production deps in runtime stage
@@ -31,7 +34,7 @@ COPY --from=builder /app/firebase-applet-config.json ./firebase-applet-config.js
 # Generated schemas are required by server at runtime
 COPY --from=builder /app/generated_schemas.json ./generated_schemas.json
 
-# tsx is needed to run server.ts in production (install as prod dep)
+# tsx needed to run TypeScript server.ts in production
 RUN npm install tsx --ignore-scripts --legacy-peer-deps
 
 USER cognisys
@@ -43,4 +46,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -qO- http://localhost:8080/api/health || exit 1
 
-CMD ["node", "--loader", "tsx", "server.ts"]
+# Use tsx directly (avoids deprecated --loader flag in Node 20+)
+CMD ["npx", "tsx", "server.ts"]
