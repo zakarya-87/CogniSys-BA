@@ -20,6 +20,7 @@ import { ProjectController } from './controllers/ProjectController';
 import { InitiativeController } from './controllers/InitiativeController';
 import { AIController } from './controllers/AIController';
 import { ServerMemoryService } from './services/MemoryService';
+import { getAdminAuth } from './lib/firebaseAdmin';
 
 export function createApp() {
   const app = express();
@@ -148,7 +149,38 @@ export function createApp() {
     }
   });
 
-  // GitHub OAuth
+  // ── Firebase Auth Session ────────────────────────────────────────────────────
+  // Verifies a Firebase ID token (GitHub or Google) and sets a server-side
+  // httpOnly session cookie. Client calls this after signInWithPopup succeeds.
+  app.post('/api/auth/firebase-session', authLimiter, async (req, res) => {
+    const { idToken } = req.body as { idToken?: string };
+    if (!idToken || typeof idToken !== 'string') {
+      return res.status(400).json({ error: 'idToken is required' });
+    }
+    try {
+      const adminAuth = getAdminAuth();
+      const decoded = await adminAuth.verifyIdToken(idToken);
+      res.cookie('auth_session', decoded.uid, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+      res.json({
+        status: 'authenticated',
+        uid: decoded.uid,
+        name: decoded.name ?? null,
+        email: decoded.email ?? null,
+        picture: decoded.picture ?? null,
+        provider: decoded.firebase?.sign_in_provider ?? 'unknown',
+      });
+    } catch (err) {
+      logger.error({ err }, 'Firebase token verification failed');
+      res.status(401).json({ error: 'Invalid or expired token' });
+    }
+  });
+
+  // Legacy GitHub OAuth routes — kept for backward compatibility during migration
   const PORT = process.env.PORT || 5000;
   app.get('/api/auth/url', authLimiter, (req, res) => {
     const origin = req.headers.origin || req.headers.referer || `http://localhost:${PORT}`;
@@ -192,17 +224,6 @@ export function createApp() {
     } catch (error) {
       safeErrorHtml(res, error, 'OAuth Callback');
     }
-  });
-
-  app.get('/api/auth/me', (req, res) => {
-    const token = req.cookies.auth_session;
-    if (!token) return res.status(401).json({ error: 'Not authenticated' });
-    res.json({ status: 'authenticated' });
-  });
-
-  app.post('/api/auth/logout', (req, res) => {
-    res.clearCookie('auth_session', { secure: true, sameSite: 'none', httpOnly: true });
-    res.json({ status: 'logged_out' });
   });
 
   // GitHub API Proxy — uses user's OAuth access token from auth_session cookie
@@ -353,7 +374,6 @@ export function createApp() {
     }
   });
 
-<<<<<<< HEAD
   // --- Gemini Embedding Proxy ---
   // Unblocks vector memory (Phase 2). Uses text-embedding-004 model.
   app.post('/api/gemini/embed', aiLimiter, authorize('viewer'), async (req, res) => {
