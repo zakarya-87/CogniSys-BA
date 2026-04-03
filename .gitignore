@@ -31,3 +31,7 @@ dist-ssr
 # Generated runtime artifacts
 generated_schemas.json
 metadata.json
+
+# k6 load test output
+k6/results*.json
+k6/summary*.json
