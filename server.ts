@@ -1,3 +1,7 @@
+// OTel tracing MUST be initialized before any other imports
+import { startTracing } from './server/tracing';
+startTracing();
+
 import { config } from 'dotenv';
 // Load .env.local first (takes precedence), then fall back to .env
 config({ path: '.env.local' });
