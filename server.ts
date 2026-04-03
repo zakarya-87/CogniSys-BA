@@ -1,11 +1,12 @@
-// OTel tracing MUST be initialized before any other imports
-import { startTracing } from './server/tracing';
-startTracing();
-
 import { config } from 'dotenv';
 // Load .env.local first (takes precedence), then fall back to .env
+// Must run before startTracing() so OTEL_* env vars are available
 config({ path: '.env.local' });
 config();
+
+// OTel tracing initialized after dotenv so OTEL_SERVICE_NAME etc. are set
+import { startTracing } from './server/tracing';
+startTracing();
 import { createServer as createViteServer } from 'vite';
 import { logger } from './server/logger';
 import { createApp } from './server/app';
