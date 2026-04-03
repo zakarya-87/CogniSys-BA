@@ -14,6 +14,7 @@ import { authorize } from './middleware/rbac';
 import { correlationId } from './middleware/correlationId';
 import { safeError, safeErrorHtml } from './utils/errorHandler';
 import { ModelRouter, ModelType } from './ai-agents/ModelRouter';
+import { createOperation, getOperation, subscribe, updateOperation } from './operationStore';
 import { OrganizationController } from './controllers/OrganizationController';
 import { ProjectController } from './controllers/ProjectController';
 import { InitiativeController } from './controllers/InitiativeController';
@@ -273,6 +274,7 @@ export function createApp() {
     }
   });
 
+<<<<<<< HEAD
   // --- Gemini Embedding Proxy ---
   // Unblocks vector memory (Phase 2). Uses text-embedding-004 model.
   app.post('/api/gemini/embed', aiLimiter, authorize('viewer'), async (req, res) => {
@@ -308,6 +310,79 @@ export function createApp() {
     } catch (error) {
       safeError(res, error, 'Gemini Embed Proxy');
     }
+  });
+
+  // --- Async AI Generation with SSE progress ---
+  // POST /api/gemini/generate/stream  → 202 { operationId }
+  // Caller then opens GET /api/ai/stream/:operationId to receive SSE events.
+  app.post('/api/gemini/generate/stream', aiLimiter, authorize('viewer'), (req, res) => {
+    const { prompt, model, config } = req.body as { prompt: string; model?: 'flash' | 'pro'; config?: Record<string, unknown> };
+    if (!prompt || typeof prompt !== 'string') {
+      return res.status(400).json({ error: 'prompt is required and must be a string' });
+    }
+
+    const operationId = `op-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    createOperation(operationId);
+    updateOperation(operationId, { status: 'running' });
+
+    // Fire-and-forget background generation
+    (async () => {
+      try {
+        const modelType = model === 'pro' ? ModelType.REASONING : ModelType.SPEED;
+        const router = new ModelRouter();
+        let text: string;
+        if (config?.inlineImage) {
+          text = await router.generateContentWithImage(prompt, modelType, config.inlineImage as { mimeType: string; data: string });
+        } else if (config?.tools) {
+          text = await router.generateContentWithConfig(prompt, modelType, config);
+        } else {
+          text = await router.generateContent(prompt, modelType);
+        }
+        updateOperation(operationId, { status: 'complete', result: text });
+      } catch (err) {
+        logger.error({ err }, 'Async Gemini generation failed');
+        updateOperation(operationId, { status: 'error', error: 'AI generation failed. Please try again.' });
+      }
+    })();
+
+    res.status(202).json({ operationId });
+  });
+
+  // GET /api/ai/stream/:operationId  → SSE stream
+  // Emits: progress | complete | error events, then closes.
+  app.get('/api/ai/stream/:operationId', authorize('viewer'), (req, res) => {
+    const { operationId } = req.params;
+    const op = getOperation(operationId);
+    if (!op) {
+      return res.status(404).json({ error: 'Operation not found' });
+    }
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders();
+
+    const send = (event: string, data: string) => {
+      res.write(`event: ${event}\ndata: ${data}\n\n`);
+      if (event === 'complete' || event === 'error') {
+        res.end();
+      }
+    };
+
+    // If already done, reply immediately
+    if (op.status === 'complete') {
+      send('complete', JSON.stringify({ text: op.result ?? '' }));
+      return;
+    }
+    if (op.status === 'error') {
+      send('error', JSON.stringify({ error: op.error ?? 'Unknown error' }));
+      return;
+    }
+
+    // Subscribe to future updates
+    const unsub = subscribe(operationId, send);
+    req.on('close', unsub);
   });
 
   // JSON 404 for unknown /api/* routes — must come before SPA catch-all

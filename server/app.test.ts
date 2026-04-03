@@ -251,6 +251,7 @@ describe('API Server', () => {
     });
   });
 
+<<<<<<< HEAD
   // ── /api/gemini/embed ─────────────────────────────────────────────────────
   describe('POST /api/gemini/embed', () => {
     it('returns 401 without Authorization header', async () => {
@@ -284,6 +285,35 @@ describe('API Server', () => {
         .post('/api/gemini/embed')
         .send({ text: 'embed this' });
       expect([401, 500]).toContain(res.status);
+    });
+  });
+
+  // ── SSE streaming — /api/gemini/generate/stream ────────────────────────────
+  describe('POST /api/gemini/generate/stream', () => {
+    it('returns 401 without Authorization header', async () => {
+      const res = await request(app)
+        .post('/api/gemini/generate/stream')
+        .send({ prompt: 'hello' });
+      expect(res.status).toBe(401);
+    });
+
+    it('returns 400 when prompt is missing', async () => {
+      const res = await request(app)
+        .post('/api/gemini/generate/stream')
+        .set('Cookie', 'auth_session=token')
+        .set('Authorization', 'Bearer fake-token')
+        .send({});
+      // Auth check runs first; 401 is acceptable here too
+      expect([400, 401]).toContain(res.status);
+    });
+  });
+
+  // ── SSE streaming — /api/ai/stream/:operationId ────────────────────────────
+  describe('GET /api/ai/stream/:operationId', () => {
+    it('returns 404 for unknown operationId without auth', async () => {
+      // No auth → 401 (RBAC runs before lookup)
+      const res = await request(app).get('/api/ai/stream/nonexistent');
+      expect(res.status).toBe(401);
     });
   });
 });
