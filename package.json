@@ -9,7 +9,10 @@
     "preview": "vite preview",
     "lint": "tsc --noEmit",
     "test": "vitest run",
-    "prepare": "husky"
+    "prepare": "husky",
+    "docker:build": "docker build -t cognisys-ba:local .",
+    "docker:run": "docker run --env-file .env.local -p 8080:8080 cognisys-ba:local",
+    "docker:dev": "docker-compose --profile dev up app-dev"
   },
   "dependencies": {
     "@google/genai": "^1.48.0",

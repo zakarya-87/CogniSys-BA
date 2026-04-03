@@ -1,0 +1,34 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Build outputs
+dist/
+.vite/
+
+# Environment — never bake secrets into image
+.env
+.env.local
+.env.*.local
+
+# Dev tools
+.git/
+.github/
+.husky/
+*.test.ts
+*.test.tsx
+**/__tests__/
+vitest.config.*
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large generated file (regenerated at build time)
+generated_schemas.json
