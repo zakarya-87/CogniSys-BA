@@ -99,7 +99,7 @@ export function createApp() {
   app.get('/api/v1/feature-flags', (_req, res) => res.json(getAllFlags()));
 
   // Organizations
-  app.post('/api/organizations', apiLimiter, OrganizationController.create);
+  app.post('/api/organizations', apiLimiter, authorize('member'), OrganizationController.create);
   app.get('/api/organizations/:orgId', apiLimiter, authorize('viewer'), OrganizationController.get);
 
   // Projects
