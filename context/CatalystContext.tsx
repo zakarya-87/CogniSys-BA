@@ -1,5 +1,4 @@
 
-
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef, useCallback, useMemo } from 'react';
 import { TInitiative, InitiativeStatus, Theme, TWorkBreakdown, TActivity, TTeamMember, TOrganization, TProject, UserRole } from '../types';
 import { MOCK_INITIATIVES, AI_TEAM_MEMBERS } from '../constants';
@@ -7,6 +6,11 @@ import { DomainRules } from '../utils/domainRules';
 import { generateAgentComment, setAiModelId } from '../services/geminiService';
 import { MemoryService } from '../services/memoryService';
 import { OrganizationAPI, ProjectAPI, InitiativeAPI, AIAPI } from '../src/services/api';
+import {
+    firestoreSetInitiative,
+    firestoreUpdateInitiative,
+    firestoreWatchInitiatives,
+} from '../services/firestoreService';
 
 interface User {
     id: string;
@@ -126,11 +130,21 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
         if (!user) return;
         setLoading(true);
         try {
-            // For now, assume user has at least one org or we fetch all they have access to
-            // This is a simplified version for the integration phase
-            // In a real app, we'd have an 'activeOrgId'
+            // If user has an orgId (from RBAC claims), watch their initiatives in real-time.
+            // Falls back to localStorage state if Firestore is unavailable.
+            const orgId = (user as any).orgId as string | undefined;
+            if (orgId) {
+                // Real-time listener: updates state whenever Firestore changes
+                const unsubscribe = firestoreWatchInitiatives(orgId, (firestoreInitiatives) => {
+                    if (firestoreInitiatives.length > 0) {
+                        setInitiativesState(firestoreInitiatives);
+                    }
+                });
+                // Cleanup listener on user change or unmount
+                return unsubscribe;
+            }
         } catch (error) {
-            console.error("Failed to fetch initial data", error);
+            console.error("Failed to fetch initial data from Firestore, using localStorage", error);
         } finally {
             setLoading(false);
         }
@@ -295,6 +309,14 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
         setInitiativesState(prev => [initiative, ...prev]);
         setToastMessage(`Initiative "${initiative.title}" created.`);
         
+        // Persist to Firestore if user has orgId claim
+        const orgId = (user as any)?.orgId as string | undefined;
+        if (orgId) {
+            firestoreSetInitiative({ ...initiative, orgId }).catch(err =>
+                console.error('Firestore write failed for addInitiative:', err)
+            );
+        }
+
         // Activity Log
         const activity: TActivity = {
             id: `act-${Date.now()}`,
@@ -309,7 +331,7 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
         };
         setActivities(prev => [activity, ...prev]);
 
-    }, [setToastMessage]);
+    }, [user, setToastMessage]);
 
     const updateInitiative = useCallback((initiative: TInitiative) => {
         setInitiativesState(prev => prev.map(i => i.id === initiative.id ? initiative : i));
@@ -317,6 +339,11 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
             setSelectedInitiative(initiative);
         }
         setToastMessage(`Initiative "${initiative.title}" updated.`);
+
+        // Persist to Firestore
+        firestoreUpdateInitiative(initiative.id, initiative).catch(err =>
+            console.error('Firestore write failed for updateInitiative:', err)
+        );
     }, [selectedInitiative, setToastMessage]);
 
     const updateInitiativeStatus = useCallback((id: string, newStatus: InitiativeStatus) => {
