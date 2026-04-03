@@ -562,12 +562,23 @@ export async function generateText(prompt: string): Promise<string> {
 }
 
 // --- Embedding Generation ---
-// NOTE: Embeddings require direct API access. This function is server-side only.
-// For client-side embedding needs, call a dedicated /api/gemini/embed endpoint (Phase 2).
-export const getEmbedding = async (_text: string): Promise<number[]> => {
-  // Placeholder: embeddings will be implemented server-side in Phase 2.
-  console.warn("getEmbedding: not yet proxied — returning empty vector");
-  return [];
+export const getEmbedding = async (text: string): Promise<number[]> => {
+  try {
+    const response = await fetch('/api/gemini/embed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    if (!response.ok) {
+      console.warn(`getEmbedding: server returned ${response.status}`);
+      return [];
+    }
+    const data = await response.json() as { embedding?: number[] };
+    return data.embedding ?? [];
+  } catch (err) {
+    console.warn('getEmbedding: request failed', err);
+    return [];
+  }
 };
 
 

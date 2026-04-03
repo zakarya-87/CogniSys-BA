@@ -236,6 +236,43 @@ export function createApp() {
     }
   });
 
+  // --- Gemini Embedding Proxy ---
+  // Unblocks vector memory (Phase 2). Uses text-embedding-004 model.
+  app.post('/api/gemini/embed', aiLimiter, authorize('viewer'), async (req, res) => {
+    try {
+      const { text } = req.body as { text?: string };
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({ error: 'text is required and must be a string' });
+      }
+
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ error: 'GEMINI_API_KEY is not configured' });
+      }
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: 'models/text-embedding-004', content: { parts: [{ text }] } }),
+        }
+      );
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        logger.error({ status: response.status, body: JSON.stringify(errData) }, 'Gemini Embed API error');
+        return res.status(502).json({ error: 'Embedding service error' });
+      }
+
+      const data = await response.json() as { embedding?: { values?: number[] } };
+      const embedding = data?.embedding?.values ?? [];
+      res.json({ embedding });
+    } catch (error) {
+      safeError(res, error, 'Gemini Embed Proxy');
+    }
+  });
+
   // JSON 404 for unknown /api/* routes — must come before SPA catch-all
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
 
