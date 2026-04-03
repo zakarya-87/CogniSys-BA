@@ -21,6 +21,7 @@ import { InitiativeController } from './controllers/InitiativeController';
 import { AIController } from './controllers/AIController';
 import { ServerMemoryService } from './services/MemoryService';
 import { getAdminAuth } from './lib/firebaseAdmin';
+import { getAllFlags } from './featureFlags';
 
 export function createApp() {
   const app = express();
@@ -94,6 +95,8 @@ export function createApp() {
 
   // Health
   app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+  app.get('/api/v1/health', (_req, res) => res.json({ status: 'ok', version: 'v1' }));
+  app.get('/api/v1/feature-flags', (_req, res) => res.json(getAllFlags()));
 
   // Organizations
   app.post('/api/organizations', apiLimiter, OrganizationController.create);
