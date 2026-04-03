@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
-    branches: [main]
+    branches: [main, dev]
   workflow_dispatch:
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
       - name: Create stub schemas for tests
         run: echo '{}' > generated_schemas.json
 
-      - name: Run tests
+      - name: Run unit tests
         run: npm run test
 
       - name: TypeScript check (baseline — errors documented, not blocking)
@@ -43,3 +43,29 @@ jobs:
         run: npm run build
         env:
           NODE_OPTIONS: --max-old-space-size=5120
+
+      - name: Bundle size report
+        run: |
+          echo "## Bundle Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Chunk | Size (raw) | Size (gzip) |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-----------|------------|" >> $GITHUB_STEP_SUMMARY
+          find dist/assets -name "*.js" | sort | while read f; do
+            NAME=$(basename "$f")
+            RAW=$(du -k "$f" | cut -f1)
+            GZIP=$(gzip -c "$f" | wc -c | awk '{printf "%.0f", $1/1024}')
+            echo "| $NAME | ${RAW}KB | ${GZIP}KB |" >> $GITHUB_STEP_SUMMARY
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          ENTRY=$(find dist/assets -name "index-*.js" | head -1)
+          if [ -n "$ENTRY" ]; then
+            ENTRY_GZIP=$(gzip -c "$ENTRY" | wc -c | awk '{printf "%.0f", $1/1024}')
+            echo "**Initial JS entry (index.js): ${ENTRY_GZIP}KB gzip**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            # Fail if entry chunk exceeds 100KB gzip (regression guard)
+            if [ "$ENTRY_GZIP" -gt 100 ]; then
+              echo "⚠️  Entry chunk ${ENTRY_GZIP}KB exceeds 100KB gzip target" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ Entry chunk ${ENTRY_GZIP}KB is within 100KB gzip target" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
