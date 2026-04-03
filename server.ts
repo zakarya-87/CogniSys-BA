@@ -373,6 +373,11 @@ async function startServer() {
     }
   });
 
+  // JSON 404 handler for unknown /api/* routes — must come before SPA catch-all
+  app.use('/api', (_req, res) => {
+    res.status(404).json({ error: 'Not found' });
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

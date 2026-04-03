@@ -31,6 +31,9 @@ jobs:
       - name: Run tests
         run: npm run test
 
+      - name: TypeScript check (baseline — errors documented, not blocking)
+        run: npm run lint || true
+
       - name: Generate JSON schemas
         run: node generate_all_schemas.cjs
         env:
