@@ -22,6 +22,8 @@ import { AIController } from './controllers/AIController';
 import { ServerMemoryService } from './services/MemoryService';
 import { getAdminAuth } from './lib/firebaseAdmin';
 import { getAllFlags } from './featureFlags';
+import swaggerUi from 'swagger-ui-express';
+import { openApiSpec } from './openapi';
 
 export function createApp() {
   const app = express();
@@ -99,6 +101,15 @@ export function createApp() {
 
   // Feature flags — public, no auth required
   app.get('/api/v1/feature-flags', (_req, res) => res.json(getAllFlags()));
+
+  // Swagger UI — dev mode only
+  if (isDev) {
+    app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec, {
+      customSiteTitle: 'CogniSys BA API Docs',
+      swaggerOptions: { persistAuthorization: true },
+    }));
+    app.get('/api/docs.json', (_req, res) => res.json(openApiSpec));
+  }
 
   // Organizations
   app.post('/api/organizations', apiLimiter, authorize('member'), OrganizationController.create);
