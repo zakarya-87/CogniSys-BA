@@ -1,14 +1,15 @@
 import { Request, Response } from 'express';
 import { OrganizationService } from '../services/OrganizationService';
-import { TOrganization } from '../../types';
 import { safeError } from '../utils/errorHandler';
+import { CreateOrganizationSchema, parseBody } from '../schemas';
 
 const orgService = new OrganizationService();
 
 export class OrganizationController {
   static async create(req: Request, res: Response) {
     try {
-      const org: TOrganization = req.body;
+      const org = parseBody(CreateOrganizationSchema, req.body, res);
+      if (!org) return;
       const userId = req.user?.uid;
       await orgService.createOrganization(org, userId);
       res.status(201).json({ message: 'Organization created successfully' });

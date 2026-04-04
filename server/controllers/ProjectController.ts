@@ -1,14 +1,15 @@
 import { Request, Response } from 'express';
 import { ProjectService } from '../services/ProjectService';
-import { TProject } from '../../types';
 import { safeError } from '../utils/errorHandler';
+import { CreateProjectSchema, parseBody } from '../schemas';
 
 const projectService = new ProjectService();
 
 export class ProjectController {
   static async create(req: Request, res: Response) {
     try {
-      const project: TProject = req.body;
+      const project = parseBody(CreateProjectSchema, req.body, res);
+      if (!project) return;
       const userId = req.user?.uid;
       await projectService.createProject(project, userId);
       res.status(201).json({ message: 'Project created successfully' });
