@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { getAdminDb } from '../lib/firebaseAdmin';
 import { AuthService } from './AuthService';
 import { AuditLogService } from './AuditLogService';
+import { EmailService } from './EmailService';
 import { UserRole } from '../../types';
 
 export interface OrgInvitation {
@@ -59,6 +60,16 @@ export class InvitationService {
       after: { invitedEmail: email, role } as Record<string, unknown>,
       context: undefined,
     });
+
+    // Send invitation email (non-fatal if SMTP not configured)
+    await EmailService.sendInvitation({
+      to: email,
+      orgName: orgId, // caller can pass org name; orgId is a safe fallback
+      inviterName: invitedBy,
+      role,
+      token: invitation.token,
+      expiresAt: invitation.expiresAt,
+    }).catch(() => {/* email is best-effort */});
 
     return invitation;
   }
