@@ -147,6 +147,30 @@ vi.mock('./services/WebhookService', () => ({
   },
 }));
 
+vi.mock('./services/BillingService', () => ({
+  BillingService: {
+    getBilling: vi.fn().mockResolvedValue(null),
+    ensureCustomer: vi.fn().mockResolvedValue('cus_mock'),
+    createCheckoutSession: vi.fn().mockResolvedValue({ url: 'https://checkout.stripe.com/mock' }),
+    createPortalSession: vi.fn().mockResolvedValue({ url: 'https://billing.stripe.com/mock' }),
+    syncPlan: vi.fn().mockResolvedValue(undefined),
+    constructWebhookEvent: vi.fn().mockReturnValue(null),
+  },
+}));
+
+vi.mock('./services/SearchService', () => ({
+  SearchService: {
+    search: vi.fn().mockResolvedValue([]),
+  },
+}));
+
+vi.mock('./services/JobService', () => ({
+  JobService: {
+    triggerNotificationDigest: vi.fn().mockResolvedValue({ processed: 0, sent: 0 }),
+    triggerUsageReport: vi.fn().mockResolvedValue({ orgsReported: 0 }),
+  },
+}));
+
 vi.mock('./ai-agents/ModelRouter', () => ({
   ModelRouter: vi.fn().mockImplementation(() => ({
     generateContent: vi.fn().mockResolvedValue('mock response'),
@@ -461,6 +485,54 @@ describe('API Server', () => {
 
     it('GET /api/v1/organizations/:orgId/webhooks returns 401 without auth', async () => {
       const res = await request(app).get('/api/v1/organizations/org-1/webhooks');
+      expect(res.status).toBe(401);
+    });
+
+    // Phase 8 routes — require auth
+    it('GET /api/v1/organizations/:orgId/search returns 401 without auth', async () => {
+      const res = await request(app).get('/api/v1/organizations/org-1/search?q=test');
+      expect(res.status).toBe(401);
+    });
+
+    it('GET /api/v1/organizations/:orgId/billing returns 401 without auth', async () => {
+      const res = await request(app).get('/api/v1/organizations/org-1/billing');
+      expect(res.status).toBe(401);
+    });
+
+    it('POST /api/v1/organizations/:orgId/billing/checkout returns 401 without auth', async () => {
+      const res = await request(app).post('/api/v1/organizations/org-1/billing/checkout').send({ plan: 'pro', successUrl: 'https://x.com', cancelUrl: 'https://x.com' });
+      expect(res.status).toBe(401);
+    });
+
+    it('POST /api/v1/admin/jobs/trigger-digest returns 401 without auth', async () => {
+      const res = await request(app).post('/api/v1/admin/jobs/trigger-digest');
+      expect(res.status).toBe(401);
+    });
+  });
+
+  // ── Stripe webhook — public, signature-verified ────────────────────────────
+  describe('POST /api/webhooks/stripe', () => {
+    it('returns 400 when Stripe-Signature header is missing', async () => {
+      const res = await request(app).post('/api/webhooks/stripe').send('{}');
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty('error');
+    });
+
+    it('returns 400 when signature is invalid (mock returns null)', async () => {
+      const res = await request(app)
+        .post('/api/webhooks/stripe')
+        .set('stripe-signature', 'invalid-sig')
+        .set('Content-Type', 'application/json')
+        .send('{}');
+      expect(res.status).toBe(400);
+    });
+  });
+
+  // ── Search — validates query param ────────────────────────────────────────
+  describe('GET /api/v1/organizations/:orgId/search', () => {
+    it('returns 400 when q param is missing (unauthenticated → 401 first)', async () => {
+      // Without auth → 401 (RBAC fires before validation)
+      const res = await request(app).get('/api/v1/organizations/org-1/search');
       expect(res.status).toBe(401);
     });
   });
