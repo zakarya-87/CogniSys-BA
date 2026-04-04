@@ -87,6 +87,12 @@ describe('API Server', () => {
       expect(res.body).toEqual({ status: 'ok' });
     });
 
+    it('GET /api/v1/health returns version', async () => {
+      const res = await request(app).get('/api/v1/health');
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ status: 'ok', version: 'v1' });
+    });
+
     it('includes X-Correlation-ID header on every response', async () => {
       const res = await request(app).get('/api/health');
       expect(res.headers['x-correlation-id']).toBeDefined();
@@ -98,6 +104,35 @@ describe('API Server', () => {
       const id = 'test-correlation-id-123';
       const res = await request(app).get('/api/health').set('X-Correlation-ID', id);
       expect(res.headers['x-correlation-id']).toBe(id);
+    });
+  });
+
+  // ── Feature Flags ─────────────────────────────────────────────────────────
+  describe('GET /api/v1/feature-flags', () => {
+    it('returns 200 with a flags object', async () => {
+      const res = await request(app).get('/api/v1/feature-flags');
+      expect(res.status).toBe(200);
+      expect(typeof res.body).toBe('object');
+    });
+
+    it('returns known flag names', async () => {
+      const res = await request(app).get('/api/v1/feature-flags');
+      expect(res.body).toHaveProperty('ai_streaming');
+      expect(res.body).toHaveProperty('google_auth');
+      expect(res.body).toHaveProperty('vector_memory');
+    });
+
+    it('all flag values are booleans', async () => {
+      const res = await request(app).get('/api/v1/feature-flags');
+      for (const val of Object.values(res.body)) {
+        expect(typeof val).toBe('boolean');
+      }
+    });
+
+    it('requires no authentication (public endpoint)', async () => {
+      // Must return 200 without any auth cookie
+      const res = await request(app).get('/api/v1/feature-flags');
+      expect(res.status).toBe(200);
     });
   });
 

@@ -96,6 +96,8 @@ export function createApp() {
   // Health
   app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
   app.get('/api/v1/health', (_req, res) => res.json({ status: 'ok', version: 'v1' }));
+
+  // Feature flags — public, no auth required
   app.get('/api/v1/feature-flags', (_req, res) => res.json(getAllFlags()));
 
   // Organizations
