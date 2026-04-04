@@ -78,6 +78,41 @@ vi.mock('./services/AuthService', () => ({
   },
 }));
 
+vi.mock('./services/InvitationService', () => ({
+  InvitationService: {
+    createInvitation: vi.fn().mockResolvedValue({ id: 'inv-1', token: 'tok-abc', orgId: 'org-1', email: 'test@example.com', role: 'member', status: 'pending', createdAt: new Date().toISOString(), expiresAt: new Date().toISOString() }),
+    listInvitations: vi.fn().mockResolvedValue([]),
+    revokeInvitation: vi.fn().mockResolvedValue(undefined),
+    acceptInvitation: vi.fn().mockResolvedValue({ orgId: 'org-1', role: 'member' }),
+  },
+}));
+
+vi.mock('./services/MemberService', () => ({
+  MemberService: {
+    listMembers: vi.fn().mockResolvedValue([]),
+    removeMember: vi.fn().mockResolvedValue(undefined),
+    changeMemberRole: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+vi.mock('./services/NotificationService', () => ({
+  NotificationService: {
+    createNotification: vi.fn().mockResolvedValue(undefined),
+    getNotifications: vi.fn().mockResolvedValue([]),
+    markRead: vi.fn().mockResolvedValue(undefined),
+    markAllRead: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+vi.mock('./services/UsageMeteringService', () => ({
+  UsageMeteringService: {
+    trackAICall: vi.fn().mockResolvedValue({ aiCalls: 1, tokenCount: 100 }),
+    getUsage: vi.fn().mockResolvedValue(null),
+    enforceQuota: vi.fn().mockResolvedValue(undefined),
+    setPlan: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 vi.mock('./ai-agents/ModelRouter', () => ({
   ModelRouter: vi.fn().mockImplementation(() => ({
     generateContent: vi.fn().mockResolvedValue('mock response'),
@@ -335,6 +370,32 @@ describe('API Server', () => {
       const res = await request(app)
         .get('/api/organizations/org-123')
         .set('Authorization', 'Bearer invalid-token');
+      expect(res.status).toBe(401);
+    });
+
+    // Phase 6 routes — require auth
+    it('POST /api/v1/organizations/:orgId/invitations returns 401 without auth', async () => {
+      const res = await request(app).post('/api/v1/organizations/org-1/invitations').send({ email: 'a@b.com', role: 'member' });
+      expect(res.status).toBe(401);
+    });
+
+    it('GET /api/v1/organizations/:orgId/members returns 401 without auth', async () => {
+      const res = await request(app).get('/api/v1/organizations/org-1/members');
+      expect(res.status).toBe(401);
+    });
+
+    it('GET /api/v1/notifications returns 401 without auth', async () => {
+      const res = await request(app).get('/api/v1/notifications');
+      expect(res.status).toBe(401);
+    });
+
+    it('GET /api/v1/organizations/:orgId/usage returns 401 without auth', async () => {
+      const res = await request(app).get('/api/v1/organizations/org-1/usage');
+      expect(res.status).toBe(401);
+    });
+
+    it('POST /api/v1/invitations/:token/accept returns 401 without Bearer token', async () => {
+      const res = await request(app).post('/api/v1/invitations/some-token/accept');
       expect(res.status).toBe(401);
     });
   });
