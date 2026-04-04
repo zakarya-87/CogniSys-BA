@@ -1,11 +1,13 @@
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TInitiative, InitiativeStatus, TPortfolioFinancials, TPortfolioRisks } from '../types';
 import { STATUS_STYLES } from '../constants';
 import { generatePortfolioReport, generatePortfolioFinancials, generatePortfolioRisks } from '../services/geminiService';
 import { Button } from './ui/Button';
 import { Spinner } from './ui/Spinner';
+
+const AnalyticsDashboard = lazy(() => import('./AnalyticsDashboard').then(m => ({ default: m.AnalyticsDashboard })));
 
 interface ReportsViewProps {
   initiatives: TInitiative[];
@@ -135,7 +137,7 @@ const PieChart: React.FC<{ data: { label: string; value: number }[]; onClick: (l
 
 export const ReportsView: React.FC<ReportsViewProps> = ({ initiatives, onSelectInitiative }) => {
   const { t } = useTranslation(['reports']);
-  const [activeTab, setActiveTab] = useState<'Executive' | 'Financial' | 'Risk'>('Executive');
+  const [activeTab, setActiveTab] = useState<'Executive' | 'Financial' | 'Risk' | 'Analytics'>('Executive');
   
   // Executive State
   const [filter, setFilter] = useState<{ type: 'status' | 'owner'; value: string } | null>(null);
@@ -272,7 +274,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initiatives, onSelectI
           </div>
           
           <div className="flex bg-surface-darker/5 dark:bg-surface-darker/30 p-1.5 rounded-2xl border border-border-light dark:border-border-dark w-fit">
-              {(['Executive', 'Financial', 'Risk'] as const).map(tab => (
+              {(['Executive', 'Financial', 'Risk', 'Analytics'] as const).map(tab => (
                   <button 
                     key={tab}
                     onClick={() => setActiveTab(tab)} 
@@ -495,6 +497,12 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initiatives, onSelectI
       )}
 
       {/* Tooltip */}
+      {activeTab === 'Analytics' && (
+        <Suspense fallback={<div className="py-16 text-center text-text-muted-light dark:text-text-muted-dark text-sm">Loading Analytics…</div>}>
+          <AnalyticsDashboard />
+        </Suspense>
+      )}
+
       {tooltip && tooltip.visible && (
         <div
           className="fixed z-[100] pointer-events-none transform -translate-x-1/2 -translate-y-full -mt-4 animate-in fade-in zoom-in duration-200"

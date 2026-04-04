@@ -1,6 +1,9 @@
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
+
+const MembersView = lazy(() => import('./MembersView').then(m => ({ default: m.MembersView })));
+const BillingView = lazy(() => import('./BillingView').then(m => ({ default: m.BillingView })));
 import { Button } from './ui/Button';
 import { Spinner } from './ui/Spinner';
 import { useCatalyst, useTheme } from '../context/CatalystContext';
@@ -123,6 +126,7 @@ export const SettingsView: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const { t, i18n } = useTranslation(['settings', 'common']);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeSettingsTab, setActiveSettingsTab] = useState<'general' | 'members' | 'billing'>('general');
 
   const handleLanguageChange = (lng: string) => {
     i18n.changeLanguage(lng);
@@ -304,7 +308,37 @@ export const SettingsView: React.FC = () => {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('settings:title')}</h1>
-      
+
+      {/* Tab bar */}
+      <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700">
+        {(['general', 'members', 'billing'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveSettingsTab(tab)}
+            className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
+              activeSettingsTab === tab
+                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {activeSettingsTab === 'members' && (
+        <Suspense fallback={<div className="p-6 text-slate-400 text-sm">Loading…</div>}>
+          <MembersView />
+        </Suspense>
+      )}
+
+      {activeSettingsTab === 'billing' && (
+        <Suspense fallback={<div className="p-6 text-slate-400 text-sm">Loading…</div>}>
+          <BillingView />
+        </Suspense>
+      )}
+
+      {activeSettingsTab === 'general' && <>
       <SettingsCard
         title={t('settings:appearance')}
         description={t('settings:appearanceDesc')}
@@ -407,6 +441,7 @@ export const SettingsView: React.FC = () => {
           {t('settings:reset')}
         </Button>
       </SettingsCard>
+      </>}
     </div>
   );
 };
