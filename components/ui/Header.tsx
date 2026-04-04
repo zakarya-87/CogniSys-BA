@@ -2,10 +2,10 @@
 
 import React from 'react';
 import { useCatalyst } from '../../context/CatalystContext';
-
-import { Search, Bell, ArrowLeft, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Search, ArrowLeft, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageSwitcher } from '../../src/components/ui/LanguageSwitcher';
+import { NotificationBell } from './NotificationBell';
 
 interface HeaderProps {
   initiativeName?: string;
@@ -76,16 +76,8 @@ export const Header: React.FC<HeaderProps> = React.memo(({ initiativeName, onBac
             <div className="flex items-center gap-2">
               <LanguageSwitcher />
               <ThemeToggle />
-              {/* Notification Bell */}
-              <button 
-                  onClick={() => setCurrentView('pulse')}
-                  className="text-slate-500 hover:text-accent-purple dark:text-text-muted-dark dark:hover:text-accent-purple relative p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-surface-darker transition-all active:scale-95"
-              >
-                  <Bell className="h-5 w-5" />
-                  {unreadActivities > 0 && (
-                      <span className="absolute top-2.5 right-2.5 h-2.5 w-2.5 bg-accent-red rounded-full ring-2 ring-white dark:ring-surface-dark animate-pulse"></span>
-                  )}
-              </button>
+              {/* Real-time Notification Bell (SSE-powered) */}
+              <NotificationBell />
               
               {/* User Avatar */}
               {user ? (
