@@ -17,66 +17,18 @@ import {
     onAuthStateChanged,
     type FirebaseUser,
 } from '../firebase';
+import { UIContext, UIContextType } from './UIContext';
+import { AuthContext, AuthContextType, User } from './AuthContext';
+import { OrgContext, OrgContextType } from './OrgContext';
+import { InitiativeContext, InitiativeContextType } from './InitiativeContext';
 
-interface User {
-    id: string;
-    name: string;
-    avatarUrl?: string;
-    role?: UserRole; // Added role
-}
+// Re-export focused hooks so components can subscribe to a single domain
+export { useUI } from './UIContext';
+export { useAuth } from './AuthContext';
+export { useOrg } from './OrgContext';
+export { useInitiative } from './InitiativeContext';
 
-interface CatalystContextType {
-    initiatives: TInitiative[];
-    organizations: TOrganization[]; // Added
-    projects: TProject[]; // Added
-    selectedInitiative: TInitiative | null;
-    currentView: string;
-    theme: Theme;
-    toastMessage: string;
-    aiModel: string;
-    hiveCommand: string | null;
-    activities: TActivity[];
-    unreadActivities: number;
-    user: User | null;
-    loading: boolean;
-    apiError: string | null;
-    
-    // Actions
-    setInitiatives: (initiatives: TInitiative[]) => void;
-    setOrganizations: (organizations: TOrganization[]) => void; // Added
-    setProjects: (projects: TProject[]) => void; // Added
-    selectInitiative: (initiative: TInitiative | null) => void;
-    setCurrentView: (view: any) => void;
-    setTheme: (theme: Theme) => void;
-    setToastMessage: (msg: string) => void;
-    setAiModel: (model: string) => void;
-    setHiveCommand: (command: string | null) => void;
-    markActivitiesRead: () => void;
-    login: () => void;
-    loginWithGoogle: () => void;
-    logout: () => void;
-    fetchInitialData: () => Promise<void>;
-    
-    // Domain Actions
-    addInitiative: (initiative: TInitiative) => void;
-    updateInitiative: (initiative: TInitiative) => void;
-    updateInitiativeStatus: (id: string, status: InitiativeStatus) => void;
-    saveArtifact: (initiativeId: string, key: string, data: any) => void;
-    resetData: () => void;
-    saveWbs: (initiativeId: string, wbs: TWorkBreakdown) => void;
-    
-    // Organization/Project Actions
-    addOrganization: (org: Partial<TOrganization>) => Promise<void>;
-    addProject: (orgId: string, project: Partial<TProject>) => Promise<void>;
-    
-    // AI Actions
-    triggerWBS: (orgId: string, initiativeId: string) => Promise<void>;
-    triggerRisks: (orgId: string, initiativeId: string) => Promise<void>;
-
-    // Persistence
-    exportData: () => Promise<string>;
-    importData: (json: string) => void;
-}
+type CatalystContextType = UIContextType & AuthContextType & OrgContextType & InitiativeContextType;
 
 const CatalystContext = createContext<CatalystContextType | undefined>(undefined);
 
@@ -572,59 +524,80 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
     }, [setToastMessage]);
 
-    const contextValue = useMemo(() => ({
-        initiatives,
-        organizations,
-        projects,
-        selectedInitiative,
-        currentView,
-        theme,
-        toastMessage,
-        aiModel,
-        hiveCommand,
-        activities,
-        unreadActivities,
+    // ── Domain-scoped memos — each re-runs only when its own slice changes ─────
+    const authValue = useMemo<AuthContextType>(() => ({
         user,
-        loading,
-        apiError,
-        setInitiatives: setInitiativesState,
-        setOrganizations: setOrganizationsState,
-        setProjects: setProjectsState,
-        selectInitiative: setSelectedInitiative,
-        setCurrentView,
-        setTheme: setThemeState,
-        setToastMessage,
-        setAiModel: setAiModelState,
-        setHiveCommand,
-        markActivitiesRead,
         login,
         loginWithGoogle,
         logout,
+    }), [user, login, loginWithGoogle, logout]);
+
+    const orgValue = useMemo<OrgContextType>(() => ({
+        organizations,
+        projects,
+        loading,
+        apiError,
+        setOrganizations: setOrganizationsState,
+        setProjects: setProjectsState,
+        addOrganization,
+        addProject,
+        fetchInitialData,
+    }), [organizations, projects, loading, apiError, addOrganization, addProject, fetchInitialData]);
+
+    const initiativeValue = useMemo<InitiativeContextType>(() => ({
+        initiatives,
+        selectedInitiative,
+        activities,
+        unreadActivities,
+        setInitiatives: setInitiativesState,
+        selectInitiative: setSelectedInitiative,
+        markActivitiesRead,
         addInitiative,
         updateInitiative,
         updateInitiativeStatus,
         saveArtifact,
         resetData,
         saveWbs,
-        addOrganization,
-        addProject,
         triggerWBS,
         triggerRisks,
         exportData,
         importData,
-        fetchInitialData,
-    }), [
-        initiatives, organizations, projects, selectedInitiative, currentView, theme, toastMessage,
-        aiModel, hiveCommand, activities, unreadActivities, user, loading, apiError,
-        login, loginWithGoogle, logout, addInitiative, updateInitiative, updateInitiativeStatus,
-        saveArtifact, resetData, saveWbs, addOrganization, addProject, triggerWBS, triggerRisks,
-        exportData, importData, fetchInitialData,
-    ]);
+    }), [initiatives, selectedInitiative, activities, unreadActivities, markActivitiesRead,
+        addInitiative, updateInitiative, updateInitiativeStatus, saveArtifact, resetData,
+        saveWbs, triggerWBS, triggerRisks, exportData, importData]);
+
+    const uiValue = useMemo<UIContextType>(() => ({
+        currentView,
+        theme,
+        toastMessage,
+        aiModel,
+        hiveCommand,
+        setCurrentView,
+        setTheme: setThemeState,
+        setToastMessage,
+        setAiModel: setAiModelState,
+        setHiveCommand,
+    }), [currentView, theme, toastMessage, aiModel, hiveCommand, setCurrentView, setToastMessage]);
+
+    const contextValue = useMemo<CatalystContextType>(() => ({
+        ...authValue,
+        ...orgValue,
+        ...initiativeValue,
+        ...uiValue,
+    }), [authValue, orgValue, initiativeValue, uiValue]);
 
     return (
-        <CatalystContext.Provider value={contextValue}>
-            {children}
-        </CatalystContext.Provider>
+        <UIContext.Provider value={uiValue}>
+            <AuthContext.Provider value={authValue}>
+                <OrgContext.Provider value={orgValue}>
+                    <InitiativeContext.Provider value={initiativeValue}>
+                        <CatalystContext.Provider value={contextValue}>
+                            {children}
+                        </CatalystContext.Provider>
+                    </InitiativeContext.Provider>
+                </OrgContext.Provider>
+            </AuthContext.Provider>
+        </UIContext.Provider>
     );
 };
 

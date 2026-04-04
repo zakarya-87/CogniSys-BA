@@ -37,6 +37,7 @@ import { CatalystProvider, useCatalyst } from './context/CatalystContext';
 import { ApiStatusProvider } from './context/ApiStatusContext';
 import { setAiModelId } from './services/geminiService';
 import { LoginView } from './components/LoginView';
+import { OnboardingWizard } from './components/OnboardingWizard';
 
 const ViewFallback = () => (
     <div className="flex h-full items-center justify-center">
@@ -295,8 +296,26 @@ const App: React.FC = () => {
 };
 
 const AuthGate: React.FC = () => {
-    const { user } = useCatalyst();
+    const { user, organizations, loading, setCurrentView } = useCatalyst();
+    const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+
+    const showWizard =
+        user !== null &&
+        organizations.length === 0 &&
+        !loading &&
+        !hasCompletedOnboarding;
+
+    const handleWizardComplete = (action?: 'dashboard' | 'settings') => {
+        setHasCompletedOnboarding(true);
+        if (action === 'settings') {
+            setCurrentView('settings');
+        } else {
+            setCurrentView('dashboard');
+        }
+    };
+
     if (user === null) return <LoginView />;
+    if (showWizard) return <OnboardingWizard onComplete={handleWizardComplete} />;
     return <MainLayout />;
 };
 
