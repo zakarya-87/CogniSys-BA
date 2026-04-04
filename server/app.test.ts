@@ -69,6 +69,15 @@ vi.mock('./services/AuditLogService', () => ({
   },
 }));
 
+vi.mock('./services/AuthService', () => ({
+  AuthService: {
+    provisionOrgClaims: vi.fn().mockResolvedValue(undefined),
+    revokeOrgClaims: vi.fn().mockResolvedValue(undefined),
+    getOrgClaims: vi.fn().mockResolvedValue(null),
+    revokeRefreshTokens: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 vi.mock('./ai-agents/ModelRouter', () => ({
   ModelRouter: vi.fn().mockImplementation(() => ({
     generateContent: vi.fn().mockResolvedValue('mock response'),
@@ -237,6 +246,23 @@ describe('API Server', () => {
       const cookieStr = Array.isArray(setCookie) ? setCookie.join(';') : setCookie;
       expect(cookieStr).toContain('auth_session=');
       expect(cookieStr).toMatch(/Expires=.*1970|Max-Age=0/i);
+    });
+  });
+
+  // ── Auth — /api/auth/claims/refresh ───────────────────────────────────────
+  describe('POST /api/auth/claims/refresh', () => {
+    it('returns 401 when no Authorization header is provided', async () => {
+      const res = await request(app).post('/api/auth/claims/refresh');
+      expect(res.status).toBe(401);
+      expect(res.body).toHaveProperty('error');
+    });
+
+    it('returns 401 when Authorization header is malformed', async () => {
+      const res = await request(app)
+        .post('/api/auth/claims/refresh')
+        .set('Authorization', 'invalid-token');
+      expect(res.status).toBe(401);
+      expect(res.body).toHaveProperty('error');
     });
   });
 
