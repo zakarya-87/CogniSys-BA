@@ -154,6 +154,7 @@ export function createApp() {
   const v1 = Router();
 
   v1.get('/health', (_req, res) => res.json({ status: 'ok', version: 'v1' }));
+  v1.get('/ping', (_req, res) => res.json({ pong: true }));
   v1.get('/feature-flags', (_req, res) => res.json(getAllFlags()));
 
   // Swagger UI — dev mode only
@@ -220,7 +221,7 @@ export function createApp() {
       const tasks = await TaskQueue.getDlqTasks(orgId);
       res.json({ tasks });
     } catch (err) {
-      res.status(500).json(safeError(err));
+      safeError(res, err, 'Get DLQ Tasks');
     }
   });
 
