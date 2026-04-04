@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { InitiativeService } from '../services/InitiativeService';
 import { safeError } from '../utils/errorHandler';
+import { auditContextFromRequest } from '../utils/auditContext';
 import { CreateInitiativeSchema, UpdateInitiativeSchema, parseBody } from '../schemas';
 
 const initiativeService = new InitiativeService();
@@ -10,8 +11,8 @@ export class InitiativeController {
     try {
       const initiative = parseBody(CreateInitiativeSchema, req.body, res);
       if (!initiative) return;
-      const userId = req.user?.uid;
-      await initiativeService.createInitiative(initiative as any, userId);
+      const userId = req.user?.uid ?? 'anonymous';
+      await initiativeService.createInitiative(initiative as any, userId, auditContextFromRequest(req));
       res.status(201).json({ message: 'Initiative created successfully' });
     } catch (error) {
       safeError(res, error, 'InitiativeController.create');
@@ -44,11 +45,21 @@ export class InitiativeController {
       const data = parseBody(UpdateInitiativeSchema, req.body, res);
       if (!data) return;
       const { orgId } = data;
-      const userId = req.user?.uid;
-      await initiativeService.updateInitiative(initiativeId, data, orgId, userId);
+      const userId = req.user?.uid ?? 'anonymous';
+      // Fetch current state for before/after diff
+      const before = await initiativeService.getInitiativeById(initiativeId);
+      await initiativeService.updateInitiative(
+        initiativeId,
+        (before ?? {}) as any,
+        data as any,
+        orgId,
+        userId,
+        auditContextFromRequest(req),
+      );
       res.json({ message: 'Initiative updated successfully' });
     } catch (error) {
       safeError(res, error, 'InitiativeController.update');
     }
   }
 }
+

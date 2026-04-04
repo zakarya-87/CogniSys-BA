@@ -61,6 +61,14 @@ vi.mock('./controllers/AIController', () => ({
   },
 }));
 
+vi.mock('./services/AuditLogService', () => ({
+  AuditLogService: {
+    logMutation: vi.fn().mockResolvedValue(undefined),
+    logAction: vi.fn().mockResolvedValue(undefined),
+    getLogs: vi.fn().mockResolvedValue([]),
+  },
+}));
+
 vi.mock('./ai-agents/ModelRouter', () => ({
   ModelRouter: vi.fn().mockImplementation(() => ({
     generateContent: vi.fn().mockResolvedValue('mock response'),
@@ -419,6 +427,19 @@ describe('API Server', () => {
       const res = await request(app).get('/api/v1/health');
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ status: 'ok', version: 'v1' });
+    });
+  });
+
+  // ── Audit Logs ────────────────────────────────────────────────────────────────
+  describe('GET /api/v1/organizations/:orgId/audit-logs', () => {
+    it('returns 401 without auth token', async () => {
+      const res = await request(app).get('/api/v1/organizations/org1/audit-logs');
+      expect(res.status).toBe(401);
+    });
+
+    it('returns 401 for backward-compat /api alias too', async () => {
+      const res = await request(app).get('/api/organizations/org1/audit-logs');
+      expect(res.status).toBe(401);
     });
   });
 });
