@@ -9,12 +9,19 @@ import { Permission, roleHasPermission, LEGACY_ROLE_ORDER } from './permissions'
  */
 export const authorize = (requiredRole: string) => {
   return async (req: Request, res: Response, next: NextFunction) => {
+    // Support ?token= query param as fallback for SSE (EventSource can't set headers)
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    let token: string | undefined;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split('Bearer ')[1];
+    } else if (typeof req.query.token === 'string' && req.query.token) {
+      token = req.query.token;
     }
 
-    const token = authHeader.split('Bearer ')[1];
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
     try {
       const decodedToken = await getAdminAuth().verifyIdToken(token);
       const { orgId, role } = decodedToken;
