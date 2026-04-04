@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { OrganizationService } from '../services/OrganizationService';
 import { safeError } from '../utils/errorHandler';
+import { auditContextFromRequest } from '../utils/auditContext';
 import { CreateOrganizationSchema, parseBody } from '../schemas';
 
 const orgService = new OrganizationService();
@@ -10,8 +11,8 @@ export class OrganizationController {
     try {
       const org = parseBody(CreateOrganizationSchema, req.body, res);
       if (!org) return;
-      const userId = req.user?.uid;
-      await orgService.createOrganization(org, userId);
+      const userId = req.user?.uid ?? 'anonymous';
+      await orgService.createOrganization(org, userId, auditContextFromRequest(req));
       res.status(201).json({ message: 'Organization created successfully' });
     } catch (error) {
       safeError(res, error, 'OrganizationController.create');
@@ -31,3 +32,4 @@ export class OrganizationController {
     }
   }
 }
+

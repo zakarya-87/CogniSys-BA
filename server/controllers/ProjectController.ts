@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { ProjectService } from '../services/ProjectService';
 import { safeError } from '../utils/errorHandler';
+import { auditContextFromRequest } from '../utils/auditContext';
 import { CreateProjectSchema, parseBody } from '../schemas';
 
 const projectService = new ProjectService();
@@ -10,8 +11,8 @@ export class ProjectController {
     try {
       const project = parseBody(CreateProjectSchema, req.body, res);
       if (!project) return;
-      const userId = req.user?.uid;
-      await projectService.createProject(project, userId);
+      const userId = req.user?.uid ?? 'anonymous';
+      await projectService.createProject(project, userId, auditContextFromRequest(req));
       res.status(201).json({ message: 'Project created successfully' });
     } catch (error) {
       safeError(res, error, 'ProjectController.create');
@@ -28,3 +29,4 @@ export class ProjectController {
     }
   }
 }
+

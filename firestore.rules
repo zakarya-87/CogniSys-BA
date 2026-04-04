@@ -5,81 +5,166 @@ service cloud.firestore {
     // ===============================================================
     // Helper Functions
     // ===============================================================
+
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    function isAdmin() {
-      return isAuthenticated() && request.auth.token.role == 'admin';
+    /** User has admin role for this org (via custom claims). */
+    function isAdmin(orgId) {
+      return isAuthenticated()
+        && request.auth.token.orgId == orgId
+        && request.auth.token.role == 'admin';
     }
 
-    function isOrgMember(orgId) {
-      return isAuthenticated() && request.auth.token.orgId == orgId;
+    /** User has at least member role for this org. */
+    function isMember(orgId) {
+      return isAuthenticated()
+        && request.auth.token.orgId == orgId
+        && request.auth.token.role in ['member', 'admin'];
     }
 
+    /** User has at least viewer role for this org. */
+    function isViewer(orgId) {
+      return isAuthenticated()
+        && request.auth.token.orgId == orgId
+        && request.auth.token.role in ['viewer', 'member', 'admin'];
+    }
+
+    /** Ensure all required fields are present in the incoming document. */
     function hasRequiredFields(fields) {
       return request.resource.data.keys().hasAll(fields);
     }
 
+    /** Prevent any fields outside the allowed set from being written. */
     function hasOnlyAllowedFields(fields) {
       return request.resource.data.keys().hasOnly(fields);
     }
 
+    /** Validate initiative/project status enum. */
+    function validInitiativeStatus(status) {
+      return status in [
+        'Planning',
+        'Awaiting Approval',
+        'In Development',
+        'Live',
+        'On Hold'
+      ];
+    }
+
+    /** Validate sector enum. */
+    function validSector(sector) {
+      return sector in [
+        'Cloud & SaaS',
+        'Fintech',
+        'Renewable Energy',
+        'Circular Economy',
+        'Agritech & Foodtech',
+        'Industry 4.0 & IoT',
+        'Biotech & Pharma',
+        'General Business'
+      ];
+    }
+
+    /** Prevent critical immutable fields from being removed or changed. */
+    function orgIdUnchanged() {
+      return !('orgId' in request.resource.data) || request.resource.data.orgId == resource.data.orgId;
+    }
+
     // ===============================================================
-    // Collections
+    // Organizations
     // ===============================================================
 
     match /organizations/{orgId} {
-      allow read: if isOrgMember(orgId);
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow read:   if isViewer(orgId);
+      allow create: if isMember(orgId)
+                    && hasRequiredFields(['id', 'name', 'ownerId', 'members'])
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() >= 2
+                    && request.resource.data.name.size() <= 100;
+      allow update: if isAdmin(orgId)
+                    && hasOnlyAllowedFields(['name', 'members'])
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() >= 2
+                    && request.resource.data.name.size() <= 100;
+      allow delete: if isAdmin(orgId);
     }
+
+    // ===============================================================
+    // Projects
+    // ===============================================================
 
     match /projects/{projectId} {
-      allow read: if isOrgMember(resource.data.orgId);
-      allow create: if isOrgMember(request.resource.data.orgId) &&
-                      hasRequiredFields(['orgId', 'name']) &&
-                      request.resource.data.name is string &&
-                      request.resource.data.name.size() > 0 &&
-                      request.resource.data.name.size() < 100;
-      allow update: if isOrgMember(resource.data.orgId) &&
-                      hasOnlyAllowedFields(['orgId', 'name', 'description']) &&
-                      request.resource.data.name is string &&
-                      request.resource.data.name.size() > 0 &&
-                      request.resource.data.name.size() < 100;
-      allow delete: if isAdmin();
+      allow read: if isViewer(resource.data.orgId);
+
+      allow create: if isMember(request.resource.data.orgId)
+                    && hasRequiredFields(['orgId', 'name', 'description'])
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() >= 2
+                    && request.resource.data.name.size() <= 100
+                    && request.resource.data.description is string
+                    && request.resource.data.description.size() <= 500;
+
+      allow update: if isMember(resource.data.orgId)
+                    && orgIdUnchanged()
+                    && hasOnlyAllowedFields(['name', 'description', 'orgId'])
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() >= 2
+                    && request.resource.data.name.size() <= 100
+                    && request.resource.data.description is string
+                    && request.resource.data.description.size() <= 500;
+
+      allow delete: if isAdmin(resource.data.orgId);
     }
+
+    // ===============================================================
+    // Initiatives
+    // ===============================================================
 
     match /initiatives/{initiativeId} {
-      allow read: if isOrgMember(resource.data.orgId);
-      allow create: if isOrgMember(request.resource.data.orgId) &&
-                      hasRequiredFields(['orgId', 'projectId', 'title']) &&
-                      request.resource.data.title is string &&
-                      request.resource.data.title.size() > 0 &&
-                      request.resource.data.title.size() < 200;
-      // Backend (Admin SDK) bypasses these rules entirely.
-      // Client updates are restricted to user-editable fields only.
+      allow read: if isViewer(resource.data.orgId);
+
+      allow create: if isMember(request.resource.data.orgId)
+                    && hasRequiredFields(['orgId', 'projectId', 'title', 'status', 'sector'])
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() >= 2
+                    && request.resource.data.title.size() <= 200
+                    && validInitiativeStatus(request.resource.data.status)
+                    && validSector(request.resource.data.sector);
+
+      // Client updates restricted to user-editable fields only.
       // AI-generated fields (wbs, artifacts, readinessScore, lastUpdated)
-      // are written exclusively by the server via Admin SDK.
-      allow update: if isOrgMember(resource.data.orgId) &&
-                      hasOnlyAllowedFields(['orgId', 'projectId', 'title', 'description', 'status', 'sector', 'owner']) &&
-                      request.resource.data.title is string &&
-                      request.resource.data.title.size() > 0 &&
-                      request.resource.data.title.size() < 200;
-      allow delete: if isAdmin();
+      // are written exclusively by the server via Admin SDK (bypasses rules).
+      allow update: if isMember(resource.data.orgId)
+                    && orgIdUnchanged()
+                    && hasOnlyAllowedFields(['orgId', 'projectId', 'title', 'description', 'status', 'sector', 'owner'])
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() >= 2
+                    && request.resource.data.title.size() <= 200
+                    && validInitiativeStatus(request.resource.data.status)
+                    && validSector(request.resource.data.sector);
+
+      allow delete: if isAdmin(resource.data.orgId);
     }
 
+    // ===============================================================
+    // Audit Logs
+    // ===============================================================
+
     match /audit_logs/{logId} {
-      // Only admins can read audit logs; writes are handled exclusively
-      // by the backend Admin SDK (bypasses these rules).
-      allow read: if isAdmin();
+      // Only admins may read audit logs for their own org.
+      allow read: if isAuthenticated()
+                  && isAdmin(resource.data.orgId);
+      // All writes are handled exclusively by the backend Admin SDK.
       allow write: if false;
     }
 
-    // task_queue and prompts are internal backend collections.
-    // All access goes through the Admin SDK which bypasses Firestore rules.
-    // Explicitly deny any direct client access as a safety net.
+    // ===============================================================
+    // Internal backend collections
+    // All access goes through the Admin SDK which bypasses these rules.
+    // Explicitly deny direct client access as a safety net.
+    // ===============================================================
+
     match /task_queue/{taskId} {
       allow read, write: if false;
     }
@@ -87,6 +172,12 @@ service cloud.firestore {
     match /prompts/{promptId} {
       allow read, write: if false;
     }
+
+    match /memory/{orgId}/{memoryId} {
+      // Vector memory is server-only; Admin SDK bypasses these rules.
+      allow read, write: if false;
+    }
   }
 }
+
 
