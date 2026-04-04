@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { getAdminDb } from '../lib/firebaseAdmin';
+import { sseManager } from './SseManager';
 
 export type NotificationType =
   | 'org_invitation'
@@ -45,6 +46,8 @@ export class NotificationService {
       createdAt: new Date().toISOString(),
     };
     await NotificationService.col(userId).doc(notification.id).set(notification);
+    // Push to SSE stream if user is connected
+    sseManager.push(userId, 'notification', notification);
     return notification;
   }
 

@@ -195,9 +195,21 @@ export function createApp() {
     }
   });
 
-  // AI Operations
-  v1.post('/organizations/:orgId/initiatives/:initiativeId/wbs', aiLimiter, authorize('member'), AIController.triggerWBS);
-  v1.post('/organizations/:orgId/initiatives/:initiativeId/risks', aiLimiter, authorize('member'), AIController.triggerRiskAssessment);
+  // AI Operations — enforce usage quota before dispatching
+  const enforceAIQuota = async (req: any, res: any, next: any) => {
+    try {
+      const orgId = req.params.orgId;
+      const billing = await BillingService.getBilling(orgId);
+      const plan = (billing?.plan ?? 'free') as import('./services/UsageMeteringService').AIPlan;
+      await UsageMeteringService.enforceQuota(orgId, plan);
+      next();
+    } catch (err: any) {
+      res.status(err?.statusCode ?? 429).json({ error: err?.message ?? 'Quota exceeded' });
+    }
+  };
+
+  v1.post('/organizations/:orgId/initiatives/:initiativeId/wbs', aiLimiter, authorize('member'), enforceAIQuota, AIController.triggerWBS);
+  v1.post('/organizations/:orgId/initiatives/:initiativeId/risks', aiLimiter, authorize('member'), enforceAIQuota, AIController.triggerRiskAssessment);
 
   // Vector Memory
   v1.post('/organizations/:orgId/memory', apiLimiter, authorize('member'), async (req, res) => {
