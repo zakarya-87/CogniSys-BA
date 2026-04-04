@@ -217,7 +217,7 @@ async function repairJson<T>(malformedJson: string, errorMsg: string, schema?: a
 
     let lastError: any = null;
     for (const modelId of modelsToTry) {
-        if (modelId === AI_CONFIG.models.primary && isPrimaryModelExhausted) continue;
+        if (modelId === activeModelId && isPrimaryModelExhausted) continue;
         try {
             const fixedText = await executeRepair(modelId);
             if (fixedText) return safeParseJSON<T>(fixedText, undefined, true);
@@ -225,7 +225,7 @@ async function repairJson<T>(malformedJson: string, errorMsg: string, schema?: a
             lastError = e;
             const errorMessage = e.message || "";
             if (errorMessage.includes('429') || errorMessage.includes('Quota')) {
-                if (modelId === AI_CONFIG.models.primary) {
+                if (modelId === activeModelId) {
                     isPrimaryModelExhausted = true;
                     if (typeof window !== 'undefined') window.dispatchEvent(new Event('quota-exceeded'));
                 }
@@ -310,7 +310,7 @@ export async function generateJson<T>(
 
         let lastError: any = null;
         for (const modelId of modelsToTry) {
-            if (modelId === AI_CONFIG.models.primary && isPrimaryModelExhausted) continue;
+            if (modelId === activeModelId && isPrimaryModelExhausted) continue;
             if (circuitBreaker.isOpen(modelId)) {
                 logger.warn(`[CircuitBreaker] Skipping open provider: ${modelId}`);
                 continue;
@@ -328,7 +328,7 @@ export async function generateJson<T>(
                 const errorMessage = error.message || error.error?.message || JSON.stringify(error);
                 const isQuotaError = errorMessage.includes('429') || errorMessage.includes('Quota') || error.status === 'RESOURCE_EXHAUSTED';
 
-                if (isQuotaError && modelId === AI_CONFIG.models.primary) {
+                if (isQuotaError && modelId === activeModelId) {
                     isPrimaryModelExhausted = true;
                     if (typeof window !== 'undefined') window.dispatchEvent(new Event('quota-exceeded'));
                 }
@@ -415,7 +415,7 @@ export async function generateGroundedJson<T>(prompt: string, requiredKeys: stri
                     text = proxyResult.text;
                     sources = proxyResult.sources;
                 } else {
-                    const result = await executeCall(AI_CONFIG.models.primary);
+                    const result = await executeCall(activeModelId);
                     text = result.text;
                     sources = result.sources;
                 }
@@ -427,7 +427,7 @@ export async function generateGroundedJson<T>(prompt: string, requiredKeys: stri
 
                 let lastError: any = null;
                 for (const modelId of modelsToTry) {
-                    if (modelId === AI_CONFIG.models.primary && isPrimaryModelExhausted) continue;
+                    if (modelId === activeModelId && isPrimaryModelExhausted) continue;
                     try {
                         if (modelId === 'mistral') {
                             const fullPrompt = `${prompt}\n\nPlease return the response in JSON format.`;
@@ -450,7 +450,7 @@ export async function generateGroundedJson<T>(prompt: string, requiredKeys: stri
                         const errorMessage = error.message || error.error?.message || JSON.stringify(error);
                         const isQuotaError = errorMessage.includes('429') || errorMessage.includes('Quota') || error.status === 'RESOURCE_EXHAUSTED';
 
-                        if (isQuotaError && modelId === AI_CONFIG.models.primary) {
+                        if (isQuotaError && modelId === activeModelId) {
                             isPrimaryModelExhausted = true;
                             if (typeof window !== 'undefined') window.dispatchEvent(new Event('quota-exceeded'));
                         }
@@ -531,7 +531,7 @@ export async function generateText(
 
         let lastError: any = null;
         for (const modelId of modelsToTry) {
-            if (modelId === AI_CONFIG.models.primary && isPrimaryModelExhausted) continue;
+            if (modelId === activeModelId && isPrimaryModelExhausted) continue;
             if (circuitBreaker.isOpen(modelId)) {
                 logger.warn(`[CircuitBreaker] Skipping open provider: ${modelId}`);
                 continue;
@@ -549,7 +549,7 @@ export async function generateText(
                 const errorMessage = error.message || error.error?.message || JSON.stringify(error);
                 const isQuotaError = errorMessage.includes('429') || errorMessage.includes('Quota') || error.status === 'RESOURCE_EXHAUSTED';
 
-                if (isQuotaError && modelId === AI_CONFIG.models.primary) {
+                if (isQuotaError && modelId === activeModelId) {
                     isPrimaryModelExhausted = true;
                     if (typeof window !== 'undefined') window.dispatchEvent(new Event('quota-exceeded'));
                 }
