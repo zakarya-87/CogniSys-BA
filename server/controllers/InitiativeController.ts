@@ -1,16 +1,17 @@
 import { Request, Response } from 'express';
 import { InitiativeService } from '../services/InitiativeService';
-import { TInitiative } from '../../types';
 import { safeError } from '../utils/errorHandler';
+import { CreateInitiativeSchema, UpdateInitiativeSchema, parseBody } from '../schemas';
 
 const initiativeService = new InitiativeService();
 
 export class InitiativeController {
   static async create(req: Request, res: Response) {
     try {
-      const initiative: TInitiative = req.body;
+      const initiative = parseBody(CreateInitiativeSchema, req.body, res);
+      if (!initiative) return;
       const userId = req.user?.uid;
-      await initiativeService.createInitiative(initiative, userId);
+      await initiativeService.createInitiative(initiative as any, userId);
       res.status(201).json({ message: 'Initiative created successfully' });
     } catch (error) {
       safeError(res, error, 'InitiativeController.create');
@@ -40,8 +41,9 @@ export class InitiativeController {
   static async update(req: Request, res: Response) {
     try {
       const { initiativeId } = req.params as { initiativeId: string };
-      const { orgId } = req.body;
-      const data = req.body;
+      const data = parseBody(UpdateInitiativeSchema, req.body, res);
+      if (!data) return;
+      const { orgId } = data;
       const userId = req.user?.uid;
       await initiativeService.updateInitiative(initiativeId, data, orgId, userId);
       res.json({ message: 'Initiative updated successfully' });

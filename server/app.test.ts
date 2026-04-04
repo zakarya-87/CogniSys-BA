@@ -395,4 +395,30 @@ describe('API Server', () => {
       expect(res.status).toBe(401);
     });
   });
+
+  // ── Input validation — Zod schemas ───────────────────────────────────────────
+  describe('Input validation (Zod)', () => {
+    it('POST /api/organizations returns 401 without auth (RBAC before validation)', async () => {
+      const res = await request(app).post('/api/organizations').send({});
+      expect(res.status).toBe(401);
+    });
+
+    it('POST /api/v1/feature-flags is not a route — returns 404', async () => {
+      const res = await request(app).post('/api/v1/feature-flags').send({});
+      expect(res.status).toBe(404);
+    });
+
+    it('GET /api/v1/feature-flags returns all flags (no auth required)', async () => {
+      const res = await request(app).get('/api/v1/feature-flags');
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('ai_streaming');
+      expect(res.body).toHaveProperty('google_auth');
+    });
+
+    it('GET /api/v1/health returns version info', async () => {
+      const res = await request(app).get('/api/v1/health');
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ status: 'ok', version: 'v1' });
+    });
+  });
 });
