@@ -66,7 +66,8 @@ export function createApp() {
           'https://*.cloudfunctions.net',
           ...(isDev ? ['ws://localhost:*', 'wss://localhost:*'] : []),
         ],
-        frameSrc: ["'none'"],
+        // Firebase Auth requires iframes from firebaseapp.com and accounts.google.com
+        frameSrc: ['https://*.firebaseapp.com', 'https://accounts.google.com'],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
         formAction: ["'self'"],
