@@ -61,6 +61,15 @@ vi.mock('./controllers/AIController', () => ({
   },
 }));
 
+vi.mock('./services/AuthService', () => ({
+  AuthService: {
+    provisionOrgClaims: vi.fn().mockResolvedValue(undefined),
+    revokeOrgClaims: vi.fn().mockResolvedValue(undefined),
+    getOrgClaims: vi.fn().mockResolvedValue(null),
+    revokeRefreshTokens: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 vi.mock('./ai-agents/ModelRouter', () => ({
   ModelRouter: vi.fn().mockImplementation(() => ({
     generateContent: vi.fn().mockResolvedValue('mock response'),
@@ -419,6 +428,22 @@ describe('API Server', () => {
       const res = await request(app).get('/api/v1/health');
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ status: 'ok', version: 'v1' });
+    });
+  });
+
+  // ── Claims Refresh ────────────────────────────────────────────────────────────
+  describe('POST /api/auth/claims/refresh', () => {
+    it('returns 401 without Bearer token', async () => {
+      const res = await request(app).post('/api/auth/claims/refresh').send({});
+      expect(res.status).toBe(401);
+    });
+
+    it('returns 401 with invalid Bearer token', async () => {
+      const res = await request(app)
+        .post('/api/auth/claims/refresh')
+        .set('Authorization', 'Bearer invalid-token')
+        .send({});
+      expect(res.status).toBe(401);
     });
   });
 });

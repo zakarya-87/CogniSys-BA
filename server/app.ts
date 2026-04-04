@@ -20,6 +20,7 @@ import { ProjectController } from './controllers/ProjectController';
 import { InitiativeController } from './controllers/InitiativeController';
 import { AIController } from './controllers/AIController';
 import { ServerMemoryService } from './services/MemoryService';
+import { AuthService } from './services/AuthService';
 import { getAdminAuth } from './lib/firebaseAdmin';
 import { getAllFlags } from './featureFlags';
 import swaggerUi from 'swagger-ui-express';
@@ -220,6 +221,21 @@ export function createApp() {
   app.post('/api/auth/logout', (req, res) => {
     res.clearCookie('auth_session', { secure: true, sameSite: 'none', httpOnly: true });
     res.json({ status: 'logged_out' });
+  });
+
+  // Claims refresh — call after org creation/join so new claims are reflected immediately.
+  // Forces a token refresh by revoking the current refresh token.
+  app.post('/api/auth/claims/refresh', authLimiter, async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
+    const token = authHeader.split('Bearer ')[1];
+    try {
+      const decoded = await getAdminAuth().verifyIdToken(token);
+      await AuthService.revokeRefreshTokens(decoded.uid);
+      res.json({ status: 'refreshed', message: 'Sign out and sign in again to receive updated claims.' });
+    } catch {
+      res.status(401).json({ error: 'Invalid token' });
+    }
   });
 
   // Legacy GitHub OAuth routes — kept for backward compatibility during migration
