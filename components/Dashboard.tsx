@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TInitiative, Sector } from '../types';
 import { Card } from './ui/Card';
@@ -18,8 +18,14 @@ import {
   TrendingUp, 
   Layers,
   ArrowRight,
-  Search
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  AlertTriangle,
+  RefreshCw,
 } from 'lucide-react';
+
+const ITEMS_PER_PAGE = 20;
 
 interface DashboardProps {
   initiatives: TInitiative[];
@@ -28,10 +34,14 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ initiatives, onSelectInitiative, onCreateInitiative }) => {
-  const { setHiveCommand, setCurrentView, user } = useCatalyst();
+  const { setHiveCommand, setCurrentView, user, loading, apiError, fetchInitialData } = useCatalyst();
   const { t, i18n } = useTranslation(['dashboard', 'common']);
   const [isIngestorOpen, setIsIngestorOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+
+  // Reset to page 1 when search changes
+  useEffect(() => setPage(1), [searchQuery]);
   
   const numberFormatter = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language]);
   const percentFormatter = useMemo(() => new Intl.NumberFormat(i18n.language, { style: 'percent' }), [i18n.language]);
@@ -47,16 +57,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ initiatives, onSelectIniti
     );
   }, [initiatives, searchQuery]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredInitiatives.length / ITEMS_PER_PAGE));
+
+  const paginatedInitiatives = useMemo(() => {
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    return filteredInitiatives.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredInitiatives, page]);
+
   const groupedInitiatives = useMemo(() => {
     const groups: Record<string, TInitiative[]> = {};
-    filteredInitiatives.forEach(init => {
+    paginatedInitiatives.forEach(init => {
       if (!groups[init.sector]) {
         groups[init.sector] = [];
       }
       groups[init.sector].push(init);
     });
     return groups;
-  }, [filteredInitiatives]);
+  }, [paginatedInitiatives]);
 
   const sortedSectors = Object.keys(groupedInitiatives).sort();
 
@@ -96,6 +113,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ initiatives, onSelectIniti
 
   return (
     <div className="p-6 md:p-10 space-y-16 max-w-[1800px] mx-auto">
+      {/* API Error Banner */}
+      {apiError && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between gap-4 bg-red-500/10 border border-red-500/30 rounded-2xl px-6 py-4 text-red-600 dark:text-red-400"
+        >
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 shrink-0" />
+            <span className="text-sm font-medium">{apiError}</span>
+          </div>
+          <button
+            onClick={() => fetchInitialData()}
+            disabled={loading}
+            className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:opacity-80 transition-opacity disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Retry
+          </button>
+        </motion.div>
+      )}
+
+      {/* Loading Skeleton */}
+      {loading && initiatives.length === 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-48 bg-surface-light dark:bg-surface-dark rounded-3xl border border-border-light dark:border-border-dark animate-pulse" />
+          ))}
+        </div>
+      )}
       {/* Welcome Header */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
@@ -203,7 +250,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ initiatives, onSelectIniti
           />
       )}
 
-      {filteredInitiatives.length === 0 ? (
+      {filteredInitiatives.length === 0 && !loading ? (
           <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -223,6 +270,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ initiatives, onSelectIniti
               </Button>
           </motion.div>
       ) : (
+          <>
           <div className="space-y-24">
             {sortedSectors.map((sector, sIdx) => (
                 <div key={sector} className="space-y-12">
@@ -264,6 +312,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ initiatives, onSelectIniti
                 </div>
             ))}
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-4 pt-8">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="flex items-center gap-2 px-5 py-3 rounded-2xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark hover:border-accent-purple/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="text-sm font-semibold">Prev</span>
+              </button>
+              <span className="text-sm font-medium text-text-muted-light dark:text-text-muted-dark">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="flex items-center gap-2 px-5 py-3 rounded-2xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark hover:border-accent-purple/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <span className="text-sm font-semibold">Next</span>
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+          </>
       )}
 
       {/* Footer CTA */}
