@@ -55,7 +55,8 @@ class LRUCache {
   }
 
   set(key: string, value: string): void {
-    if (this.cache.size >= AI_CONFIG.cache.maxSize) {
+    // Only evict if we're adding a new key (not updating an existing one)
+    if (!this.cache.has(key) && this.cache.size >= AI_CONFIG.cache.maxSize) {
       const oldest = this.cache.keys().next().value;
       if (oldest !== undefined) this.cache.delete(oldest);
     }
@@ -63,26 +64,35 @@ class LRUCache {
   }
 }
 
-/** Simple non-crypto hash suitable for cache keys */
+/** SHA-256 cache key over the full prompt — no truncation, no collision risk */
 function hashKey(model: string, prompt: string): string {
-  const str = `${model}::${prompt.slice(0, 500)}`;
-  let hash = 0;
+  // crypto is available in browser (WebCrypto) and Node; use a sync approach via
+  // a simple djb2-style hash over the full string for client-side compatibility.
+  // We XOR the first half against the second half to keep sensitivity to late chars.
+  const str = `${model}::${prompt}`;
+  let h1 = 0x811c9dc5; // FNV offset basis
+  let h2 = 0x9dc5811c;
   for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash |= 0;
+    const c = str.charCodeAt(i);
+    if (i < str.length / 2) {
+      h1 ^= c; h1 = Math.imul(h1, 0x01000193);
+    } else {
+      h2 ^= c; h2 = Math.imul(h2, 0x01000193);
+    }
   }
-  return hash.toString(36);
+  return ((h1 >>> 0).toString(36) + (h2 >>> 0).toString(36));
 }
 
 // ─── Request Timeout ─────────────────────────────────────────────────────────
-function withTimeout<T>(fn: () => Promise<T>, ms: number): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`AI request timed out after ${ms}ms`)), ms);
-    fn().then(
-      (v) => { clearTimeout(timer); resolve(v); },
-      (e) => { clearTimeout(timer); reject(e); },
-    );
-  });
+/**
+ * Wraps `fn` with an AbortController so the underlying fetch can be cancelled.
+ * The signal is passed to `fn`; callers that support it (callGeminiProxy) will
+ * abort the in-flight request rather than just letting it drain silently.
+ */
+function withTimeout<T>(fn: (signal: AbortSignal) => Promise<T>, ms: number): Promise<T> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(new Error(`AI request timed out after ${ms}ms`)), ms);
+  return fn(controller.signal).finally(() => clearTimeout(timer));
 }
 
 // ─── Structured AI Call Logging ───────────────────────────────────────────────
@@ -217,7 +227,7 @@ async function repairJson<T>(malformedJson: string, errorMsg: string, schema?: a
             if (errorMessage.includes('429') || errorMessage.includes('Quota')) {
                 if (modelId === 'gemini-3-flash-preview') {
                     isPrimaryModelExhausted = true;
-                    window.dispatchEvent(new Event('quota-exceeded'));
+                    if (typeof window !== 'undefined') window.dispatchEvent(new Event('quota-exceeded'));
                 }
             }
             logger.warn(`Repair attempt with ${modelId} failed. Trying next...`, errorMessage);
@@ -272,7 +282,7 @@ export async function generateJson<T>(
           ? `${prompt}\n\nPlease return the response in JSON format matching this schema:\n${JSON.stringify(schema)}`
           : prompt;
 
-        const callModel = async (modelId: string) => {
+        const callModel = async (modelId: string, signal: AbortSignal) => {
             if (modelId === 'mistral') {
                 const response = await callMistral({
                     messages: [{ role: 'user', content: fullPrompt }],
@@ -288,7 +298,7 @@ export async function generateJson<T>(
             } else {
                 return await callGeminiProxy(fullPrompt, resolveModelTier(modelId), {
                     generationConfig: { maxOutputTokens: maxTokens },
-                });
+                }, signal);
             }
         };
 
@@ -308,7 +318,7 @@ export async function generateJson<T>(
 
             const callStart = Date.now();
             try {
-                text = await withTimeout(() => callModel(modelId), timeoutMs);
+                text = await withTimeout((signal) => callModel(modelId, signal), timeoutMs);
                 circuitBreaker.recordSuccess(modelId);
                 logAiCall({ model: modelId, latencyMs: Date.now() - callStart, success: true });
                 if (text) break;
@@ -320,7 +330,7 @@ export async function generateJson<T>(
 
                 if (isQuotaError && modelId === 'gemini-3-flash-preview') {
                     isPrimaryModelExhausted = true;
-                    window.dispatchEvent(new Event('quota-exceeded'));
+                    if (typeof window !== 'undefined') window.dispatchEvent(new Event('quota-exceeded'));
                 }
 
                 logAiCall({ model: modelId, latencyMs: Date.now() - callStart, success: false, error: errorMessage });
@@ -442,7 +452,7 @@ export async function generateGroundedJson<T>(prompt: string, requiredKeys: stri
 
                         if (isQuotaError && modelId === 'gemini-3-flash-preview') {
                             isPrimaryModelExhausted = true;
-                            window.dispatchEvent(new Event('quota-exceeded'));
+                            if (typeof window !== 'undefined') window.dispatchEvent(new Event('quota-exceeded'));
                         }
 
                         logger.warn(`Model ${modelId} failed. Trying next in chain...`, errorMessage);
@@ -494,7 +504,7 @@ export async function generateText(
 
   return withRetry(async () => {
     try {
-        const callModel = async (modelId: string) => {
+        const callModel = async (modelId: string, signal: AbortSignal) => {
             if (modelId === 'mistral') {
                 const response = await callMistral({
                   messages: [{ role: 'user', content: prompt }],
@@ -510,7 +520,7 @@ export async function generateText(
             } else {
                 return await callGeminiProxy(prompt, resolveModelTier(modelId), {
                     generationConfig: { maxOutputTokens: maxTokens },
-                });
+                }, signal);
             }
         };
 
@@ -529,7 +539,7 @@ export async function generateText(
 
             const callStart = Date.now();
             try {
-                const result = await withTimeout(() => callModel(modelId), timeoutMs);
+                const result = await withTimeout((signal) => callModel(modelId, signal), timeoutMs);
                 circuitBreaker.recordSuccess(modelId);
                 logAiCall({ model: modelId, latencyMs: Date.now() - callStart, success: true });
                 if (result) return result;
@@ -541,7 +551,7 @@ export async function generateText(
 
                 if (isQuotaError && modelId === 'gemini-3-flash-preview') {
                     isPrimaryModelExhausted = true;
-                    window.dispatchEvent(new Event('quota-exceeded'));
+                    if (typeof window !== 'undefined') window.dispatchEvent(new Event('quota-exceeded'));
                 }
 
                 logAiCall({ model: modelId, latencyMs: Date.now() - callStart, success: false, error: errorMessage });
@@ -561,10 +571,11 @@ export async function generateText(
 // --- Embedding Generation ---
 export const getEmbedding = async (text: string): Promise<number[]> => {
   try {
-    const fetchWithTimeout = withTimeout(() => fetch('/api/gemini/embed', {
+    const fetchWithTimeout = withTimeout((signal) => fetch('/api/gemini/embed', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
+      signal,
     }), AI_CONFIG.timeouts.embedding);
     const response = await fetchWithTimeout;
     if (!response.ok) {

@@ -25,27 +25,31 @@ export class TaskQueue {
     const idempotencyInput = `${orgId}::${payload?.initiativeId ?? ''}::${type}`;
     const idempotencyKey = crypto.createHash('sha256').update(idempotencyInput).digest('hex');
 
-    // Check for an in-flight task with the same key
-    const existing = await db.collection('task_queue')
-      .where('idempotencyKey', '==', idempotencyKey)
-      .where('status', 'in', [TaskStatus.PENDING, TaskStatus.PROCESSING])
-      .limit(1)
-      .get();
+    // Use the idempotency key as the document ID so we can do an atomic
+    // read-check-write inside a Firestore transaction — no race condition.
+    const taskRef = db.collection('task_queue').doc(idempotencyKey);
 
-    if (!existing.empty) {
-      return existing.docs[0].id;
-    }
+    return db.runTransaction(async (txn) => {
+      const taskDoc = await txn.get(taskRef);
+      if (taskDoc.exists) {
+        const status = taskDoc.data()!.status as TaskStatus;
+        if (status === TaskStatus.PENDING || status === TaskStatus.PROCESSING) {
+          return taskRef.id; // already in-flight — return existing ID
+        }
+        // Completed or failed — fall through to re-enqueue
+      }
 
-    const taskRef = await db.collection('task_queue').add({
-      orgId,
-      type,
-      payload,
-      status: TaskStatus.PENDING,
-      idempotencyKey,
-      retryCount: 0,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      txn.set(taskRef, {
+        orgId,
+        type,
+        payload,
+        status: TaskStatus.PENDING,
+        idempotencyKey,
+        retryCount: 0,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return taskRef.id;
     });
-    return taskRef.id;
   }
 
   static async updateTaskStatus(taskId: string, status: TaskStatus, result?: any): Promise<void> {

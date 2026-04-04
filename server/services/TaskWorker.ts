@@ -23,7 +23,7 @@ export class TaskWorker {
     console.log(`TaskWorker started (max ${MAX_CONCURRENT_TASKS} concurrent jobs)...`);
 
     getAdminDb().collection('task_queue')
-      .where('status', '==', TaskStatus.PENDING)
+      .where('status', 'in', [TaskStatus.PENDING, TaskStatus.FAILED])
       .onSnapshot((snapshot) => {
         snapshot.docChanges().forEach((change) => {
           if (change.type === 'added') {
