@@ -30,6 +30,9 @@ import { EmailService } from './services/EmailService';
 import { sseManager } from './services/SseManager';
 import { AnalyticsService } from './services/AnalyticsService';
 import { WebhookService } from './services/WebhookService';
+import { BillingService } from './services/BillingService';
+import { SearchService } from './services/SearchService';
+import { JobService } from './services/JobService';
 import { can } from './middleware/rbac';
 import { Permission } from './middleware/permissions';
 import { getAdminAuth } from './lib/firebaseAdmin';
@@ -101,6 +104,40 @@ export function createApp() {
     customProps: (req) => ({ correlationId: req.headers['x-correlation-id'] }),
     autoLogging: { ignore: (req) => req.url === '/api/health' },
   }));
+  // Stripe webhook — must be BEFORE express.json() to get raw body for signature verification
+  app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+    const sig = req.headers['stripe-signature'] as string | undefined;
+    if (!sig) return res.status(400).json({ error: 'Missing Stripe-Signature' });
+
+    const event = BillingService.constructWebhookEvent(req.body as Buffer, sig);
+    if (!event) return res.status(400).json({ error: 'Invalid signature or billing not configured' });
+
+    try {
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object as { metadata?: { orgId?: string; plan?: string }; subscription?: string };
+        const orgId = session.metadata?.orgId;
+        const plan = (session.metadata?.plan ?? 'pro') as 'pro' | 'enterprise';
+        if (orgId) await BillingService.syncPlan(orgId, plan, session.subscription as string, 'active');
+      } else if (event.type === 'customer.subscription.updated') {
+        const sub = event.data.object as { metadata?: { orgId?: string; plan?: string }; id: string; status: string; current_period_end: number };
+        const orgId = sub.metadata?.orgId;
+        if (orgId) {
+          const plan = (sub.metadata?.plan ?? 'pro') as 'pro' | 'enterprise';
+          const status = sub.status as 'active' | 'trialing' | 'past_due' | 'canceled';
+          const periodEnd = new Date(sub.current_period_end * 1000).toISOString();
+          await BillingService.syncPlan(orgId, plan, sub.id, status, periodEnd);
+        }
+      } else if (event.type === 'customer.subscription.deleted') {
+        const sub = event.data.object as { metadata?: { orgId?: string }; id: string };
+        const orgId = sub.metadata?.orgId;
+        if (orgId) await BillingService.syncPlan(orgId, 'free', sub.id, 'canceled');
+      }
+      res.json({ received: true });
+    } catch (err) {
+      res.status(500).json({ error: 'Webhook processing failed' });
+    }
+  });
+
   app.use(express.json());
 
   const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 100, standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'Too many requests, please try again later.' } });
@@ -420,6 +457,79 @@ export function createApp() {
       res.json({ status: 'deleted' });
     } catch (error) {
       safeError(res, error, 'Delete Webhook');
+    }
+  });
+
+  // ── Search ────────────────────────────────────────────────────────────────
+  v1.get('/organizations/:orgId/search', apiLimiter, authorize('viewer'), async (req, res) => {
+    try {
+      const { orgId } = req.params;
+      const q = req.query.q as string | undefined;
+      const type = (req.query.type as string | undefined) ?? 'all';
+      const limit = Math.min(Number(req.query.limit ?? 20), 50);
+      if (!q) return res.status(400).json({ error: 'q (query) is required' });
+      if (!['initiatives', 'projects', 'all'].includes(type)) {
+        return res.status(400).json({ error: 'type must be initiatives | projects | all' });
+      }
+      const results = await SearchService.search(orgId, q, type as any, isNaN(limit) ? 20 : limit);
+      res.json({ results, query: q, type });
+    } catch (error) {
+      safeError(res, error, 'Search');
+    }
+  });
+
+  // ── Billing ───────────────────────────────────────────────────────────────
+  v1.get('/organizations/:orgId/billing', apiLimiter, authorize('admin'), async (req, res) => {
+    try {
+      const billing = await BillingService.getBilling(req.params.orgId);
+      res.json({ billing: billing ?? { plan: 'free', status: 'none' } });
+    } catch (error) {
+      safeError(res, error, 'Get Billing');
+    }
+  });
+
+  v1.post('/organizations/:orgId/billing/checkout', apiLimiter, authorize('admin'), async (req, res) => {
+    try {
+      const { orgId } = req.params;
+      const { plan, successUrl, cancelUrl } = req.body as { plan?: string; successUrl?: string; cancelUrl?: string };
+      if (!plan || !['pro', 'enterprise'].includes(plan)) return res.status(400).json({ error: 'plan must be pro | enterprise' });
+      if (!successUrl || !cancelUrl) return res.status(400).json({ error: 'successUrl and cancelUrl are required' });
+      const session = await BillingService.createCheckoutSession(orgId, plan as any, successUrl, cancelUrl);
+      if (!session) return res.status(503).json({ error: 'Billing not configured' });
+      res.json(session);
+    } catch (error) {
+      safeError(res, error, 'Billing Checkout');
+    }
+  });
+
+  v1.post('/organizations/:orgId/billing/portal', apiLimiter, authorize('admin'), async (req, res) => {
+    try {
+      const { returnUrl } = req.body as { returnUrl?: string };
+      if (!returnUrl) return res.status(400).json({ error: 'returnUrl is required' });
+      const session = await BillingService.createPortalSession(req.params.orgId, returnUrl);
+      if (!session) return res.status(503).json({ error: 'Billing not configured' });
+      res.json(session);
+    } catch (error) {
+      safeError(res, error, 'Billing Portal');
+    }
+  });
+
+  // ── Admin Jobs ────────────────────────────────────────────────────────────
+  v1.post('/admin/jobs/trigger-digest', apiLimiter, authorize('admin'), async (_req, res) => {
+    try {
+      const result = await JobService.triggerNotificationDigest();
+      res.json({ status: 'ok', ...result });
+    } catch (error) {
+      safeError(res, error, 'Trigger Digest');
+    }
+  });
+
+  v1.post('/admin/jobs/trigger-usage-report', apiLimiter, authorize('admin'), async (_req, res) => {
+    try {
+      const result = await JobService.triggerUsageReport();
+      res.json({ status: 'ok', ...result });
+    } catch (error) {
+      safeError(res, error, 'Trigger Usage Report');
     }
   });
 
