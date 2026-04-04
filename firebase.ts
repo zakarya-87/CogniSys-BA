@@ -4,6 +4,8 @@ import {
   GithubAuthProvider,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   onAuthStateChanged,
   type User as FirebaseUser,
@@ -28,5 +30,5 @@ googleProvider.addScope('profile');
 googleProvider.addScope('email');
 
 // ── Auth helpers ──────────────────────────────────────────────────────────────
-export { signInWithPopup, signOut, onAuthStateChanged };
+export { signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged };
 export type { FirebaseUser };

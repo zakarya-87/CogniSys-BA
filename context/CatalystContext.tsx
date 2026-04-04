@@ -13,6 +13,8 @@ import {
     githubProvider,
     googleProvider,
     signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult,
     signOut,
     onAuthStateChanged,
     type FirebaseUser,
@@ -184,6 +186,27 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
         avatarUrl: fbUser.photoURL || undefined,
     }), []);
 
+    // Error codes that indicate popup was blocked by browser tracking prevention
+    // or privacy settings — fall back to redirect flow in these cases
+    const POPUP_FALLBACK_ERRORS = new Set([
+        'auth/popup-blocked',
+        'auth/cancelled-popup-request',
+        'auth/web-storage-unsupported',
+        'auth/internal-error',
+        'auth/operation-not-supported-in-this-environment',
+    ]);
+
+    // On mount: consume any pending redirect result (fires after signInWithRedirect)
+    // onAuthStateChanged will fire automatically once the redirect resolves.
+    useEffect(() => {
+        getRedirectResult(auth).catch((err) => {
+            if (err?.code && err.code !== 'auth/popup-closed-by-user') {
+                logger.error('Redirect sign-in error:', err);
+            }
+        });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     // Listen to Firebase auth state changes — single source of truth for user
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
@@ -225,8 +248,10 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
             await signInWithPopup(auth, githubProvider);
             // onAuthStateChanged fires automatically — no manual setUser needed
         } catch (err: any) {
-            if (err?.code === 'auth/popup-blocked') {
-                setToastMessage('Please allow popups to sign in.');
+            if (POPUP_FALLBACK_ERRORS.has(err?.code)) {
+                // Browser tracking prevention or popup blocked — use redirect flow
+                logger.warn('GitHub popup blocked, falling back to redirect:', err?.code);
+                await signInWithRedirect(auth, githubProvider);
             } else if (err?.code !== 'auth/popup-closed-by-user') {
                 logger.error('GitHub sign-in error:', err);
                 setToastMessage('Failed to sign in with GitHub.');
@@ -239,8 +264,10 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
         try {
             await signInWithPopup(auth, googleProvider);
         } catch (err: any) {
-            if (err?.code === 'auth/popup-blocked') {
-                setToastMessage('Please allow popups to sign in.');
+            if (POPUP_FALLBACK_ERRORS.has(err?.code)) {
+                // Browser tracking prevention or popup blocked — use redirect flow
+                logger.warn('Google popup blocked, falling back to redirect:', err?.code);
+                await signInWithRedirect(auth, googleProvider);
             } else if (err?.code !== 'auth/popup-closed-by-user') {
                 logger.error('Google sign-in error:', err);
                 setToastMessage('Failed to sign in with Google.');
