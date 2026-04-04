@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CreditCard, Zap, ArrowUpCircle, ExternalLink } from 'lucide-react';
-import { BillingAPI, UsageAPI } from '../../src/services/api';
-import { useCatalyst } from '../../context/CatalystContext';
+import { BillingAPI, UsageAPI } from '../src/services/api';
+import { useCatalyst } from '../context/CatalystContext';
 
 interface BillingInfo { plan: string; status: string; currentPeriodEnd?: string; }
 interface UsageInfo { aiCalls: number; tokenCount: number; plan: string; month: string; }

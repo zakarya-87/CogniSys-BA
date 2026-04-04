@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { TrendingUp, Users, Zap, Activity } from 'lucide-react';
-import { AnalyticsAPI, UsageAPI } from '../../src/services/api';
-import { useCatalyst } from '../../context/CatalystContext';
+import { AnalyticsAPI, UsageAPI } from '../src/services/api';
+import { useCatalyst } from '../context/CatalystContext';
 
 const COLORS = ['#6366f1', '#22d3ee', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6'];
 

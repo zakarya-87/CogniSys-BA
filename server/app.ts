@@ -764,7 +764,7 @@ export function createApp() {
   });
 
   // Mistral Proxy
-  app.post('/api/mistral/chat', async (req, res) => {
+  app.post('/api/mistral/chat', aiLimiter, authorize('viewer'), async (req, res) => {
     try {
       const apiKey = process.env.MISTRAL_API_KEY;
       if (!apiKey) return res.status(500).json({ error: 'MISTRAL_API_KEY is not configured' });

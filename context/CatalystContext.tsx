@@ -215,6 +215,8 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
     // Listen to Firebase auth state changes — single source of truth for user
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+            // E2E test bypass: if Playwright injected a test user, don't let Firebase override it
+            if (!fbUser && localStorage.getItem('__playwright_skip_auth__')) return;
             if (fbUser) {
                 const mapped = mapFirebaseUser(fbUser);
                 setUser(mapped);

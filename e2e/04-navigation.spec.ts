@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { injectFakeUser } from './helpers';
 
 /**
  * Journey 4 — Navigation
@@ -6,6 +7,10 @@ import { test, expect } from '@playwright/test';
  * switch views without a full page reload (SPA navigation).
  */
 test.describe('Navigation', () => {
+  test.beforeEach(async ({ page }) => {
+    await injectFakeUser(page);
+  });
+
   test('sidebar is visible on load', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
@@ -16,7 +21,7 @@ test.describe('Navigation', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     // Brand text visible in expanded sidebar
-    await expect(page.getByText('COGNISYS')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('COGNISYS').first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('sidebar contains navigation links', async ({ page }) => {
