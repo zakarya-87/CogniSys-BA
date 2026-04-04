@@ -113,6 +113,40 @@ vi.mock('./services/UsageMeteringService', () => ({
   },
 }));
 
+vi.mock('./services/EmailService', () => ({
+  EmailService: {
+    sendInvitation: vi.fn().mockResolvedValue(undefined),
+    sendWelcome: vi.fn().mockResolvedValue(undefined),
+    sendNotificationDigest: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+vi.mock('./services/SseManager', () => ({
+  sseManager: {
+    add: vi.fn(),
+    remove: vi.fn(),
+    push: vi.fn(),
+    connectedUsers: 0,
+  },
+}));
+
+vi.mock('./services/AnalyticsService', () => ({
+  AnalyticsService: {
+    getOrgActivity: vi.fn().mockResolvedValue([]),
+    getInitiativeMetrics: vi.fn().mockResolvedValue({ total: 0, byStatus: {}, bySector: {} }),
+    getAIUsageTrend: vi.fn().mockResolvedValue([]),
+  },
+}));
+
+vi.mock('./services/WebhookService', () => ({
+  WebhookService: {
+    registerWebhook: vi.fn().mockResolvedValue({ id: 'wh-1', orgId: 'org-1', url: 'https://example.com/hook', events: ['member.joined'], secret: 'abc123', active: true, createdAt: new Date().toISOString(), createdBy: 'user-1' }),
+    listWebhooks: vi.fn().mockResolvedValue([]),
+    deleteWebhook: vi.fn().mockResolvedValue(undefined),
+    deliverEvent: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 vi.mock('./ai-agents/ModelRouter', () => ({
   ModelRouter: vi.fn().mockImplementation(() => ({
     generateContent: vi.fn().mockResolvedValue('mock response'),
@@ -396,6 +430,37 @@ describe('API Server', () => {
 
     it('POST /api/v1/invitations/:token/accept returns 401 without Bearer token', async () => {
       const res = await request(app).post('/api/v1/invitations/some-token/accept');
+      expect(res.status).toBe(401);
+    });
+
+    // Phase 7 routes — require auth
+    it('GET /api/v1/notifications/stream returns 401 without auth', async () => {
+      const res = await request(app).get('/api/v1/notifications/stream');
+      expect(res.status).toBe(401);
+    });
+
+    it('GET /api/v1/organizations/:orgId/analytics/activity returns 401 without auth', async () => {
+      const res = await request(app).get('/api/v1/organizations/org-1/analytics/activity');
+      expect(res.status).toBe(401);
+    });
+
+    it('GET /api/v1/organizations/:orgId/analytics/initiatives returns 401 without auth', async () => {
+      const res = await request(app).get('/api/v1/organizations/org-1/analytics/initiatives');
+      expect(res.status).toBe(401);
+    });
+
+    it('GET /api/v1/organizations/:orgId/analytics/ai-usage returns 401 without auth', async () => {
+      const res = await request(app).get('/api/v1/organizations/org-1/analytics/ai-usage');
+      expect(res.status).toBe(401);
+    });
+
+    it('POST /api/v1/organizations/:orgId/webhooks returns 401 without auth', async () => {
+      const res = await request(app).post('/api/v1/organizations/org-1/webhooks').send({ url: 'https://example.com', events: ['member.joined'] });
+      expect(res.status).toBe(401);
+    });
+
+    it('GET /api/v1/organizations/:orgId/webhooks returns 401 without auth', async () => {
+      const res = await request(app).get('/api/v1/organizations/org-1/webhooks');
       expect(res.status).toBe(401);
     });
   });
