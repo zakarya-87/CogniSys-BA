@@ -42,3 +42,77 @@ export const AIAPI = {
   triggerRisks: (orgId: string, initiativeId: string) => 
     api.post(`/organizations/${orgId}/initiatives/${initiativeId}/risks`),
 };
+
+// ── Phase 6–8 API modules ─────────────────────────────────────────────────
+
+export const InvitationAPI = {
+  send: (orgId: string, email: string, role: UserRole) =>
+    api.post(`/v1/organizations/${orgId}/invitations`, { email, role }),
+  list: (orgId: string, status?: string) =>
+    api.get(`/v1/organizations/${orgId}/invitations`, { params: { status } }),
+  revoke: (orgId: string, invitationId: string) =>
+    api.delete(`/v1/organizations/${orgId}/invitations/${invitationId}`),
+  accept: (token: string) =>
+    api.post(`/v1/invitations/${token}/accept`),
+};
+
+export const MemberAPI = {
+  list: (orgId: string) =>
+    api.get<{ members: { userId: string; role: UserRole }[] }>(`/v1/organizations/${orgId}/members`),
+  remove: (orgId: string, userId: string) =>
+    api.delete(`/v1/organizations/${orgId}/members/${userId}`),
+  changeRole: (orgId: string, userId: string, role: UserRole) =>
+    api.patch(`/v1/organizations/${orgId}/members/${userId}/role`, { role }),
+};
+
+export const NotificationAPI = {
+  list: (unreadOnly = false, limit = 50) =>
+    api.get(`/v1/notifications`, { params: { unreadOnly, limit } }),
+  markRead: (notificationId: string) =>
+    api.patch(`/v1/notifications/${notificationId}/read`),
+  markAllRead: () =>
+    api.post(`/v1/notifications/mark-all-read`),
+};
+
+export const BillingAPI = {
+  get: (orgId: string) =>
+    api.get(`/v1/organizations/${orgId}/billing`),
+  checkout: (orgId: string, plan: 'pro' | 'enterprise', successUrl: string, cancelUrl: string) =>
+    api.post<{ url: string }>(`/v1/organizations/${orgId}/billing/checkout`, { plan, successUrl, cancelUrl }),
+  portal: (orgId: string, returnUrl: string) =>
+    api.post<{ url: string }>(`/v1/organizations/${orgId}/billing/portal`, { returnUrl }),
+};
+
+export const SearchAPI = {
+  search: (orgId: string, q: string, type: 'all' | 'initiatives' | 'projects' = 'all', limit = 20) =>
+    api.get(`/v1/organizations/${orgId}/search`, { params: { q, type, limit } }),
+};
+
+export const AnalyticsAPI = {
+  activity: (orgId: string, days = 30) =>
+    api.get(`/v1/organizations/${orgId}/analytics/activity`, { params: { days } }),
+  initiatives: (orgId: string) =>
+    api.get(`/v1/organizations/${orgId}/analytics/initiatives`),
+  aiUsage: (orgId: string, months = 6) =>
+    api.get(`/v1/organizations/${orgId}/analytics/ai-usage`, { params: { months } }),
+};
+
+export const UsageAPI = {
+  get: (orgId: string, month?: string) =>
+    api.get(`/v1/organizations/${orgId}/usage`, { params: { month } }),
+};
+
+/** Build an authenticated EventSource URL for SSE. Returns null if no user is logged in. */
+export async function createNotificationStream(onMessage: (notification: unknown) => void): Promise<EventSource | null> {
+  const user = auth.currentUser;
+  if (!user) return null;
+  const token = await user.getIdToken();
+  // EventSource doesn't support custom headers — pass token as query param
+  const url = `/api/v1/notifications/stream?token=${encodeURIComponent(token)}`;
+  const es = new EventSource(url);
+  es.addEventListener('notification', (e) => {
+    try { onMessage(JSON.parse(e.data)); } catch { /* ignore parse errors */ }
+  });
+  return es;
+}
+

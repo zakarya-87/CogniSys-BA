@@ -1,7 +1,9 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { TInitiative } from '../../types';
 import { MODULE_GROUPS } from '../../constants';
+import { SearchAPI } from '../../src/services/api';
+import { useCatalyst } from '../../context/CatalystContext';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -16,9 +18,20 @@ const CommandIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http:/
 const ArrowRightIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75" /></svg>;
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavigate, onAction, selectedInitiative }) => {
+  const { organizations } = useCatalyst();
+  const currentOrg = organizations[0];
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [searchResults, setSearchResults] = useState<{ id: string; type: string; name: string; description?: string }[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const runSearch = useCallback((q: string) => {
+    if (!currentOrg?.id || q.trim().length < 2) { setSearchResults([]); return; }
+    SearchAPI.search(currentOrg.id, q)
+      .then((res) => setSearchResults((res.data as any).results ?? []))
+      .catch(() => setSearchResults([]));
+  }, [currentOrg?.id]);
 
   // Define commands based on context
   const getCommands = () => {
@@ -65,8 +78,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         setTimeout(() => inputRef.current?.focus(), 50);
         setQuery('');
         setSelectedIndex(0);
+        setSearchResults([]);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => runSearch(query), 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [query, runSearch]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -117,7 +137,24 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         </div>
 
         <div className="max-h-[60vh] overflow-y-auto py-2">
-            {filteredCommands.length === 0 ? (
+            {/* Firestore search results */}
+            {searchResults.length > 0 && (
+              <div>
+                <div className="px-4 py-1 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Search Results</div>
+                {searchResults.map((r) => (
+                  <div key={`sr-${r.id}`} className="flex items-center gap-3 px-4 py-3 cursor-default text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <span className="text-xs font-bold bg-indigo-500/20 text-indigo-400 rounded px-1.5 py-0.5 uppercase flex-shrink-0">{r.type}</span>
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{r.name}</div>
+                      {r.description && <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{r.description}</div>}
+                    </div>
+                  </div>
+                ))}
+                <div className="mx-4 my-1 border-t border-gray-200 dark:border-gray-700" />
+              </div>
+            )}
+            {/* Commands */}
+            {filteredCommands.length === 0 && searchResults.length === 0 ? (
                 <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                     No commands found.
                 </div>
