@@ -14,7 +14,9 @@
     "test:e2e:ui": "playwright test --ui",
     "docker:build": "docker build -t cognisys-ba:local .",
     "docker:run": "docker run --env-file .env.local -p 8080:8080 cognisys-ba:local",
-    "docker:dev": "docker-compose --profile dev up app-dev"
+    "docker:dev": "docker-compose --profile dev up app-dev",
+    "db:seed": "dotenv -e .env.local -- tsx scripts/seed.ts",
+    "db:seed:clear": "dotenv -e .env.local -- tsx scripts/seed.ts --clear"
   },
   "dependencies": {
     "@google/genai": "^1.48.0",
