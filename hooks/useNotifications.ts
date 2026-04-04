@@ -48,6 +48,23 @@ export function useNotifications() {
   // Subscribe to SSE stream for real-time pushes
   useEffect(() => {
     let mounted = true;
+
+    const load = async () => {
+      setLoading(true);
+      try {
+        const res = await NotificationAPI.list(false, 20);
+        const items: AppNotification[] = (res.data as any).notifications ?? [];
+        if (mounted) {
+          setNotifications(items);
+          setUnreadCount(items.filter((n) => !n.read).length);
+        }
+      } catch {
+        // non-fatal
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
     createNotificationStream((notification) => {
       if (!mounted) return;
       const n = notification as AppNotification;
@@ -57,13 +74,14 @@ export function useNotifications() {
       if (mounted) esRef.current = es;
     });
 
-    fetchNotifications();
+    load();
 
     return () => {
       mounted = false;
       esRef.current?.close();
     };
-  }, [fetchNotifications]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return { notifications, unreadCount, loading, markRead, markAllRead, refetch: fetchNotifications };
 }

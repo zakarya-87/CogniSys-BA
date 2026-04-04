@@ -141,26 +141,48 @@ export const BillingView: React.FC = () => {
   );
 };
 
+const COLOR_CLASSES: Record<string, { border: string; borderHover: string; text: string; check: string; btn: string; btnHover: string }> = {
+  indigo: {
+    border: 'border-indigo-500/30',
+    borderHover: 'hover:border-indigo-500/60',
+    text: 'text-indigo-400',
+    check: 'text-indigo-400',
+    btn: 'bg-indigo-600',
+    btnHover: 'hover:bg-indigo-700',
+  },
+  amber: {
+    border: 'border-amber-500/30',
+    borderHover: 'hover:border-amber-500/60',
+    text: 'text-amber-400',
+    check: 'text-amber-400',
+    btn: 'bg-amber-600',
+    btnHover: 'hover:bg-amber-700',
+  },
+};
+
 const PlanCard: React.FC<{
   name: string; price: string; features: string[];
   onUpgrade: () => void; loading: boolean; color: string;
-}> = ({ name, price, features, onUpgrade, loading, color }) => (
-  <div className={`bg-slate-800 rounded-xl p-5 border border-${color}-500/30 hover:border-${color}-500/60 transition-colors`}>
-    <p className={`text-sm font-bold text-${color}-400 mb-1`}>{name}</p>
-    <p className="text-2xl font-bold text-white mb-3">{price}</p>
-    <ul className="space-y-1.5 mb-4">
-      {features.map((f) => (
-        <li key={f} className="text-xs text-slate-400 flex items-center gap-2">
-          <span className={`text-${color}-400`}>✓</span> {f}
-        </li>
-      ))}
-    </ul>
-    <button
-      onClick={onUpgrade}
-      disabled={loading}
-      className={`w-full flex items-center justify-center gap-2 bg-${color}-600 hover:bg-${color}-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors`}
-    >
-      <ArrowUpCircle className="w-4 h-4" /> {loading ? 'Redirecting…' : `Upgrade to ${name}`}
-    </button>
-  </div>
-);
+}> = ({ name, price, features, onUpgrade, loading, color }) => {
+  const c = COLOR_CLASSES[color] ?? COLOR_CLASSES.indigo;
+  return (
+    <div className={`bg-slate-800 rounded-xl p-5 border ${c.border} ${c.borderHover} transition-colors`}>
+      <p className={`text-sm font-bold ${c.text} mb-1`}>{name}</p>
+      <p className="text-2xl font-bold text-white mb-3">{price}</p>
+      <ul className="space-y-1.5 mb-4">
+        {features.map((f) => (
+          <li key={f} className="text-xs text-slate-400 flex items-center gap-2">
+            <span className={c.check}>✓</span> {f}
+          </li>
+        ))}
+      </ul>
+      <button
+        onClick={onUpgrade}
+        disabled={loading}
+        className={`w-full flex items-center justify-center gap-2 ${c.btn} ${c.btnHover} disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors`}
+      >
+        <ArrowUpCircle className="w-4 h-4" /> {loading ? 'Redirecting…' : `Upgrade to ${name}`}
+      </button>
+    </div>
+  );
+};

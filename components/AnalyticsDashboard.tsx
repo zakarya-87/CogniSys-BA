@@ -147,9 +147,16 @@ export const AnalyticsDashboard: React.FC = () => {
   );
 };
 
+const KPI_COLOR_CLASSES: Record<string, string> = {
+  indigo: 'text-indigo-400',
+  cyan: 'text-cyan-400',
+  amber: 'text-amber-400',
+  emerald: 'text-emerald-400',
+};
+
 const KpiCard: React.FC<{ icon: React.ReactNode; label: string; value: number | string; color: string; loading: boolean; isText?: boolean }> = ({ icon, label, value, color, loading, isText }) => (
   <div className={`bg-slate-800 rounded-xl p-4 border border-slate-700`}>
-    <div className={`text-${color}-400 mb-2`}>{icon}</div>
+    <div className={`${KPI_COLOR_CLASSES[color] ?? 'text-slate-400'} mb-2`}>{icon}</div>
     <div className="text-xl font-bold text-white">{loading ? '—' : (isText ? String(value).toUpperCase() : value)}</div>
     <div className="text-xs text-slate-400 mt-1">{label}</div>
   </div>

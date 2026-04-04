@@ -367,7 +367,7 @@ export function createApp() {
   });
 
   // ── Usage Metering ────────────────────────────────────────────────────────
-  v1.get('/organizations/:orgId/usage', apiLimiter, authorize('admin'), async (req, res) => {
+  v1.get('/organizations/:orgId/usage', apiLimiter, authorize('viewer'), async (req, res) => {
     try {
       const { orgId } = req.params;
       const month = req.query.month as string | undefined;

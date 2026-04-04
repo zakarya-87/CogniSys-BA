@@ -142,7 +142,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
               <div>
                 <div className="px-4 py-1 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Search Results</div>
                 {searchResults.map((r) => (
-                  <div key={`sr-${r.id}`} className="flex items-center gap-3 px-4 py-3 cursor-default text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  <div
+                    key={`sr-${r.id}`}
+                    className="flex items-center gap-3 px-4 py-3 cursor-pointer text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    onClick={() => {
+                      if (r.type === 'initiative') onNavigate('initiatives');
+                      else if (r.type === 'project') onNavigate('projectHub');
+                      else onNavigate('dashboard');
+                      onClose();
+                    }}
+                  >
                     <span className="text-xs font-bold bg-indigo-500/20 text-indigo-400 rounded px-1.5 py-0.5 uppercase flex-shrink-0">{r.type}</span>
                     <div className="min-w-0">
                       <div className="font-medium truncate">{r.name}</div>
