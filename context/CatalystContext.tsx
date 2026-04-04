@@ -7,6 +7,15 @@ import { DomainRules } from '../utils/domainRules';
 import { generateAgentComment, setAiModelId } from '../services/geminiService';
 import { MemoryService } from '../services/memoryService';
 import { OrganizationAPI, ProjectAPI, InitiativeAPI, AIAPI } from '../src/services/api';
+import {
+    auth,
+    githubProvider,
+    googleProvider,
+    signInWithPopup,
+    signOut,
+    onAuthStateChanged,
+    type FirebaseUser,
+} from '../firebase';
 
 interface User {
     id: string;
@@ -41,6 +50,7 @@ interface CatalystContextType {
     setHiveCommand: (command: string | null) => void;
     markActivitiesRead: () => void;
     login: () => void;
+    loginWithGoogle: () => void;
     logout: () => void;
     
     // Domain Actions
@@ -194,30 +204,78 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
         setTimeout(() => setToastMessageState(''), 3000);
     }, []);
 
-    const login = useCallback(() => {
-        // Fetch the OAuth URL from our backend
-        fetch('/api/auth/url')
-            .then(res => res.json())
-            .then(data => {
-                const width = 600;
-                const height = 700;
-                const left = window.screen.width / 2 - width / 2;
-                const top = window.screen.height / 2 - height / 2;
-                
-                const authWindow = window.open(
-                    data.url,
-                    'oauth_popup',
-                    `width=${width},height=${height},top=${top},left=${left}`
-                );
+    // ── Firebase Auth ─────────────────────────────────────────────────────────
+    // Map a Firebase user to our internal User shape
+    const mapFirebaseUser = useCallback((fbUser: FirebaseUser): User => ({
+        id: fbUser.uid,
+        name: fbUser.displayName || fbUser.email || 'Unknown',
+        avatarUrl: fbUser.photoURL || undefined,
+    }), []);
 
-                if (!authWindow) {
-                    setToastMessage('Please allow popups to sign in.');
+    // Listen to Firebase auth state changes — single source of truth for user
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+            if (fbUser) {
+                const mapped = mapFirebaseUser(fbUser);
+                setUser(mapped);
+                localStorage.setItem('cognisys-user', JSON.stringify(mapped));
+                // Send ID token to server to create an httpOnly session cookie
+                try {
+                    const idToken = await fbUser.getIdToken();
+                    await fetch('/api/auth/firebase-session', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ idToken }),
+                    });
+                } catch (err) {
+                    console.warn('Could not sync Firebase session with server:', err);
                 }
-            })
-            .catch(err => {
-                console.error('Failed to get auth URL', err);
-                setToastMessage('Failed to initialize login.');
-            });
+            } else {
+                setUser(null);
+                localStorage.removeItem('cognisys-user');
+            }
+        });
+        return unsubscribe;
+    }, [mapFirebaseUser]);
+
+    // Sign in with GitHub via Firebase
+    const login = useCallback(async () => {
+        try {
+            await signInWithPopup(auth, githubProvider);
+            // onAuthStateChanged fires automatically — no manual setUser needed
+        } catch (err: any) {
+            if (err?.code === 'auth/popup-blocked') {
+                setToastMessage('Please allow popups to sign in.');
+            } else if (err?.code !== 'auth/popup-closed-by-user') {
+                console.error('GitHub sign-in error:', err);
+                setToastMessage('Failed to sign in with GitHub.');
+            }
+        }
+    }, [setToastMessage]);
+
+    // Sign in with Google via Firebase
+    const loginWithGoogle = useCallback(async () => {
+        try {
+            await signInWithPopup(auth, googleProvider);
+        } catch (err: any) {
+            if (err?.code === 'auth/popup-blocked') {
+                setToastMessage('Please allow popups to sign in.');
+            } else if (err?.code !== 'auth/popup-closed-by-user') {
+                console.error('Google sign-in error:', err);
+                setToastMessage('Failed to sign in with Google.');
+            }
+        }
+    }, [setToastMessage]);
+
+    // Sign out from Firebase + clear server session
+    const logout = useCallback(async () => {
+        try {
+            await signOut(auth);
+            await fetch('/api/auth/logout', { method: 'POST' });
+            setToastMessage('Logged out successfully.');
+        } catch (err) {
+            console.error('Logout failed:', err);
+        }
     }, [setToastMessage]);
 
     const addOrganization = useCallback(async (org: Partial<TOrganization>) => {
@@ -258,34 +316,7 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
     }, [setToastMessage]);
 
-    const logout = useCallback(() => {
-        fetch('/api/auth/logout', { method: 'POST' })
-            .then(() => {
-                setUser(null);
-                localStorage.removeItem('cognisys-user');
-                setToastMessage('Logged out successfully.');
-            })
-            .catch(err => console.error('Logout failed', err));
-    }, [setToastMessage]);
-
-    useEffect(() => {
-        const handleMessage = (event: MessageEvent) => {
-            // Validate origin is from AI Studio preview or localhost
-            const origin = event.origin;
-            if (!origin.endsWith('.run.app') && !origin.includes('localhost')) {
-                return;
-            }
-            if (event.data?.type === 'OAUTH_AUTH_SUCCESS' && event.data.user) {
-                setUser(event.data.user);
-                localStorage.setItem('cognisys-user', JSON.stringify(event.data.user));
-                setToastMessage(`Welcome, ${event.data.user.name}!`);
-            }
-        };
-        window.addEventListener('message', handleMessage);
-        return () => window.removeEventListener('message', handleMessage);
-    }, [setToastMessage]);
-
-    const markActivitiesRead = useCallback(() => {
+    const markActivitiesRead= useCallback(() => {
         setActivities(prev => prev.map(a => ({ ...a, read: true })));
     }, []);
 
@@ -530,7 +561,7 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
         exportData,
         importData
     }), [
-        initiatives, organizations, projects, selectedInitiative, currentView, theme, toastMessage, aiModel, hiveCommand, activities, unreadActivities, user, login, logout, addInitiative, updateInitiative, updateInitiativeStatus, saveArtifact, resetData, saveWbs, addOrganization, addProject, triggerWBS, triggerRisks, exportData, importData
+        initiatives, organizations, projects, selectedInitiative, currentView, theme, toastMessage, aiModel, hiveCommand, activities, unreadActivities, user, login, loginWithGoogle, logout, addInitiative, updateInitiative, updateInitiativeStatus, saveArtifact, resetData, saveWbs, addOrganization, addProject, triggerWBS, triggerRisks, exportData, importData
     ]);
 
     return (

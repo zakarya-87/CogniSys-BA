@@ -9,11 +9,22 @@
     "preview": "vite preview",
     "lint": "tsc --noEmit",
     "test": "vitest run",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "docker:build": "docker build -t cognisys-ba:local .",
+    "docker:run": "docker run --env-file .env.local -p 8080:8080 cognisys-ba:local",
+    "docker:dev": "docker-compose --profile dev up app-dev"
   },
   "dependencies": {
     "@google/genai": "^1.48.0",
     "@heroicons/react": "^2.2.0",
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/auto-instrumentations-node": "^0.72.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.214.0",
+    "@opentelemetry/resources": "^2.6.1",
+    "@opentelemetry/sdk-node": "^0.214.0",
+    "@opentelemetry/semantic-conventions": "^1.40.0",
     "@tailwindcss/vite": "^4.2.2",
     "@tensorflow/tfjs": "^4.22.0",
     "@testing-library/dom": "^10.0.0",
@@ -52,6 +63,7 @@
     "vitest": "^4.1.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",

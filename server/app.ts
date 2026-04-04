@@ -14,10 +14,14 @@ import { authorize } from './middleware/rbac';
 import { correlationId } from './middleware/correlationId';
 import { safeError, safeErrorHtml } from './utils/errorHandler';
 import { ModelRouter, ModelType } from './ai-agents/ModelRouter';
+import { createOperation, getOperation, subscribe, updateOperation } from './operationStore';
 import { OrganizationController } from './controllers/OrganizationController';
 import { ProjectController } from './controllers/ProjectController';
 import { InitiativeController } from './controllers/InitiativeController';
 import { AIController } from './controllers/AIController';
+import { ServerMemoryService } from './services/MemoryService';
+import { getAdminAuth } from './lib/firebaseAdmin';
+import { getAllFlags } from './featureFlags';
 
 export function createApp() {
   const app = express();
@@ -91,9 +95,13 @@ export function createApp() {
 
   // Health
   app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+  app.get('/api/v1/health', (_req, res) => res.json({ status: 'ok', version: 'v1' }));
+
+  // Feature flags — public, no auth required
+  app.get('/api/v1/feature-flags', (_req, res) => res.json(getAllFlags()));
 
   // Organizations
-  app.post('/api/organizations', apiLimiter, OrganizationController.create);
+  app.post('/api/organizations', apiLimiter, authorize('member'), OrganizationController.create);
   app.get('/api/organizations/:orgId', apiLimiter, authorize('viewer'), OrganizationController.get);
 
   // Projects
@@ -110,7 +118,85 @@ export function createApp() {
   app.post('/api/organizations/:orgId/initiatives/:initiativeId/wbs', aiLimiter, authorize('member'), AIController.triggerWBS);
   app.post('/api/organizations/:orgId/initiatives/:initiativeId/risks', aiLimiter, authorize('member'), AIController.triggerRiskAssessment);
 
-  // GitHub OAuth
+  // Vector Memory — multi-tenant Firestore-backed semantic memory
+  // POST /api/organizations/:orgId/memory        → store a memory (content + embedding)
+  // POST /api/organizations/:orgId/memory/search → semantic search by query vector
+  app.post('/api/organizations/:orgId/memory', apiLimiter, authorize('member'), async (req, res) => {
+    try {
+      const { orgId } = req.params;
+      const { content, vector, type, metadata } = req.body as {
+        content?: string;
+        vector?: number[];
+        type?: 'fact' | 'decision' | 'insight';
+        metadata?: Record<string, unknown>;
+      };
+      if (!content || typeof content !== 'string') return res.status(400).json({ error: 'content is required' });
+      if (!vector || !Array.isArray(vector) || vector.length === 0) return res.status(400).json({ error: 'vector (number[]) is required' });
+      if (!type || !['fact', 'decision', 'insight'].includes(type)) return res.status(400).json({ error: 'type must be fact | decision | insight' });
+
+      const memory = await ServerMemoryService.addMemory(orgId, content, vector, type, metadata);
+      res.status(201).json({ memory });
+    } catch (error) {
+      safeError(res, error, 'Memory Store');
+    }
+  });
+
+  app.post('/api/organizations/:orgId/memory/search', apiLimiter, authorize('viewer'), async (req, res) => {
+    try {
+      const { orgId } = req.params;
+      const { vector, limit } = req.body as { vector?: number[]; limit?: number };
+      if (!vector || !Array.isArray(vector) || vector.length === 0) return res.status(400).json({ error: 'vector (number[]) is required' });
+
+      const results = await ServerMemoryService.search(orgId, vector, limit ?? 5);
+      res.json({ results });
+    } catch (error) {
+      safeError(res, error, 'Memory Search');
+    }
+  });
+
+  // ── Firebase Auth Session ────────────────────────────────────────────────────
+  // Verifies a Firebase ID token (GitHub or Google) and sets a server-side
+  // httpOnly session cookie. Client calls this after signInWithPopup succeeds.
+  app.post('/api/auth/firebase-session', authLimiter, async (req, res) => {
+    const { idToken } = req.body as { idToken?: string };
+    if (!idToken || typeof idToken !== 'string') {
+      return res.status(400).json({ error: 'idToken is required' });
+    }
+    try {
+      const adminAuth = getAdminAuth();
+      const decoded = await adminAuth.verifyIdToken(idToken);
+      res.cookie('auth_session', decoded.uid, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+      res.json({
+        status: 'authenticated',
+        uid: decoded.uid,
+        name: decoded.name ?? null,
+        email: decoded.email ?? null,
+        picture: decoded.picture ?? null,
+        provider: decoded.firebase?.sign_in_provider ?? 'unknown',
+      });
+    } catch (err) {
+      logger.error({ err }, 'Firebase token verification failed');
+      res.status(401).json({ error: 'Invalid or expired token' });
+    }
+  });
+
+  app.get('/api/auth/me', (req, res) => {
+    const session = req.cookies.auth_session;
+    if (!session) return res.status(401).json({ error: 'Not authenticated' });
+    res.json({ status: 'authenticated' });
+  });
+
+  app.post('/api/auth/logout', (req, res) => {
+    res.clearCookie('auth_session', { secure: true, sameSite: 'none', httpOnly: true });
+    res.json({ status: 'logged_out' });
+  });
+
+  // Legacy GitHub OAuth routes — kept for backward compatibility during migration
   const PORT = process.env.PORT || 5000;
   app.get('/api/auth/url', authLimiter, (req, res) => {
     const origin = req.headers.origin || req.headers.referer || `http://localhost:${PORT}`;
@@ -156,15 +242,83 @@ export function createApp() {
     }
   });
 
-  app.get('/api/auth/me', (req, res) => {
-    const token = req.cookies.auth_session;
-    if (!token) return res.status(401).json({ error: 'Not authenticated' });
-    res.json({ status: 'authenticated' });
+  // GitHub API Proxy — uses user's OAuth access token from auth_session cookie
+  // Routes: /api/github/repos, /api/github/commits/:owner/:repo, /api/github/repos/:owner/:repo
+  const ghHeaders = (token: string) => ({
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
   });
 
-  app.post('/api/auth/logout', (req, res) => {
-    res.clearCookie('auth_session', { secure: true, sameSite: 'none', httpOnly: true });
-    res.json({ status: 'logged_out' });
+  app.get('/api/github/repos', authLimiter, async (req, res) => {
+    const token = req.cookies.auth_session;
+    if (!token) return res.status(401).json({ error: 'Not authenticated' });
+    try {
+      const response = await fetch('https://api.github.com/user/repos?sort=pushed&per_page=30', {
+        headers: ghHeaders(token),
+      });
+      if (!response.ok) {
+        logger.warn({ status: response.status }, 'GitHub repos API error');
+        return res.status(response.status).json({ error: 'GitHub API error' });
+      }
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      safeError(res, error, 'GitHub Repos Proxy');
+    }
+  });
+
+  app.get('/api/github/commits/:owner/:repo', authLimiter, async (req, res) => {
+    const token = req.cookies.auth_session;
+    if (!token) return res.status(401).json({ error: 'Not authenticated' });
+    const { owner, repo } = req.params;
+    const perPage = Math.min(Number(req.query.per_page) || 20, 100);
+    try {
+      const response = await fetch(
+        `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits?per_page=${perPage}`,
+        { headers: ghHeaders(token) }
+      );
+      if (!response.ok) {
+        logger.warn({ status: response.status, owner, repo }, 'GitHub commits API error');
+        return res.status(response.status).json({ error: 'GitHub API error' });
+      }
+      const raw = await response.json() as Array<{
+        sha: string;
+        html_url: string;
+        commit: { message: string; author: { email: string; date: string } };
+        author: { login: string } | null;
+      }>;
+      // Normalise to TGitCommit shape
+      const commits = raw.map(c => ({
+        id: c.sha.slice(0, 7),
+        sha: c.sha,
+        message: c.commit.message.split('\n')[0], // first line only
+        author: c.author?.login ?? c.commit.author.email,
+        date: c.commit.author.date.slice(0, 10),
+        url: c.html_url,
+      }));
+      res.json(commits);
+    } catch (error) {
+      safeError(res, error, 'GitHub Commits Proxy');
+    }
+  });
+
+  app.get('/api/github/repos/:owner/:repo', authLimiter, async (req, res) => {
+    const token = req.cookies.auth_session;
+    if (!token) return res.status(401).json({ error: 'Not authenticated' });
+    const { owner, repo } = req.params;
+    try {
+      const response = await fetch(
+        `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
+        { headers: ghHeaders(token) }
+      );
+      if (!response.ok) {
+        return res.status(response.status).json({ error: 'GitHub API error' });
+      }
+      res.json(await response.json());
+    } catch (error) {
+      safeError(res, error, 'GitHub Repo Proxy');
+    }
   });
 
   // Gemini AI Proxy
@@ -234,6 +388,116 @@ export function createApp() {
     } catch (error) {
       safeError(res, error, 'Azure OpenAI Proxy');
     }
+  });
+
+  // --- Gemini Embedding Proxy ---
+  // Unblocks vector memory (Phase 2). Uses text-embedding-004 model.
+  app.post('/api/gemini/embed', aiLimiter, authorize('viewer'), async (req, res) => {
+    try {
+      const { text } = req.body as { text?: string };
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({ error: 'text is required and must be a string' });
+      }
+
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ error: 'GEMINI_API_KEY is not configured' });
+      }
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: 'models/text-embedding-004', content: { parts: [{ text }] } }),
+        }
+      );
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        logger.error({ status: response.status, body: JSON.stringify(errData) }, 'Gemini Embed API error');
+        return res.status(502).json({ error: 'Embedding service error' });
+      }
+
+      const data = await response.json() as { embedding?: { values?: number[] } };
+      const embedding = data?.embedding?.values ?? [];
+      res.json({ embedding });
+    } catch (error) {
+      safeError(res, error, 'Gemini Embed Proxy');
+    }
+  });
+
+  // --- Async AI Generation with SSE progress ---
+  // POST /api/gemini/generate/stream  → 202 { operationId }
+  // Caller then opens GET /api/ai/stream/:operationId to receive SSE events.
+  app.post('/api/gemini/generate/stream', aiLimiter, authorize('viewer'), (req, res) => {
+    const { prompt, model, config } = req.body as { prompt: string; model?: 'flash' | 'pro'; config?: Record<string, unknown> };
+    if (!prompt || typeof prompt !== 'string') {
+      return res.status(400).json({ error: 'prompt is required and must be a string' });
+    }
+
+    const operationId = `op-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    createOperation(operationId);
+    updateOperation(operationId, { status: 'running' });
+
+    // Fire-and-forget background generation
+    (async () => {
+      try {
+        const modelType = model === 'pro' ? ModelType.REASONING : ModelType.SPEED;
+        const router = new ModelRouter();
+        let text: string;
+        if (config?.inlineImage) {
+          text = await router.generateContentWithImage(prompt, modelType, config.inlineImage as { mimeType: string; data: string });
+        } else if (config?.tools) {
+          text = await router.generateContentWithConfig(prompt, modelType, config);
+        } else {
+          text = await router.generateContent(prompt, modelType);
+        }
+        updateOperation(operationId, { status: 'complete', result: text });
+      } catch (err) {
+        logger.error({ err }, 'Async Gemini generation failed');
+        updateOperation(operationId, { status: 'error', error: 'AI generation failed. Please try again.' });
+      }
+    })();
+
+    res.status(202).json({ operationId });
+  });
+
+  // GET /api/ai/stream/:operationId  → SSE stream
+  // Emits: progress | complete | error events, then closes.
+  app.get('/api/ai/stream/:operationId', authorize('viewer'), (req, res) => {
+    const { operationId } = req.params;
+    const op = getOperation(operationId);
+    if (!op) {
+      return res.status(404).json({ error: 'Operation not found' });
+    }
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders();
+
+    const send = (event: string, data: string) => {
+      res.write(`event: ${event}\ndata: ${data}\n\n`);
+      if (event === 'complete' || event === 'error') {
+        res.end();
+      }
+    };
+
+    // If already done, reply immediately
+    if (op.status === 'complete') {
+      send('complete', JSON.stringify({ text: op.result ?? '' }));
+      return;
+    }
+    if (op.status === 'error') {
+      send('error', JSON.stringify({ error: op.error ?? 'Unknown error' }));
+      return;
+    }
+
+    // Subscribe to future updates
+    const unsub = subscribe(operationId, send);
+    req.on('close', unsub);
   });
 
   // JSON 404 for unknown /api/* routes — must come before SPA catch-all
