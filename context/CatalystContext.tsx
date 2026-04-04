@@ -30,6 +30,16 @@ export { useAuth } from './AuthContext';
 export { useOrg } from './OrgContext';
 export { useInitiative } from './InitiativeContext';
 
+// Error codes that indicate popup was blocked by browser tracking prevention
+// or privacy settings (Edge, Safari ITP) — fall back to redirect flow in these cases
+const POPUP_FALLBACK_ERRORS = new Set([
+    'auth/popup-blocked',
+    'auth/cancelled-popup-request',
+    'auth/web-storage-unsupported',
+    'auth/internal-error',
+    'auth/operation-not-supported-in-this-environment',
+]);
+
 type CatalystContextType = UIContextType & AuthContextType & OrgContextType & InitiativeContextType;
 
 const CatalystContext = createContext<CatalystContextType | undefined>(undefined);
@@ -186,24 +196,23 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
         avatarUrl: fbUser.photoURL || undefined,
     }), []);
 
-    // Error codes that indicate popup was blocked by browser tracking prevention
-    // or privacy settings — fall back to redirect flow in these cases
-    const POPUP_FALLBACK_ERRORS = new Set([
-        'auth/popup-blocked',
-        'auth/cancelled-popup-request',
-        'auth/web-storage-unsupported',
-        'auth/internal-error',
-        'auth/operation-not-supported-in-this-environment',
-    ]);
-
-    // On mount: consume any pending redirect result (fires after signInWithRedirect)
-    // onAuthStateChanged will fire automatically once the redirect resolves.
+    // On mount: consume any pending redirect result (fires after signInWithRedirect).
+    // Must be called to complete the redirect flow — onAuthStateChanged fires once processed.
     useEffect(() => {
-        getRedirectResult(auth).catch((err) => {
-            if (err?.code && err.code !== 'auth/popup-closed-by-user') {
-                logger.error('Redirect sign-in error:', err);
-            }
-        });
+        getRedirectResult(auth)
+            .then((result) => {
+                if (result?.user) {
+                    // Redirect completed — onAuthStateChanged will also fire,
+                    // but log here for visibility
+                    logger.log('Redirect sign-in succeeded:', result.user.displayName);
+                }
+            })
+            .catch((err) => {
+                if (err?.code && err.code !== 'auth/popup-closed-by-user') {
+                    logger.error('Redirect sign-in error:', err?.code, err?.message);
+                    setToastMessage('Sign-in failed. Please try again.');
+                }
+            });
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
