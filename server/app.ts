@@ -8,6 +8,7 @@ import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import { Sentry } from './sentryInit';
 import pinoHttp from 'pino-http';
 import { logger } from './logger';
 import { authorize } from './middleware/rbac';
@@ -922,6 +923,11 @@ export function createApp() {
 
   // JSON 404 for unknown /api/* routes — must come before SPA catch-all
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
+
+  // Sentry error handler must come AFTER all routes (captures unhandled errors)
+  if (process.env.SENTRY_DSN) {
+    Sentry.setupExpressErrorHandler(app);
+  }
 
   return app;
 }

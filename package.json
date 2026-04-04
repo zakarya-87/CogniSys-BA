@@ -30,6 +30,8 @@
     "@opentelemetry/resources": "^2.6.1",
     "@opentelemetry/sdk-node": "^0.214.0",
     "@opentelemetry/semantic-conventions": "^1.40.0",
+    "@sentry/node": "^10.47.0",
+    "@sentry/react": "^10.47.0",
     "@tailwindcss/vite": "^4.2.2",
     "@tensorflow/tfjs": "^4.22.0",
     "@testing-library/dom": "^10.0.0",
