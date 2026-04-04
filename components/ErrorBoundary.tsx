@@ -1,6 +1,7 @@
 
 import React, { ErrorInfo, ReactNode } from "react";
 import { Button } from "./ui/Button";
+import { Sentry } from "../src/utils/sentry";
 
 interface Props {
   children?: ReactNode;
@@ -29,7 +30,8 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
+    // Report to Sentry if initialised (no-op if DSN not configured)
+    Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
   }
 
   public render() {

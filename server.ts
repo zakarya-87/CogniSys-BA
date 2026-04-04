@@ -4,6 +4,10 @@ import { config } from 'dotenv';
 config({ path: '.env.local' });
 config();
 
+// Sentry must be initialised before any other imports for full instrumentation
+import { initServerSentry } from './server/sentryInit';
+initServerSentry();
+
 // OTel tracing initialized after dotenv so OTEL_SERVICE_NAME etc. are set
 import { startTracing } from './server/tracing';
 startTracing();
