@@ -1,0 +1,99 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main      # → production
+      - dev       # → staging
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: ${{ secrets.GCP_REGION || 'us-central1' }}
+  IMAGE_NAME: cognisys-ba
+
+jobs:
+  deploy:
+    name: Build & Deploy to Cloud Run
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # for Workload Identity Federation (preferred over SA key)
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "SERVICE_NAME=cognisys-ba-prod" >> $GITHUB_OUTPUT
+            echo "ENV_LABEL=production" >> $GITHUB_OUTPUT
+          else
+            echo "SERVICE_NAME=cognisys-ba-staging" >> $GITHUB_OUTPUT
+            echo "ENV_LABEL=staging" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --tag ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/cognisys/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            --tag ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/cognisys/${{ env.IMAGE_NAME }}:${{ steps.env.outputs.ENV_LABEL }} \
+            .
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/cognisys/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/cognisys/${{ env.IMAGE_NAME }}:${{ steps.env.outputs.ENV_LABEL }}
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ steps.env.outputs.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/cognisys/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          env_vars: |
+            NODE_ENV=production
+          secrets: |
+            FIREBASE_PROJECT_ID=FIREBASE_PROJECT_ID:latest
+            FIREBASE_CLIENT_EMAIL=FIREBASE_CLIENT_EMAIL:latest
+            FIREBASE_PRIVATE_KEY=FIREBASE_PRIVATE_KEY:latest
+            STRIPE_SECRET_KEY=STRIPE_SECRET_KEY:latest
+            STRIPE_WEBHOOK_SECRET=STRIPE_WEBHOOK_SECRET:latest
+            STRIPE_PRICE_PRO=STRIPE_PRICE_PRO:latest
+            SMTP_HOST=SMTP_HOST:latest
+            SMTP_USER=SMTP_USER:latest
+            SMTP_PASS=SMTP_PASS:latest
+          flags: |
+            --min-instances=1
+            --max-instances=10
+            --memory=512Mi
+            --cpu=1
+            --concurrency=100
+            --timeout=60s
+            --allow-unauthenticated
+
+      - name: Show deployed URL
+        run: echo "Deployed to ${{ steps.deploy.outputs.url }}"
+
+      - name: Smoke test
+        run: |
+          URL="${{ steps.deploy.outputs.url }}"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/api/health")
+          if [ "$STATUS" != "200" ]; then
+            echo "Smoke test failed: /api/health returned $STATUS"
+            exit 1
+          fi
+          echo "Smoke test passed: /api/health returned 200"

@@ -1,6 +1,7 @@
 import { getAdminDb } from '../lib/firebaseAdmin';
 import { AuthService } from './AuthService';
 import { AuditLogService, AuditContext } from './AuditLogService';
+import { WebhookService } from './WebhookService';
 import { UserRole } from '../../types';
 
 export interface OrgMember {
@@ -45,6 +46,7 @@ export class MemberService {
       severity: 'HIGH',
       context,
     });
+    WebhookService.deliverEvent(orgId, 'member.removed', { userId: targetUserId, removedBy: actorId }).catch(() => {});
   }
 
   /** Change a member's role and re-provision their custom claims. */

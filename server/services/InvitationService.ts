@@ -3,6 +3,8 @@ import { getAdminDb } from '../lib/firebaseAdmin';
 import { AuthService } from './AuthService';
 import { AuditLogService } from './AuditLogService';
 import { EmailService } from './EmailService';
+import { WebhookService } from './WebhookService';
+import { NotificationService } from './NotificationService';
 import { UserRole } from '../../types';
 
 export interface OrgInvitation {
@@ -118,6 +120,15 @@ export class InvitationService {
     await AuditLogService.logMutation(inv.orgId, userId, 'organization', inv.orgId, 'update', {
       after: { memberJoined: userId, role: inv.role } as Record<string, unknown>,
     });
+
+    // Fire webhook + notification (best-effort)
+    WebhookService.deliverEvent(inv.orgId, 'invitation.accepted', { userId, role: inv.role, email: inv.email }).catch(() => {});
+    NotificationService.createNotification(
+      inv.invitedBy, 'member_joined',
+      'New member joined',
+      `${inv.email} accepted your invitation and joined as ${inv.role}.`,
+      { userId, orgId: inv.orgId },
+    ).catch(() => {});
 
     return { orgId: inv.orgId, role: inv.role };
   }

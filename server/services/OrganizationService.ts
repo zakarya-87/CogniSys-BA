@@ -2,6 +2,7 @@ import { OrganizationRepository } from '../repositories/OrganizationRepository';
 import { TOrganization } from '../../types';
 import { AuditLogService, AuditContext } from './AuditLogService';
 import { AuthService } from './AuthService';
+import { BillingService } from './BillingService';
 
 export class OrganizationService {
   private repo = new OrganizationRepository();
@@ -9,6 +10,8 @@ export class OrganizationService {
   async createOrganization(org: TOrganization, userId: string, context?: AuditContext): Promise<void> {
     await this.repo.create(org.id, org);
     await AuthService.provisionOrgClaims(userId, org.id, 'admin');
+    // Create Stripe customer for the org (best-effort — billing may not be configured)
+    BillingService.ensureCustomer(org.id, `org-${org.id}@cognisys.io`, org.name).catch(() => {});
     await AuditLogService.logMutation(org.id, userId, 'organization', org.id, 'create', {
       after: org as unknown as Record<string, unknown>,
       context,
