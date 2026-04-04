@@ -7,9 +7,10 @@ import { generateConceptVideo, generateBpmnFlow, generateSequenceDiagram, genera
 import { MemoryService } from './memoryService';
 import { MathService } from './mathService';
 import { callMistral, callAzureOpenAI } from './llmProxyService';
+import { AI_CONFIG } from './ai/aiConfig';
 
-const MODEL = 'gemini-3-flash-preview';
-const FALLBACK_MODEL = 'gemini-2.5-flash';
+const MODEL = AI_CONFIG.models.primary;
+const FALLBACK_MODEL = AI_CONFIG.models.fallback;
 let isPrimaryModelExhausted = false;
 
 // --- BASE AGENT IMPLEMENTATION ---

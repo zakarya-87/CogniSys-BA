@@ -1,8 +1,9 @@
 import { GoogleGenAI } from "@google/genai";
+import { AI_CONFIG } from "../../services/ai/aiConfig";
 
 export enum ModelType {
-  REASONING   = 'gemini-3.1-pro-preview',
-  SPEED       = 'gemini-3.1-flash-preview',
+  REASONING   = AI_CONFIG.models.reasoning,
+  SPEED       = AI_CONFIG.models.primary,
   MISTRAL     = 'mistral',
   AZURE       = 'azure-openai',
 }
