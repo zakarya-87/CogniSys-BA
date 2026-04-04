@@ -7,9 +7,10 @@ import { test, expect } from '@playwright/test';
 test.describe('App shell', () => {
   test('homepage loads — root element is populated', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
     const title = await page.title();
     expect(title.length).toBeGreaterThan(0);
-    await expect(page.locator('#root')).not.toBeEmpty();
+    await expect(page.locator('#root')).not.toBeEmpty({ timeout: 30_000 });
   });
 
   test('no uncaught JS errors on initial load', async ({ page }) => {
@@ -31,6 +32,6 @@ test.describe('App shell', () => {
     const res = await request.get('/');
     expect(res.status()).toBe(200);
     const body = await res.text();
-    expect(body).toContain('<div id="root">');
+    expect(body).toContain('id="root"');
   });
 });

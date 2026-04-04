@@ -36,6 +36,7 @@ import { TInitiative, InitiativeStatus, TWorkBreakdown, Sector } from './types';
 import { CatalystProvider, useCatalyst } from './context/CatalystContext';
 import { ApiStatusProvider } from './context/ApiStatusContext';
 import { setAiModelId } from './services/geminiService';
+import { LoginView } from './components/LoginView';
 
 const ViewFallback = () => (
     <div className="flex h-full items-center justify-center">
@@ -287,10 +288,16 @@ const App: React.FC = () => {
     return (
         <ErrorBoundary componentName="Root Application">
             <CatalystProvider>
-                <MainLayout />
+                <AuthGate />
             </CatalystProvider>
         </ErrorBoundary>
     );
+};
+
+const AuthGate: React.FC = () => {
+    const { user } = useCatalyst();
+    if (user === null) return <LoginView />;
+    return <MainLayout />;
 };
 
 export default App;

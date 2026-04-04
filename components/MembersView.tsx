@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { UserMinus, Shield, RefreshCw, UserPlus, Send } from 'lucide-react';
-import { MemberAPI, InvitationAPI } from '../../src/services/api';
-import { useCatalyst } from '../../context/CatalystContext';
+import { MemberAPI, InvitationAPI } from '../src/services/api';
+import { useCatalyst } from '../context/CatalystContext';
 import { UserRole } from '../../types';
 
 interface Member { userId: string; role: UserRole; }
