@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "cognisysba-the-catalyst-hub",
+    "production": "cognisysba-the-catalyst-hub",
+    "staging": "cognisysba-the-catalyst-hub"
+  }
+}

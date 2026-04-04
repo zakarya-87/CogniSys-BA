@@ -1,0 +1,51 @@
+name: Firebase Deploy
+
+on:
+  push:
+    branches:
+      - main    # → production (hosting + functions)
+      - dev     # → staging channel (hosting preview only)
+
+jobs:
+  deploy:
+    name: Build & Deploy to Firebase
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Build frontend (Vite) + Functions (esbuild)
+        run: npm run build:all
+
+      - name: Deploy to Firebase (production)
+        if: github.ref_name == 'main'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          projectId: cognisysba-the-catalyst-hub
+          channelId: live
+        env:
+          FIREBASE_CLI_EXPERIMENTS: webframeworks
+
+      - name: Deploy preview channel (dev branch)
+        if: github.ref_name == 'dev'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          projectId: cognisysba-the-catalyst-hub
+          channelId: dev-preview
+          expires: 7d
+        env:
+          FIREBASE_CLI_EXPERIMENTS: webframeworks

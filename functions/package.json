@@ -1,0 +1,20 @@
+{
+  "name": "cognisys-ba-functions",
+  "version": "1.0.0",
+  "description": "Firebase Cloud Functions — CogniSys BA API",
+  "main": "lib/index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "build": "cd .. && npm run build:functions",
+    "deploy": "npm run build && firebase deploy --only functions"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^6.0.0",
+    "@grpc/grpc-js": "^1.10.0",
+    "@grpc/proto-loader": "^0.7.0"
+  },
+  "private": true
+}
