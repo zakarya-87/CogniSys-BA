@@ -3,7 +3,7 @@
  * API routes registered, but WITHOUT Vite/static serving or app.listen().
  * Import this in tests to get a fully wired app without starting a server.
  */
-import express from 'express';
+import express, { Router } from 'express';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import cors from 'cors';
@@ -22,6 +22,8 @@ import { AIController } from './controllers/AIController';
 import { ServerMemoryService } from './services/MemoryService';
 import { getAdminAuth } from './lib/firebaseAdmin';
 import { getAllFlags } from './featureFlags';
+import swaggerUi from 'swagger-ui-express';
+import { openApiSpec } from './openapi';
 
 export function createApp() {
   const app = express();
@@ -93,35 +95,45 @@ export function createApp() {
   const aiLimiter  = rateLimit({ windowMs: 15 * 60 * 1000, limit: 20,  standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'AI request limit reached, please try again later.' } });
   const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'Too many auth requests, please try again later.' } });
 
-  // Health
+  // Health (keep legacy /api/health for backward compat)
   app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
-  app.get('/api/v1/health', (_req, res) => res.json({ status: 'ok', version: 'v1' }));
 
-  // Feature flags — public, no auth required
-  app.get('/api/v1/feature-flags', (_req, res) => res.json(getAllFlags()));
+  // ── /api/v1 Router ────────────────────────────────────────────────────────
+  // All resource routes live here. /api/* aliases below keep backward compat.
+  const v1 = Router();
+
+  v1.get('/health', (_req, res) => res.json({ status: 'ok', version: 'v1' }));
+  v1.get('/feature-flags', (_req, res) => res.json(getAllFlags()));
+
+  // Swagger UI — dev mode only
+  if (isDev) {
+    app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec, {
+      customSiteTitle: 'CogniSys BA API Docs',
+      swaggerOptions: { persistAuthorization: true },
+    }));
+    app.get('/api/docs.json', (_req, res) => res.json(openApiSpec));
+  }
 
   // Organizations
-  app.post('/api/organizations', apiLimiter, authorize('member'), OrganizationController.create);
-  app.get('/api/organizations/:orgId', apiLimiter, authorize('viewer'), OrganizationController.get);
+  v1.post('/organizations', apiLimiter, authorize('member'), OrganizationController.create);
+  v1.get('/organizations/:orgId', apiLimiter, authorize('viewer'), OrganizationController.get);
 
   // Projects
-  app.post('/api/organizations/:orgId/projects', apiLimiter, authorize('member'), ProjectController.create);
-  app.get('/api/organizations/:orgId/projects', apiLimiter, authorize('viewer'), ProjectController.list);
+  v1.post('/organizations/:orgId/projects', apiLimiter, authorize('member'), ProjectController.create);
+  v1.get('/organizations/:orgId/projects', apiLimiter, authorize('viewer'), ProjectController.list);
 
   // Initiatives
-  app.post('/api/organizations/:orgId/projects/:projectId/initiatives', apiLimiter, authorize('member'), InitiativeController.create);
-  app.get('/api/organizations/:orgId/initiatives', apiLimiter, authorize('viewer'), InitiativeController.listByOrg);
-  app.get('/api/organizations/:orgId/projects/:projectId/initiatives', apiLimiter, authorize('viewer'), InitiativeController.listByProject);
-  app.put('/api/organizations/:orgId/projects/:projectId/initiatives/:initiativeId', apiLimiter, authorize('member'), InitiativeController.update);
+  v1.post('/organizations/:orgId/projects/:projectId/initiatives', apiLimiter, authorize('member'), InitiativeController.create);
+  v1.get('/organizations/:orgId/initiatives', apiLimiter, authorize('viewer'), InitiativeController.listByOrg);
+  v1.get('/organizations/:orgId/projects/:projectId/initiatives', apiLimiter, authorize('viewer'), InitiativeController.listByProject);
+  v1.put('/organizations/:orgId/projects/:projectId/initiatives/:initiativeId', apiLimiter, authorize('member'), InitiativeController.update);
 
   // AI Operations
-  app.post('/api/organizations/:orgId/initiatives/:initiativeId/wbs', aiLimiter, authorize('member'), AIController.triggerWBS);
-  app.post('/api/organizations/:orgId/initiatives/:initiativeId/risks', aiLimiter, authorize('member'), AIController.triggerRiskAssessment);
+  v1.post('/organizations/:orgId/initiatives/:initiativeId/wbs', aiLimiter, authorize('member'), AIController.triggerWBS);
+  v1.post('/organizations/:orgId/initiatives/:initiativeId/risks', aiLimiter, authorize('member'), AIController.triggerRiskAssessment);
 
-  // Vector Memory — multi-tenant Firestore-backed semantic memory
-  // POST /api/organizations/:orgId/memory        → store a memory (content + embedding)
-  // POST /api/organizations/:orgId/memory/search → semantic search by query vector
-  app.post('/api/organizations/:orgId/memory', apiLimiter, authorize('member'), async (req, res) => {
+  // Vector Memory
+  v1.post('/organizations/:orgId/memory', apiLimiter, authorize('member'), async (req, res) => {
     try {
       const { orgId } = req.params;
       const { content, vector, type, metadata } = req.body as {
@@ -133,7 +145,6 @@ export function createApp() {
       if (!content || typeof content !== 'string') return res.status(400).json({ error: 'content is required' });
       if (!vector || !Array.isArray(vector) || vector.length === 0) return res.status(400).json({ error: 'vector (number[]) is required' });
       if (!type || !['fact', 'decision', 'insight'].includes(type)) return res.status(400).json({ error: 'type must be fact | decision | insight' });
-
       const memory = await ServerMemoryService.addMemory(orgId, content, vector, type, metadata);
       res.status(201).json({ memory });
     } catch (error) {
@@ -141,18 +152,33 @@ export function createApp() {
     }
   });
 
-  app.post('/api/organizations/:orgId/memory/search', apiLimiter, authorize('viewer'), async (req, res) => {
+  v1.post('/organizations/:orgId/memory/search', apiLimiter, authorize('viewer'), async (req, res) => {
     try {
       const { orgId } = req.params;
       const { vector, limit } = req.body as { vector?: number[]; limit?: number };
       if (!vector || !Array.isArray(vector) || vector.length === 0) return res.status(400).json({ error: 'vector (number[]) is required' });
-
       const results = await ServerMemoryService.search(orgId, vector, limit ?? 5);
       res.json({ results });
     } catch (error) {
       safeError(res, error, 'Memory Search');
     }
   });
+
+  // Mount versioned router
+  app.use('/api/v1', v1);
+
+  // Backward-compat aliases — /api/* proxies to /api/v1/*
+  app.use('/api', (req, res, next) => {
+    // Only proxy unmatched /api/* routes that aren't auth/health/ai/github/mistral/azure
+    if (
+      req.path.startsWith('/organizations') ||
+      req.path.startsWith('/v1')
+    ) {
+      req.url = req.url; // already handled above or will 404 via catch-all
+    }
+    next();
+  });
+  app.use('/api', v1);
 
   // ── Firebase Auth Session ────────────────────────────────────────────────────
   // Verifies a Firebase ID token (GitHub or Google) and sets a server-side
