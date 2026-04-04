@@ -22,6 +22,12 @@ import { AIController } from './controllers/AIController';
 import { ServerMemoryService } from './services/MemoryService';
 import { AuthService } from './services/AuthService';
 import { AuditLogService } from './services/AuditLogService';
+import { InvitationService } from './services/InvitationService';
+import { MemberService } from './services/MemberService';
+import { NotificationService } from './services/NotificationService';
+import { UsageMeteringService } from './services/UsageMeteringService';
+import { can } from './middleware/rbac';
+import { Permission } from './middleware/permissions';
 import { getAdminAuth } from './lib/firebaseAdmin';
 import { getAllFlags } from './featureFlags';
 import swaggerUi from 'swagger-ui-express';
@@ -181,6 +187,141 @@ export function createApp() {
       res.json({ results });
     } catch (error) {
       safeError(res, error, 'Memory Search');
+    }
+  });
+
+  // ── Invitations ───────────────────────────────────────────────────────────
+  v1.post('/organizations/:orgId/invitations', apiLimiter, can(Permission.ORGANIZATION_INVITE_MEMBER), async (req, res) => {
+    try {
+      const { orgId } = req.params;
+      const { email, role } = req.body as { email?: string; role?: string };
+      if (!email || typeof email !== 'string') return res.status(400).json({ error: 'email is required' });
+      if (!role || !['admin', 'member', 'viewer'].includes(role)) return res.status(400).json({ error: 'role must be admin | member | viewer' });
+      const userId = (req as any).user?.uid ?? 'unknown';
+      const invitation = await InvitationService.createInvitation(orgId, email, role as any, userId);
+      res.status(201).json({ invitation });
+    } catch (error) {
+      safeError(res, error, 'Create Invitation');
+    }
+  });
+
+  v1.get('/organizations/:orgId/invitations', apiLimiter, authorize('admin'), async (req, res) => {
+    try {
+      const { orgId } = req.params;
+      const status = req.query.status as string | undefined;
+      const invitations = await InvitationService.listInvitations(orgId, status as any);
+      res.json({ invitations });
+    } catch (error) {
+      safeError(res, error, 'List Invitations');
+    }
+  });
+
+  v1.delete('/organizations/:orgId/invitations/:invitationId', apiLimiter, authorize('admin'), async (req, res) => {
+    try {
+      const { invitationId } = req.params;
+      const userId = (req as any).user?.uid ?? 'unknown';
+      await InvitationService.revokeInvitation(invitationId, userId);
+      res.json({ status: 'revoked' });
+    } catch (error) {
+      safeError(res, error, 'Revoke Invitation');
+    }
+  });
+
+  // Public: accept an invitation by token (no org auth required — token is the credential)
+  v1.post('/invitations/:token/accept', apiLimiter, async (req, res) => {
+    try {
+      const { token } = req.params;
+      const authHeader = req.headers.authorization;
+      if (!authHeader?.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
+      const idToken = authHeader.split('Bearer ')[1];
+      const decoded = await (await import('./lib/firebaseAdmin')).getAdminAuth().verifyIdToken(idToken);
+      const result = await InvitationService.acceptInvitation(token, decoded.uid);
+      res.json({ status: 'accepted', ...result });
+    } catch (error) {
+      safeError(res, error, 'Accept Invitation');
+    }
+  });
+
+  // ── Member Management ─────────────────────────────────────────────────────
+  v1.get('/organizations/:orgId/members', apiLimiter, authorize('viewer'), async (req, res) => {
+    try {
+      const { orgId } = req.params;
+      const members = await MemberService.listMembers(orgId);
+      res.json({ members });
+    } catch (error) {
+      safeError(res, error, 'List Members');
+    }
+  });
+
+  v1.delete('/organizations/:orgId/members/:userId', apiLimiter, authorize('admin'), async (req, res) => {
+    try {
+      const { orgId, userId: targetUserId } = req.params;
+      const actorId = (req as any).user?.uid ?? 'unknown';
+      await MemberService.removeMember(orgId, targetUserId, actorId);
+      res.json({ status: 'removed' });
+    } catch (error) {
+      safeError(res, error, 'Remove Member');
+    }
+  });
+
+  v1.patch('/organizations/:orgId/members/:userId/role', apiLimiter, authorize('admin'), async (req, res) => {
+    try {
+      const { orgId, userId: targetUserId } = req.params;
+      const { role } = req.body as { role?: string };
+      if (!role || !['admin', 'member', 'viewer'].includes(role)) return res.status(400).json({ error: 'role must be admin | member | viewer' });
+      const actorId = (req as any).user?.uid ?? 'unknown';
+      await MemberService.changeMemberRole(orgId, targetUserId, role as any, actorId);
+      res.json({ status: 'updated', role });
+    } catch (error) {
+      safeError(res, error, 'Change Member Role');
+    }
+  });
+
+  // ── Notifications ─────────────────────────────────────────────────────────
+  v1.get('/notifications', apiLimiter, authorize('viewer'), async (req, res) => {
+    try {
+      const userId = (req as any).user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+      const unreadOnly = req.query.unreadOnly === 'true';
+      const limit = Number(req.query.limit ?? 50);
+      const notifications = await NotificationService.getNotifications(userId, { unreadOnly, limit: isNaN(limit) ? 50 : limit });
+      res.json({ notifications });
+    } catch (error) {
+      safeError(res, error, 'Get Notifications');
+    }
+  });
+
+  v1.patch('/notifications/:notificationId/read', apiLimiter, authorize('viewer'), async (req, res) => {
+    try {
+      const userId = (req as any).user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+      await NotificationService.markRead(userId, req.params.notificationId);
+      res.json({ status: 'read' });
+    } catch (error) {
+      safeError(res, error, 'Mark Notification Read');
+    }
+  });
+
+  v1.post('/notifications/mark-all-read', apiLimiter, authorize('viewer'), async (req, res) => {
+    try {
+      const userId = (req as any).user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+      await NotificationService.markAllRead(userId);
+      res.json({ status: 'all_read' });
+    } catch (error) {
+      safeError(res, error, 'Mark All Notifications Read');
+    }
+  });
+
+  // ── Usage Metering ────────────────────────────────────────────────────────
+  v1.get('/organizations/:orgId/usage', apiLimiter, authorize('admin'), async (req, res) => {
+    try {
+      const { orgId } = req.params;
+      const month = req.query.month as string | undefined;
+      const usage = await UsageMeteringService.getUsage(orgId, month);
+      res.json({ usage: usage ?? { orgId, month: month ?? 'current', aiCalls: 0, tokenCount: 0 } });
+    } catch (error) {
+      safeError(res, error, 'Get Usage');
     }
   });
 
