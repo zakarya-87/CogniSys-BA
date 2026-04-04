@@ -199,6 +199,7 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
                     await fetch('/api/auth/firebase-session', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
                         body: JSON.stringify({ idToken }),
                     });
                 } catch (err) {
@@ -251,7 +252,7 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
     const logout = useCallback(async () => {
         try {
             await signOut(auth);
-            await fetch('/api/auth/logout', { method: 'POST' });
+            await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
             setToastMessage('Logged out successfully.');
         } catch (err) {
             logger.error('Logout failed:', err);

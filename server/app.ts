@@ -587,10 +587,12 @@ export function createApp() {
     try {
       const adminAuth = getAdminAuth();
       const decoded = await adminAuth.verifyIdToken(idToken);
+      // In dev (HTTP), secure:true + sameSite:'none' causes browsers to silently
+      // drop the cookie. Use lax/non-secure on localhost so /api/auth/me works.
       res.cookie('auth_session', decoded.uid, {
         httpOnly: true,
-        secure: true,
-        sameSite: 'none',
+        secure: !isDev,
+        sameSite: isDev ? 'lax' : 'none',
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
       res.json({
@@ -614,7 +616,7 @@ export function createApp() {
   });
 
   app.post('/api/auth/logout', (req, res) => {
-    res.clearCookie('auth_session', { secure: true, sameSite: 'none', httpOnly: true });
+    res.clearCookie('auth_session', { secure: !isDev, sameSite: isDev ? 'lax' : 'none', httpOnly: true });
     res.json({ status: 'logged_out' });
   });
 
@@ -661,7 +663,7 @@ export function createApp() {
       const userResponse = await fetch('https://api.github.com/user', { headers: { Authorization: `Bearer ${accessToken}` } });
       const userData = await userResponse.json() as { id?: number; name?: string; login?: string; avatar_url?: string };
 
-      res.cookie('auth_session', accessToken, { secure: true, sameSite: 'none', httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
+      res.cookie('auth_session', accessToken, { secure: !isDev, sameSite: isDev ? 'lax' : 'none', httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
 
       const safeId = String(userData.id ?? '');
       const safeName = (userData.name || userData.login || '').replace(/"/g, '&quot;');
