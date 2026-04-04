@@ -34,6 +34,7 @@ import { WebhookService } from './services/WebhookService';
 import { BillingService } from './services/BillingService';
 import { SearchService } from './services/SearchService';
 import { JobService } from './services/JobService';
+import { TaskQueue } from './services/TaskQueue';
 import { can } from './middleware/rbac';
 import { Permission } from './middleware/permissions';
 import { getAdminAuth } from './lib/firebaseAdmin';
@@ -211,6 +212,17 @@ export function createApp() {
 
   v1.post('/organizations/:orgId/initiatives/:initiativeId/wbs', aiLimiter, authorize('member'), enforceAIQuota, AIController.triggerWBS);
   v1.post('/organizations/:orgId/initiatives/:initiativeId/risks', aiLimiter, authorize('member'), enforceAIQuota, AIController.triggerRiskAssessment);
+
+  // Dead-letter queue — failed tasks after max retries
+  v1.get('/organizations/:orgId/tasks/failed', apiLimiter, authorize('admin'), async (req, res) => {
+    try {
+      const { orgId } = req.params;
+      const tasks = await TaskQueue.getDlqTasks(orgId);
+      res.json({ tasks });
+    } catch (err) {
+      res.status(500).json(safeError(err));
+    }
+  });
 
   // Vector Memory
   v1.post('/organizations/:orgId/memory', apiLimiter, authorize('member'), async (req, res) => {

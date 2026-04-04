@@ -4,13 +4,107 @@ import { withRetry, safeParseJSON, validateStructure } from '../../utils/aiUtils
 import { callMistral, callAzureOpenAI } from '../llmProxyService';
 import { TAnalysisPlan, Sector } from '../../types';
 import _generatedSchemas from '../../generated_schemas.json';
+import { AI_CONFIG, TokenBudgetKey } from './aiConfig';
+import { logger } from '../../src/utils/logger';
+import { scoreComplexity, ModelTier } from './types';
 
-// Logger shim — replace with your actual logger if available
-const logger = {
-  log: (...args: any[]) => console.log(...args),
-  warn: (...args: any[]) => console.warn(...args),
-  error: (...args: any[]) => console.error(...args),
-};
+// ─── Circuit Breaker ──────────────────────────────────────────────────────────
+/** Tracks per-provider failure state. Thread-safe within a single JS engine. */
+class CircuitBreaker {
+  private failures = new Map<string, number>();
+  private openedAt = new Map<string, number>();
+
+  isOpen(provider: string): boolean {
+    const failures = this.failures.get(provider) ?? 0;
+    if (failures < AI_CONFIG.circuitBreaker.failureThreshold) return false;
+    const opened = this.openedAt.get(provider) ?? 0;
+    // After cooldown, allow one probe (half-open)
+    if (Date.now() - opened > AI_CONFIG.circuitBreaker.cooldownMs) return false;
+    return true;
+  }
+
+  recordFailure(provider: string): void {
+    const count = (this.failures.get(provider) ?? 0) + 1;
+    this.failures.set(provider, count);
+    if (count === AI_CONFIG.circuitBreaker.failureThreshold) {
+      this.openedAt.set(provider, Date.now());
+      logger.warn(`[CircuitBreaker] Provider "${provider}" OPENED after ${count} failures`);
+    }
+  }
+
+  recordSuccess(provider: string): void {
+    const wasFailing = (this.failures.get(provider) ?? 0) >= AI_CONFIG.circuitBreaker.failureThreshold;
+    this.failures.set(provider, 0);
+    this.openedAt.delete(provider);
+    if (wasFailing) logger.log(`[CircuitBreaker] Provider "${provider}" CLOSED (recovered)`);
+  }
+}
+
+// ─── LRU Response Cache ───────────────────────────────────────────────────────
+class LRUCache {
+  private cache = new Map<string, { value: string; expiresAt: number }>();
+
+  get(key: string): string | undefined {
+    const entry = this.cache.get(key);
+    if (!entry) return undefined;
+    if (Date.now() > entry.expiresAt) { this.cache.delete(key); return undefined; }
+    // Move to end (most recently used)
+    this.cache.delete(key);
+    this.cache.set(key, entry);
+    return entry.value;
+  }
+
+  set(key: string, value: string): void {
+    if (this.cache.size >= AI_CONFIG.cache.maxSize) {
+      const oldest = this.cache.keys().next().value;
+      if (oldest !== undefined) this.cache.delete(oldest);
+    }
+    this.cache.set(key, { value, expiresAt: Date.now() + AI_CONFIG.cache.ttlMs });
+  }
+}
+
+/** Simple non-crypto hash suitable for cache keys */
+function hashKey(model: string, prompt: string): string {
+  const str = `${model}::${prompt.slice(0, 500)}`;
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return hash.toString(36);
+}
+
+// ─── Request Timeout ─────────────────────────────────────────────────────────
+function withTimeout<T>(fn: () => Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`AI request timed out after ${ms}ms`)), ms);
+    fn().then(
+      (v) => { clearTimeout(timer); resolve(v); },
+      (e) => { clearTimeout(timer); reject(e); },
+    );
+  });
+}
+
+// ─── Structured AI Call Logging ───────────────────────────────────────────────
+function logAiCall(opts: {
+  model: string;
+  latencyMs: number;
+  success: boolean;
+  cached?: boolean;
+  retryCount?: number;
+  error?: string;
+}) {
+  const { model, latencyMs, success, cached, retryCount, error } = opts;
+  if (success) {
+    logger.log(`[AI] ${model} | ${latencyMs}ms${cached ? ' (cached)' : ''} | ok${retryCount ? ` retry=${retryCount}` : ''}`);
+  } else {
+    logger.warn(`[AI] ${model} | ${latencyMs}ms | FAILED: ${error}`);
+  }
+}
+
+// ─── Module-level singletons ──────────────────────────────────────────────────
+const circuitBreaker = new CircuitBreaker();
+const responseCache = new LRUCache();
 
 // Local Type constants — mirrors @google/genai Type enum values used in schemas.
 export const Type = {
@@ -23,8 +117,8 @@ type JsonSchema = { required?: string[]; [key: string]: unknown };
 export const generatedSchemas = _generatedSchemas as Record<string, JsonSchema>;
 
 // Default model tier — 'flash' is fast/cheap; 'pro' for complex reasoning tasks
-let activeModelId = 'gemini-2.5-flash';
-const FALLBACK_MODEL = 'gemini-2.5-flash';
+let activeModelId: string = AI_CONFIG.models.primary;
+const FALLBACK_MODEL: string = AI_CONFIG.models.fallback;
 
 // Global flag to track if the primary model is exhausted (quota reached)
 let isPrimaryModelExhausted = false;
@@ -135,43 +229,92 @@ async function repairJson<T>(malformedJson: string, errorMsg: string, schema?: a
 
 // --- Core AI Caller ---
 
-export async function generateJson<T>(prompt: string, schema?: any, requiredKeys: string[] = []): Promise<T> {
+export async function generateJson<T>(
+  prompt: string,
+  schema?: any,
+  requiredKeys: string[] = [],
+  opts: {
+    noCache?: boolean;
+    tokenBudget?: TokenBudgetKey;
+    timeoutMs?: number;
+    taskType?: string;
+    forceTier?: ModelTier;
+  } = {},
+): Promise<T> {
+  const timeoutMs = opts.timeoutMs ?? AI_CONFIG.timeouts.generation;
+  const maxTokens = AI_CONFIG.tokenBudgets[opts.tokenBudget ?? 'DEFAULT'];
+
+  // Smart model routing: complexity score decides flash vs pro
+  const { tier } = scoreComplexity({
+    taskType: opts.taskType,
+    inputLength: prompt.length,
+    forceTier: opts.forceTier,
+  });
+  const routedModel = tier === 'pro' ? AI_CONFIG.models.reasoning : activeModelId;
+
+  const cacheKey = hashKey(routedModel, prompt);
+  const t0 = Date.now();
+
+  // Cache hit — skip network call entirely
+  if (!opts.noCache) {
+    const cached = responseCache.get(cacheKey);
+    if (cached) {
+      logAiCall({ model: activeModelId, latencyMs: Date.now() - t0, success: true, cached: true });
+      return safeParseJSON<T>(cached);
+    }
+  }
+
   return withRetry(async () => {
     try {
         let text = "";
 
-        const fullPrompt = schema ? `${prompt}\n\nPlease return the response in JSON format matching this schema:\n${JSON.stringify(schema)}` : prompt;
+        const fullPrompt = schema
+          ? `${prompt}\n\nPlease return the response in JSON format matching this schema:\n${JSON.stringify(schema)}`
+          : prompt;
 
         const callModel = async (modelId: string) => {
             if (modelId === 'mistral') {
                 const response = await callMistral({
                     messages: [{ role: 'user', content: fullPrompt }],
+                    max_tokens: maxTokens,
                 });
                 return response.choices[0].message.content;
             } else if (modelId === 'azure-openai') {
                 const response = await callAzureOpenAI({
                     messages: [{ role: 'user', content: fullPrompt }],
+                    max_tokens: maxTokens,
                 });
                 return response.choices[0].message.content;
             } else {
-                return await callGeminiProxy(fullPrompt, resolveModelTier(modelId));
+                return await callGeminiProxy(fullPrompt, resolveModelTier(modelId), {
+                    generationConfig: { maxOutputTokens: maxTokens },
+                });
             }
         };
 
-        const modelsToTry = [activeModelId];
-        if (activeModelId !== FALLBACK_MODEL) modelsToTry.push(FALLBACK_MODEL);
+        // Start with the complexity-routed model; fall back along the chain
+        const modelsToTry = [routedModel];
+        if (routedModel !== FALLBACK_MODEL) modelsToTry.push(FALLBACK_MODEL);
         if (!modelsToTry.includes('mistral')) modelsToTry.push('mistral');
         if (!modelsToTry.includes('azure-openai')) modelsToTry.push('azure-openai');
 
         let lastError: any = null;
         for (const modelId of modelsToTry) {
             if (modelId === 'gemini-3-flash-preview' && isPrimaryModelExhausted) continue;
+            if (circuitBreaker.isOpen(modelId)) {
+                logger.warn(`[CircuitBreaker] Skipping open provider: ${modelId}`);
+                continue;
+            }
 
+            const callStart = Date.now();
             try {
-                text = await callModel(modelId);
+                text = await withTimeout(() => callModel(modelId), timeoutMs);
+                circuitBreaker.recordSuccess(modelId);
+                logAiCall({ model: modelId, latencyMs: Date.now() - callStart, success: true });
                 if (text) break;
             } catch (error: any) {
                 lastError = error;
+                circuitBreaker.recordFailure(modelId);
                 const errorMessage = error.message || error.error?.message || JSON.stringify(error);
                 const isQuotaError = errorMessage.includes('429') || errorMessage.includes('Quota') || error.status === 'RESOURCE_EXHAUSTED';
 
@@ -180,6 +323,7 @@ export async function generateJson<T>(prompt: string, schema?: any, requiredKeys
                     window.dispatchEvent(new Event('quota-exceeded'));
                 }
 
+                logAiCall({ model: modelId, latencyMs: Date.now() - callStart, success: false, error: errorMessage });
                 logger.warn(`Model ${modelId} failed. Trying next in chain...`, errorMessage);
                 continue;
             }
@@ -196,6 +340,8 @@ export async function generateJson<T>(prompt: string, schema?: any, requiredKeys
             if (requiredKeys.length > 0) {
                 validateStructure(data, requiredKeys);
             }
+            // Cache the raw JSON text on success
+            if (!opts.noCache) responseCache.set(cacheKey, text);
             return data;
 
         } catch (parseError: any) {
@@ -339,18 +485,32 @@ export async function generateGroundedJson<T>(prompt: string, requiredKeys: stri
     });
 }
 
-export async function generateText(prompt: string): Promise<string> {
+export async function generateText(
+  prompt: string,
+  opts: { timeoutMs?: number; tokenBudget?: TokenBudgetKey } = {},
+): Promise<string> {
+  const timeoutMs = opts.timeoutMs ?? AI_CONFIG.timeouts.chat;
+  const maxTokens = AI_CONFIG.tokenBudgets[opts.tokenBudget ?? 'CHAT'];
+
   return withRetry(async () => {
     try {
         const callModel = async (modelId: string) => {
             if (modelId === 'mistral') {
-                const response = await callMistral({ messages: [{ role: 'user', content: prompt }] });
+                const response = await callMistral({
+                  messages: [{ role: 'user', content: prompt }],
+                  max_tokens: maxTokens,
+                });
                 return response.choices[0].message.content || "";
             } else if (modelId === 'azure-openai') {
-                const response = await callAzureOpenAI({ messages: [{ role: 'user', content: prompt }] });
+                const response = await callAzureOpenAI({
+                  messages: [{ role: 'user', content: prompt }],
+                  max_tokens: maxTokens,
+                });
                 return response.choices[0].message.content || "";
             } else {
-                return await callGeminiProxy(prompt, resolveModelTier(modelId));
+                return await callGeminiProxy(prompt, resolveModelTier(modelId), {
+                    generationConfig: { maxOutputTokens: maxTokens },
+                });
             }
         };
 
@@ -362,11 +522,20 @@ export async function generateText(prompt: string): Promise<string> {
         let lastError: any = null;
         for (const modelId of modelsToTry) {
             if (modelId === 'gemini-3-flash-preview' && isPrimaryModelExhausted) continue;
+            if (circuitBreaker.isOpen(modelId)) {
+                logger.warn(`[CircuitBreaker] Skipping open provider: ${modelId}`);
+                continue;
+            }
+
+            const callStart = Date.now();
             try {
-                const result = await callModel(modelId);
+                const result = await withTimeout(() => callModel(modelId), timeoutMs);
+                circuitBreaker.recordSuccess(modelId);
+                logAiCall({ model: modelId, latencyMs: Date.now() - callStart, success: true });
                 if (result) return result;
             } catch (error: any) {
                 lastError = error;
+                circuitBreaker.recordFailure(modelId);
                 const errorMessage = error.message || error.error?.message || JSON.stringify(error);
                 const isQuotaError = errorMessage.includes('429') || errorMessage.includes('Quota') || error.status === 'RESOURCE_EXHAUSTED';
 
@@ -375,6 +544,7 @@ export async function generateText(prompt: string): Promise<string> {
                     window.dispatchEvent(new Event('quota-exceeded'));
                 }
 
+                logAiCall({ model: modelId, latencyMs: Date.now() - callStart, success: false, error: errorMessage });
                 logger.warn(`Model ${modelId} failed. Trying next in chain...`, errorMessage);
                 continue;
             }
@@ -391,11 +561,12 @@ export async function generateText(prompt: string): Promise<string> {
 // --- Embedding Generation ---
 export const getEmbedding = async (text: string): Promise<number[]> => {
   try {
-    const response = await fetch('/api/gemini/embed', {
+    const fetchWithTimeout = withTimeout(() => fetch('/api/gemini/embed', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
-    });
+    }), AI_CONFIG.timeouts.embedding);
+    const response = await fetchWithTimeout;
     if (!response.ok) {
       logger.warn(`getEmbedding: server returned ${response.status}`);
       return [];

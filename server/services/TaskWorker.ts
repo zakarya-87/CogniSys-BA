@@ -91,10 +91,9 @@ export class TaskWorker {
 
       await TaskQueue.updateTaskStatus(taskId, TaskStatus.COMPLETED, result);
     } catch (error) {
-      console.error(`Task ${taskId} failed:`, error);
-      await TaskQueue.updateTaskStatus(taskId, TaskStatus.FAILED, {
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
+      const reason = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Task ${taskId} failed:`, reason);
+      await TaskQueue.recordFailure(taskId, reason, task);
     }
   }
 }
