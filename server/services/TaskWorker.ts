@@ -5,30 +5,60 @@ import { TaskQueue, TaskStatus } from './TaskQueue';
 import { InitiativeService } from './InitiativeService';
 import { getAdminDb } from '../lib/firebaseAdmin';
 
+const MAX_CONCURRENT_TASKS = 5;
+const RETRY_DELAY_MS = 5_000;
+
 export class TaskWorker {
   private wbsAgent = new WBSGeneratorAgent();
   private analyzerAgent = new ArtifactAnalyzerAgent();
   private riskAgent = new RiskAssessorAgent();
   private initiativeService = new InitiativeService();
 
+  /** Number of AI agents currently running */
+  private activeCount = 0;
+  /** Tasks waiting for a free slot */
+  private pending: Array<{ taskId: string; task: any }> = [];
+
   start() {
-    console.log('TaskWorker started with Firebase Admin SDK...');
-    
+    console.log(`TaskWorker started (max ${MAX_CONCURRENT_TASKS} concurrent jobs)...`);
+
     getAdminDb().collection('task_queue')
       .where('status', '==', TaskStatus.PENDING)
       .onSnapshot((snapshot) => {
-        snapshot.docChanges().forEach(async (change) => {
+        snapshot.docChanges().forEach((change) => {
           if (change.type === 'added') {
             const task = change.doc.data();
             const taskId = change.doc.id;
-            await this.processTask(taskId, task);
+            this.enqueue(taskId, task);
           }
         });
       }, (error) => {
         console.error('TaskWorker snapshot error:', error);
-        // Attempt to restart after a delay if it fails
-        setTimeout(() => this.start(), 5000);
+        setTimeout(() => this.start(), RETRY_DELAY_MS);
       });
+  }
+
+  private enqueue(taskId: string, task: any) {
+    if (this.activeCount < MAX_CONCURRENT_TASKS) {
+      this.run(taskId, task);
+    } else {
+      this.pending.push({ taskId, task });
+    }
+  }
+
+  private drain() {
+    if (this.pending.length > 0 && this.activeCount < MAX_CONCURRENT_TASKS) {
+      const next = this.pending.shift()!;
+      this.run(next.taskId, next.task);
+    }
+  }
+
+  private run(taskId: string, task: any) {
+    this.activeCount++;
+    this.processTask(taskId, task).finally(() => {
+      this.activeCount--;
+      this.drain();
+    });
   }
 
   private async processTask(taskId: string, task: any) {
@@ -39,7 +69,6 @@ export class TaskWorker {
       switch (task.type) {
         case 'GENERATE_WBS':
           result = await this.wbsAgent.generateWBS(task.payload.initiative);
-          // Update initiative with new WBS
           await this.initiativeService.updateInitiative(
             task.payload.initiative.id, 
             { wbs: result }, 
@@ -63,7 +92,9 @@ export class TaskWorker {
       await TaskQueue.updateTaskStatus(taskId, TaskStatus.COMPLETED, result);
     } catch (error) {
       console.error(`Task ${taskId} failed:`, error);
-      await TaskQueue.updateTaskStatus(taskId, TaskStatus.FAILED, { error: error instanceof Error ? error.message : 'Unknown error' });
+      await TaskQueue.updateTaskStatus(taskId, TaskStatus.FAILED, {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
     }
   }
 }

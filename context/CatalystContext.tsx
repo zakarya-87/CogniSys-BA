@@ -7,6 +7,7 @@ import { DomainRules } from '../utils/domainRules';
 import { generateAgentComment, setAiModelId } from '../services/geminiService';
 import { MemoryService } from '../services/memoryService';
 import { OrganizationAPI, ProjectAPI, InitiativeAPI, AIAPI } from '../src/services/api';
+import { logger } from '../src/utils/logger';
 import {
     auth,
     githubProvider,
@@ -16,76 +17,30 @@ import {
     onAuthStateChanged,
     type FirebaseUser,
 } from '../firebase';
+import { UIContext, UIContextType } from './UIContext';
+import { AuthContext, AuthContextType, User } from './AuthContext';
+import { OrgContext, OrgContextType } from './OrgContext';
+import { InitiativeContext, InitiativeContextType } from './InitiativeContext';
 
-interface User {
-    id: string;
-    name: string;
-    avatarUrl?: string;
-    role?: UserRole; // Added role
-}
+// Re-export focused hooks so components can subscribe to a single domain
+export { useUI } from './UIContext';
+export { useAuth } from './AuthContext';
+export { useOrg } from './OrgContext';
+export { useInitiative } from './InitiativeContext';
 
-interface CatalystContextType {
-    initiatives: TInitiative[];
-    organizations: TOrganization[]; // Added
-    projects: TProject[]; // Added
-    selectedInitiative: TInitiative | null;
-    currentView: string;
-    theme: Theme;
-    toastMessage: string;
-    aiModel: string;
-    hiveCommand: string | null;
-    activities: TActivity[];
-    unreadActivities: number;
-    user: User | null;
-    
-    // Actions
-    setInitiatives: (initiatives: TInitiative[]) => void;
-    setOrganizations: (organizations: TOrganization[]) => void; // Added
-    setProjects: (projects: TProject[]) => void; // Added
-    selectInitiative: (initiative: TInitiative | null) => void;
-    setCurrentView: (view: any) => void;
-    setTheme: (theme: Theme) => void;
-    setToastMessage: (msg: string) => void;
-    setAiModel: (model: string) => void;
-    setHiveCommand: (command: string | null) => void;
-    markActivitiesRead: () => void;
-    login: () => void;
-    loginWithGoogle: () => void;
-    logout: () => void;
-    
-    // Domain Actions
-    addInitiative: (initiative: TInitiative) => void;
-    updateInitiative: (initiative: TInitiative) => void;
-    updateInitiativeStatus: (id: string, status: InitiativeStatus) => void;
-    saveArtifact: (initiativeId: string, key: string, data: any) => void;
-    resetData: () => void;
-    saveWbs: (initiativeId: string, wbs: TWorkBreakdown) => void;
-    
-    // Organization/Project Actions
-    addOrganization: (org: Partial<TOrganization>) => Promise<void>;
-    addProject: (orgId: string, project: Partial<TProject>) => Promise<void>;
-    
-    // AI Actions
-    triggerWBS: (orgId: string, initiativeId: string) => Promise<void>;
-    triggerRisks: (orgId: string, initiativeId: string) => Promise<void>;
-
-    // Persistence
-    exportData: () => Promise<string>;
-    importData: (json: string) => void;
-}
+type CatalystContextType = UIContextType & AuthContextType & OrgContextType & InitiativeContextType;
 
 const CatalystContext = createContext<CatalystContextType | undefined>(undefined);
 
 export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    console.log("CatalystProvider rendered");
     // State Initialization with Robust Error Handling
     const [initiatives, setInitiativesState] = useState<TInitiative[]>(() => {
         try {
             const saved = localStorage.getItem('cognisys-initiatives');
-            return saved ? JSON.parse(saved) : MOCK_INITIATIVES;
+            // No MOCK_INITIATIVES fallback — real data comes from the API
+            return saved ? JSON.parse(saved) : [];
         } catch (e) {
-            console.error("Failed to parse initiatives from local storage, resetting to defaults.", e);
-            return MOCK_INITIATIVES;
+            return [];
         }
     });
 
@@ -130,25 +85,42 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
     });
 
     const [loading, setLoading] = useState(false);
+    const [apiError, setApiError] = useState<string | null>(null);
+
+    // Ref so fetchDataForOrgs can access current orgs without a stale closure
+    const organizationsRef = useRef<TOrganization[]>(organizations);
+    useEffect(() => { organizationsRef.current = organizations; }, [organizations]);
 
     // --- Data Fetching ---
-    const fetchInitialData = useCallback(async () => {
-        if (!user) return;
+    // Accepts the org list explicitly to avoid circular deps with organizations state
+    const fetchDataForOrgs = useCallback(async (orgs: TOrganization[]) => {
+        if (!orgs.length) return;
         setLoading(true);
+        setApiError(null);
         try {
-            // For now, assume user has at least one org or we fetch all they have access to
-            // This is a simplified version for the integration phase
-            // In a real app, we'd have an 'activeOrgId'
+            const allProjects: TProject[] = [];
+            const allInitiatives: TInitiative[] = [];
+            await Promise.all(orgs.map(async (org) => {
+                const [projectsRes, initiativesRes] = await Promise.all([
+                    ProjectAPI.list(org.id),
+                    InitiativeAPI.listByOrg(org.id),
+                ]);
+                allProjects.push(...(projectsRes.data ?? []));
+                allInitiatives.push(...(initiativesRes.data ?? []));
+            }));
+            setProjectsState(allProjects);
+            setInitiativesState(allInitiatives);
         } catch (error) {
-            console.error("Failed to fetch initial data", error);
+            setApiError('Could not load data from the server. Showing cached version.');
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, []);
 
-    useEffect(() => {
-        fetchInitialData();
-    }, [fetchInitialData]);
+    // Public fetchInitialData — uses current orgs from ref
+    const fetchInitialData = useCallback(async () => {
+        await fetchDataForOrgs(organizationsRef.current);
+    }, [fetchDataForOrgs]);
 
     const unreadActivities = useMemo(() => activities.filter(a => !a.read).length, [activities]);
 
@@ -172,7 +144,7 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
             try {
                 localStorage.setItem('cognisys-initiatives', JSON.stringify(initiatives));
             } catch (e) {
-                console.error("Failed to save initiatives to local storage", e);
+                logger.error("Failed to save initiatives to local storage", e);
             }
         }, 1000); 
 
@@ -230,15 +202,21 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
                         body: JSON.stringify({ idToken }),
                     });
                 } catch (err) {
-                    console.warn('Could not sync Firebase session with server:', err);
+                    // Session cookie is best-effort; token auth still works
                 }
+                // Refresh data from API using orgs already in localStorage
+                const storedOrgs = (() => {
+                    try { return JSON.parse(localStorage.getItem('cognisys-organizations') || '[]'); }
+                    catch { return []; }
+                })();
+                fetchDataForOrgs(storedOrgs);
             } else {
                 setUser(null);
                 localStorage.removeItem('cognisys-user');
             }
         });
-        return unsubscribe;
-    }, [mapFirebaseUser]);
+    // Update auth unsubscribe dependency to include fetchDataForOrgs
+    }, [mapFirebaseUser, fetchDataForOrgs]);
 
     // Sign in with GitHub via Firebase
     const login = useCallback(async () => {
@@ -249,7 +227,7 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
             if (err?.code === 'auth/popup-blocked') {
                 setToastMessage('Please allow popups to sign in.');
             } else if (err?.code !== 'auth/popup-closed-by-user') {
-                console.error('GitHub sign-in error:', err);
+                logger.error('GitHub sign-in error:', err);
                 setToastMessage('Failed to sign in with GitHub.');
             }
         }
@@ -263,7 +241,7 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
             if (err?.code === 'auth/popup-blocked') {
                 setToastMessage('Please allow popups to sign in.');
             } else if (err?.code !== 'auth/popup-closed-by-user') {
-                console.error('Google sign-in error:', err);
+                logger.error('Google sign-in error:', err);
                 setToastMessage('Failed to sign in with Google.');
             }
         }
@@ -276,25 +254,29 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
             await fetch('/api/auth/logout', { method: 'POST' });
             setToastMessage('Logged out successfully.');
         } catch (err) {
-            console.error('Logout failed:', err);
+            logger.error('Logout failed:', err);
         }
     }, [setToastMessage]);
 
     const addOrganization = useCallback(async (org: Partial<TOrganization>) => {
         try {
-            const response = await OrganizationAPI.create(org);
+            const res = await OrganizationAPI.create(org);
+            const newOrg: TOrganization = res.data;
+            setOrganizationsState(prev => [...prev, newOrg]);
             setToastMessage('Organization created successfully.');
-            // Refresh orgs
+            // Fetch projects and initiatives for the new org
+            fetchDataForOrgs([newOrg]);
         } catch (error) {
             setToastMessage('Failed to create organization.');
         }
-    }, [setToastMessage]);
+    }, [setToastMessage, fetchDataForOrgs]);
 
     const addProject = useCallback(async (orgId: string, project: Partial<TProject>) => {
         try {
-            await ProjectAPI.create(orgId, project);
+            const res = await ProjectAPI.create(orgId, project);
+            const newProject: TProject = res.data;
+            setProjectsState(prev => [...prev, newProject]);
             setToastMessage('Project created successfully.');
-            // Refresh projects
         } catch (error) {
             setToastMessage('Failed to create project.');
         }
@@ -325,6 +307,7 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
     // --- Actions ---
 
     const addInitiative = useCallback((initiative: TInitiative) => {
+        // Optimistic update — state updates immediately for instant UI feedback
         setInitiativesState(prev => [initiative, ...prev]);
         setToastMessage(`Initiative "${initiative.title}" created.`);
         
@@ -342,6 +325,12 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
         };
         setActivities(prev => [activity, ...prev]);
 
+        // Write-through to API (fire-and-forget; local state is source of truth until sync)
+        if (initiative.orgId && initiative.projectId) {
+            void InitiativeAPI.create(initiative.orgId, initiative.projectId, initiative).catch(() => {
+                // Non-blocking — initiative already persisted to localStorage
+            });
+        }
     }, [setToastMessage]);
 
     const updateInitiative = useCallback((initiative: TInitiative) => {
@@ -350,6 +339,15 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
             setSelectedInitiative(initiative);
         }
         setToastMessage(`Initiative "${initiative.title}" updated.`);
+        // Write-through to API (fire-and-forget)
+        if (initiative.orgId && initiative.projectId) {
+            void InitiativeAPI.update(
+                initiative.orgId,
+                initiative.projectId,
+                initiative.id,
+                initiative
+            ).catch(() => { /* non-blocking */ });
+        }
     }, [selectedInitiative, setToastMessage]);
 
     const updateInitiativeStatus = useCallback((id: string, newStatus: InitiativeStatus) => {
@@ -448,7 +446,7 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
                         ));
                         setToastMessage(`${interestedAgent.name} commented on your work.`);
                     } catch (e) {
-                        console.error("AI reaction failed", e);
+                        logger.error("AI reaction failed", e);
                     }
                 }, 2000); // 2 second delay for "thinking" effect
             }
@@ -467,15 +465,16 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
     }, [selectedInitiative, setToastMessage]);
 
     const resetData = useCallback(() => {
-        if(confirm("Are you sure? This will delete all your initiatives and restore the defaults.")) {
-            setInitiativesState(MOCK_INITIATIVES);
+        if(confirm("Are you sure? This will clear all your initiatives and reload from the server.")) {
+            setInitiativesState([]);
             setSelectedInitiative(null);
             setCurrentView('dashboard');
             setActivities([]);
             localStorage.removeItem('cognisys-initiatives');
-            setToastMessage('System reset to defaults.');
+            setToastMessage('Data cleared. Reloading from server...');
+            fetchInitialData();
         }
-    }, [setToastMessage]);
+    }, [setToastMessage, fetchInitialData]);
 
     const exportData = useCallback(async () => {
         const hiveStates: Record<string, any> = {};
@@ -485,7 +484,7 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
                 try {
                     hiveStates[init.id] = JSON.parse(stateStr);
                 } catch (e) {
-                    console.error(`Failed to parse hive state for ${init.id}`);
+                    logger.error(`Failed to parse hive state for ${init.id}`);
                 }
             }
         });
@@ -520,56 +519,85 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
             }
             setToastMessage("Data imported successfully.");
         } catch (e) {
-            console.error(e);
+            logger.error(e);
             setToastMessage("Failed to import data. Invalid file.");
         }
     }, [setToastMessage]);
 
-    const contextValue = useMemo(() => ({
-        initiatives,
+    // ── Domain-scoped memos — each re-runs only when its own slice changes ─────
+    const authValue = useMemo<AuthContextType>(() => ({
+        user,
+        login,
+        loginWithGoogle,
+        logout,
+    }), [user, login, loginWithGoogle, logout]);
+
+    const orgValue = useMemo<OrgContextType>(() => ({
         organizations,
         projects,
-        selectedInitiative,
-        currentView,
-        theme,
-        toastMessage,
-        aiModel,
-        hiveCommand,
-        activities,
-        unreadActivities,
-        user,
-        setInitiatives: setInitiativesState,
+        loading,
+        apiError,
         setOrganizations: setOrganizationsState,
         setProjects: setProjectsState,
+        addOrganization,
+        addProject,
+        fetchInitialData,
+    }), [organizations, projects, loading, apiError, addOrganization, addProject, fetchInitialData]);
+
+    const initiativeValue = useMemo<InitiativeContextType>(() => ({
+        initiatives,
+        selectedInitiative,
+        activities,
+        unreadActivities,
+        setInitiatives: setInitiativesState,
         selectInitiative: setSelectedInitiative,
-        setCurrentView,
-        setTheme: setThemeState,
-        setToastMessage,
-        setAiModel: setAiModelState,
-        setHiveCommand,
         markActivitiesRead,
-        login,
-        logout,
         addInitiative,
         updateInitiative,
         updateInitiativeStatus,
         saveArtifact,
         resetData,
         saveWbs,
-        addOrganization,
-        addProject,
         triggerWBS,
         triggerRisks,
         exportData,
-        importData
-    }), [
-        initiatives, organizations, projects, selectedInitiative, currentView, theme, toastMessage, aiModel, hiveCommand, activities, unreadActivities, user, login, loginWithGoogle, logout, addInitiative, updateInitiative, updateInitiativeStatus, saveArtifact, resetData, saveWbs, addOrganization, addProject, triggerWBS, triggerRisks, exportData, importData
-    ]);
+        importData,
+    }), [initiatives, selectedInitiative, activities, unreadActivities, markActivitiesRead,
+        addInitiative, updateInitiative, updateInitiativeStatus, saveArtifact, resetData,
+        saveWbs, triggerWBS, triggerRisks, exportData, importData]);
+
+    const uiValue = useMemo<UIContextType>(() => ({
+        currentView,
+        theme,
+        toastMessage,
+        aiModel,
+        hiveCommand,
+        setCurrentView,
+        setTheme: setThemeState,
+        setToastMessage,
+        setAiModel: setAiModelState,
+        setHiveCommand,
+    }), [currentView, theme, toastMessage, aiModel, hiveCommand, setCurrentView, setToastMessage]);
+
+    const contextValue = useMemo<CatalystContextType>(() => ({
+        ...authValue,
+        ...orgValue,
+        ...initiativeValue,
+        ...uiValue,
+    }), [authValue, orgValue, initiativeValue, uiValue]);
 
     return (
-        <CatalystContext.Provider value={contextValue}>
-            {children}
-        </CatalystContext.Provider>
+        <UIContext.Provider value={uiValue}>
+            <AuthContext.Provider value={authValue}>
+                <OrgContext.Provider value={orgValue}>
+                    <InitiativeContext.Provider value={initiativeValue}>
+                        <CatalystContext.Provider value={contextValue}>
+                            {children}
+                        </CatalystContext.Provider>
+                    </InitiativeContext.Provider>
+                </OrgContext.Provider>
+            </AuthContext.Provider>
+        </UIContext.Provider>
     );
 };
 
