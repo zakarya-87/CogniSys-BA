@@ -20,6 +20,7 @@ import { ProjectController } from './controllers/ProjectController';
 import { InitiativeController } from './controllers/InitiativeController';
 import { AIController } from './controllers/AIController';
 import { ServerMemoryService } from './services/MemoryService';
+import { AuditLogService } from './services/AuditLogService';
 import { getAdminAuth } from './lib/firebaseAdmin';
 import { getAllFlags } from './featureFlags';
 import swaggerUi from 'swagger-ui-express';
@@ -127,6 +128,24 @@ export function createApp() {
   v1.get('/organizations/:orgId/initiatives', apiLimiter, authorize('viewer'), InitiativeController.listByOrg);
   v1.get('/organizations/:orgId/projects/:projectId/initiatives', apiLimiter, authorize('viewer'), InitiativeController.listByProject);
   v1.put('/organizations/:orgId/projects/:projectId/initiatives/:initiativeId', apiLimiter, authorize('member'), InitiativeController.update);
+
+  // Audit Logs — admin only; field-level change history for all org mutations
+  v1.get('/organizations/:orgId/audit-logs', apiLimiter, authorize('admin'), async (req, res) => {
+    try {
+      const { orgId } = req.params;
+      const limit = Number(req.query.limit ?? 50);
+      const action = req.query.action as string | undefined;
+      const resourceType = req.query.resourceType as string | undefined;
+      const logs = await AuditLogService.getLogs(orgId, {
+        limit: isNaN(limit) ? 50 : limit,
+        action: action as any,
+        resourceType: resourceType as any,
+      });
+      res.json({ logs });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to retrieve audit logs' });
+    }
+  });
 
   // AI Operations
   v1.post('/organizations/:orgId/initiatives/:initiativeId/wbs', aiLimiter, authorize('member'), AIController.triggerWBS);
