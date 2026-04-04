@@ -26,6 +26,10 @@ import { InvitationService } from './services/InvitationService';
 import { MemberService } from './services/MemberService';
 import { NotificationService } from './services/NotificationService';
 import { UsageMeteringService } from './services/UsageMeteringService';
+import { EmailService } from './services/EmailService';
+import { sseManager } from './services/SseManager';
+import { AnalyticsService } from './services/AnalyticsService';
+import { WebhookService } from './services/WebhookService';
 import { can } from './middleware/rbac';
 import { Permission } from './middleware/permissions';
 import { getAdminAuth } from './lib/firebaseAdmin';
@@ -322,6 +326,100 @@ export function createApp() {
       res.json({ usage: usage ?? { orgId, month: month ?? 'current', aiCalls: 0, tokenCount: 0 } });
     } catch (error) {
       safeError(res, error, 'Get Usage');
+    }
+  });
+
+  // ── SSE — Real-time notification stream ───────────────────────────────────
+  v1.get('/notifications/stream', authorize('viewer'), (req, res) => {
+    const userId = (req as any).user?.uid;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders();
+
+    // Send initial heartbeat
+    res.write('event: connected\ndata: {"status":"ok"}\n\n');
+
+    sseManager.add(userId, res);
+
+    // Heartbeat every 30s to keep connection alive through proxies
+    const heartbeat = setInterval(() => {
+      try { res.write(':heartbeat\n\n'); } catch { clearInterval(heartbeat); }
+    }, 30_000);
+
+    req.on('close', () => {
+      clearInterval(heartbeat);
+      sseManager.remove(userId, res);
+    });
+  });
+
+  // ── Analytics ─────────────────────────────────────────────────────────────
+  v1.get('/organizations/:orgId/analytics/activity', apiLimiter, authorize('admin'), async (req, res) => {
+    try {
+      const { orgId } = req.params;
+      const days = Math.min(Number(req.query.days ?? 30), 90);
+      const activity = await AnalyticsService.getOrgActivity(orgId, isNaN(days) ? 30 : days);
+      res.json({ activity });
+    } catch (error) {
+      safeError(res, error, 'Analytics Activity');
+    }
+  });
+
+  v1.get('/organizations/:orgId/analytics/initiatives', apiLimiter, authorize('admin'), async (req, res) => {
+    try {
+      const metrics = await AnalyticsService.getInitiativeMetrics(req.params.orgId);
+      res.json({ metrics });
+    } catch (error) {
+      safeError(res, error, 'Analytics Initiatives');
+    }
+  });
+
+  v1.get('/organizations/:orgId/analytics/ai-usage', apiLimiter, authorize('admin'), async (req, res) => {
+    try {
+      const { orgId } = req.params;
+      const months = Math.min(Number(req.query.months ?? 6), 12);
+      const trend = await AnalyticsService.getAIUsageTrend(orgId, isNaN(months) ? 6 : months);
+      res.json({ trend });
+    } catch (error) {
+      safeError(res, error, 'Analytics AI Usage');
+    }
+  });
+
+  // ── Webhooks ──────────────────────────────────────────────────────────────
+  v1.post('/organizations/:orgId/webhooks', apiLimiter, authorize('admin'), async (req, res) => {
+    try {
+      const { orgId } = req.params;
+      const { url, events } = req.body as { url?: string; events?: string[] };
+      if (!url || typeof url !== 'string') return res.status(400).json({ error: 'url is required' });
+      if (!events || !Array.isArray(events) || events.length === 0) return res.status(400).json({ error: 'events[] is required' });
+      const actorId = (req as any).user?.uid ?? 'unknown';
+      const webhook = await WebhookService.registerWebhook(orgId, url, events as any, actorId);
+      // Return webhook without secret in response — secret is for verification only
+      const { secret: _s, ...safe } = webhook;
+      res.status(201).json({ webhook: safe, secret: webhook.secret });
+    } catch (error) {
+      safeError(res, error, 'Register Webhook');
+    }
+  });
+
+  v1.get('/organizations/:orgId/webhooks', apiLimiter, authorize('admin'), async (req, res) => {
+    try {
+      const webhooks = await WebhookService.listWebhooks(req.params.orgId);
+      res.json({ webhooks });
+    } catch (error) {
+      safeError(res, error, 'List Webhooks');
+    }
+  });
+
+  v1.delete('/organizations/:orgId/webhooks/:webhookId', apiLimiter, authorize('admin'), async (req, res) => {
+    try {
+      await WebhookService.deleteWebhook(req.params.webhookId, req.params.orgId);
+      res.json({ status: 'deleted' });
+    } catch (error) {
+      safeError(res, error, 'Delete Webhook');
     }
   });
 
