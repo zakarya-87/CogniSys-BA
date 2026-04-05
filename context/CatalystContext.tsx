@@ -122,8 +122,13 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
             }));
             setProjectsState(allProjects);
             setInitiativesState(allInitiatives);
-        } catch (error) {
-            setApiError('Could not load data from the server. Showing cached version.');
+        } catch (error: any) {
+            const status = error?.response?.status;
+            if (status === 403) {
+                setApiError('Access denied. Your session may be missing org permissions — try signing out and back in.');
+            } else {
+                setApiError('Could not load data from the server. Showing cached version.');
+            }
         } finally {
             setLoading(false);
         }
@@ -248,7 +253,7 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
                 localStorage.removeItem('cognisys-user');
             }
         });
-    // Update auth unsubscribe dependency to include fetchDataForOrgs
+        return unsubscribe;
     }, [mapFirebaseUser, fetchDataForOrgs]);
 
     // Sign in with GitHub via Firebase
@@ -301,7 +306,9 @@ export const CatalystProvider: React.FC<{ children: ReactNode }> = ({ children }
             const newOrg: TOrganization = res.data;
             setOrganizationsState(prev => [...prev, newOrg]);
             setToastMessage('Organization created successfully.');
-            // Fetch projects and initiatives for the new org
+            // Force-refresh the ID token so the new orgId+role claims from
+            // provisionOrgClaims() are included in subsequent API requests.
+            await auth.currentUser?.getIdToken(/* forceRefresh */ true);
             fetchDataForOrgs([newOrg]);
         } catch (error) {
             setToastMessage('Failed to create organization.');

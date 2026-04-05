@@ -11,7 +11,7 @@ import cookieParser from 'cookie-parser';
 import { Sentry } from './sentryInit';
 import pinoHttp from 'pino-http';
 import { logger } from './logger';
-import { authorize } from './middleware/rbac';
+import { authorize, requireAuth } from './middleware/rbac';
 import { correlationId } from './middleware/correlationId';
 import { safeError, safeErrorHtml } from './utils/errorHandler';
 import { ModelRouter, ModelType } from './ai-agents/ModelRouter';
@@ -167,8 +167,8 @@ export function createApp() {
     app.get('/api/docs.json', (_req, res) => res.json(openApiSpec));
   }
 
-  // Organizations
-  v1.post('/organizations', apiLimiter, authorize('member'), OrganizationController.create);
+  // Organizations — POST uses requireAuth (not authorize) because new users have no org claims yet
+  v1.post('/organizations', apiLimiter, requireAuth, OrganizationController.create);
   v1.get('/organizations/:orgId', apiLimiter, authorize('viewer'), OrganizationController.get);
 
   // Projects

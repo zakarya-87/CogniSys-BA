@@ -3,6 +3,31 @@ import { getAdminAuth } from '../lib/firebaseAdmin';
 import { Permission, roleHasPermission, LEGACY_ROLE_ORDER } from './permissions';
 
 /**
+ * Lightweight auth guard: verifies a Firebase ID token but does NOT require
+ * org claims (orgId / role). Use for routes a newly signed-in user without
+ * an org must access, e.g. POST /organizations to create their first org.
+ */
+export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
+  let token: string | undefined;
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split('Bearer ')[1];
+  } else if (typeof req.query.token === 'string' && req.query.token) {
+    token = req.query.token;
+  }
+
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+
+  try {
+    req.user = await getAdminAuth().verifyIdToken(token);
+    next();
+  } catch {
+    return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+  }
+};
+
+/**
  * Backward-compatible role-based guard.
  * Verifies the Firebase Bearer token, checks that the token's `role`
  * claim meets the required minimum role level.
