@@ -6,8 +6,31 @@ const api = axios.create({
   baseURL: '/api',
 });
 
+// Helper to wait for the first auth state emission to avoid 401s on reload
+let _authPromise: Promise<void> | null = null;
+const waitForAuth = () => {
+    if (_authPromise) return _authPromise;
+    _authPromise = new Promise((resolve) => {
+        // Synchronous check: if state is already resolved, don't wait for emission
+        if (auth.currentUser) {
+            resolve();
+            return;
+        }
+        const unsubscribe = auth.onAuthStateChanged(() => {
+            unsubscribe();
+            resolve();
+        });
+    });
+    return _authPromise;
+};
+
 // Attach Firebase ID token as Bearer on every request so RBAC middleware can verify the caller.
 api.interceptors.request.use(async (config) => {
+  // If no user yet, wait a bit for Firebase to initialize (max 2s)
+  if (!auth.currentUser) {
+      await Promise.race([waitForAuth(), new Promise(r => setTimeout(r, 2000))]);
+  }
+  
   const user = auth.currentUser;
   if (user) {
     const token = await user.getIdToken();
@@ -41,6 +64,11 @@ export const AIAPI = {
     api.post(`/organizations/${orgId}/initiatives/${initiativeId}/wbs`),
   triggerRisks: (orgId: string, initiativeId: string) => 
     api.post(`/organizations/${orgId}/initiatives/${initiativeId}/risks`),
+};
+export const ActivityAPI = {
+  create: (orgId: string, activity: any) => api.post(`/organizations/${orgId}/activities`, activity),
+  list: (orgId: string, limit = 50) => api.get<any[]>(`/organizations/${orgId}/activities`, { params: { limit } }),
+  addComment: (activityId: string, comment: any) => api.post(`/activities/${activityId}/comments`, { comment }),
 };
 
 // ── Phase 6–8 API modules ─────────────────────────────────────────────────

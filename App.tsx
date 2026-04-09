@@ -62,7 +62,9 @@ const MainLayout: React.FC = () => {
         updateInitiativeStatus,
         saveWbs,
         aiModel,
-        setAiModel
+        setAiModel,
+        user,
+        projects
     } = useCatalyst();
 
     const [initialHubInitiativeId, setInitialHubInitiativeId] = useState<string | null>(null);
@@ -116,18 +118,20 @@ const MainLayout: React.FC = () => {
         try {
             const sectors = Object.values(Sector);
             const randomSector = sectors[Math.floor(Math.random() * sectors.length)];
+            const orgId = user?.orgId || 'org-0';
+            const projectId = projects[0]?.id || 'proj-0';
 
             const newInitiative: TInitiative = {
                 id: `init-${Date.now()}`,
-                orgId: 'org-0',
-                projectId: 'proj-0', // Default project
+                orgId,
+                projectId,
                 title,
                 description: description || '',
                 status: InitiativeStatus.PLANNING,
                 sector: sector || randomSector,
                 owner: {
-                    name: 'Brenda, the Ecosystem Manager',
-                    avatarUrl: 'https://i.pravatar.cc/150?u=brenda'
+                    name: user?.name || 'Coach',
+                    avatarUrl: user?.avatarUrl || 'https://i.pravatar.cc/150?u=coach'
                 },
                 artifacts: {} // Initialize empty artifacts
             };

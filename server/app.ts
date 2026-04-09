@@ -19,6 +19,7 @@ import { createOperation, getOperation, subscribe, updateOperation } from './ope
 import { OrganizationController } from './controllers/OrganizationController';
 import { ProjectController } from './controllers/ProjectController';
 import { InitiativeController } from './controllers/InitiativeController';
+import { ActivityController } from './controllers/ActivityController';
 import { AIController } from './controllers/AIController';
 import { ServerMemoryService } from './services/MemoryService';
 import { AuthService } from './services/AuthService';
@@ -58,7 +59,7 @@ export function createApp() {
         ],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-        imgSrc: ["'self'", 'data:', 'blob:', 'https://*.googleapis.com', 'https://*.firebaseapp.com', 'https://*.web.app'],
+        imgSrc: ["'self'", 'data:', 'blob:', 'https://*.googleapis.com', 'https://*.firebaseapp.com', 'https://*.web.app', 'https://i.pravatar.cc', 'https://*.gravatar.com'],
         connectSrc: [
           "'self'",
           'https://*.googleapis.com',
@@ -74,6 +75,7 @@ export function createApp() {
         ...(isDev ? {} : { upgradeInsecureRequests: [] }),
       },
     },
+    crossOriginOpenerPolicy: { policy: isDev ? 'unsafe-none' : 'same-origin-allow-popups' },
     hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
     frameguard: { action: 'deny' },
     noSniff: true,
@@ -122,7 +124,7 @@ export function createApp() {
         const plan = (session.metadata?.plan ?? 'pro') as 'pro' | 'enterprise';
         if (orgId) await BillingService.syncPlan(orgId, plan, session.subscription as string, 'active');
       } else if (event.type === 'customer.subscription.updated') {
-        const sub = event.data.object as { metadata?: { orgId?: string; plan?: string }; id: string; status: string; current_period_end: number };
+        const sub = event.data.object as unknown as { metadata?: { orgId?: string; plan?: string }; id: string; status: string; current_period_end: number };
         const orgId = sub.metadata?.orgId;
         if (orgId) {
           const plan = (sub.metadata?.plan ?? 'pro') as 'pro' | 'enterprise';
@@ -131,7 +133,7 @@ export function createApp() {
           await BillingService.syncPlan(orgId, plan, sub.id, status, periodEnd);
         }
       } else if (event.type === 'customer.subscription.deleted') {
-        const sub = event.data.object as { metadata?: { orgId?: string }; id: string };
+        const sub = event.data.object as unknown as { metadata?: { orgId?: string }; id: string };
         const orgId = sub.metadata?.orgId;
         if (orgId) await BillingService.syncPlan(orgId, 'free', sub.id, 'canceled');
       }
@@ -143,9 +145,9 @@ export function createApp() {
 
   app.use(express.json());
 
-  const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 100, standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'Too many requests, please try again later.' } });
-  const aiLimiter  = rateLimit({ windowMs: 15 * 60 * 1000, limit: 20,  standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'AI request limit reached, please try again later.' } });
-  const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'Too many auth requests, please try again later.' } });
+  const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: isDev ? 10000 : 100, standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'Too many requests, please try again later.' } });
+  const aiLimiter  = rateLimit({ windowMs: 15 * 60 * 1000, limit: isDev ? 1000 : 20,  standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'AI request limit reached, please try again later.' } });
+  const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: isDev ? 1000 : 10, standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'Too many auth requests, please try again later.' } });
 
   // Health (keep legacy /api/health for backward compat)
   app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
@@ -180,6 +182,11 @@ export function createApp() {
   v1.get('/organizations/:orgId/initiatives', apiLimiter, authorize('viewer'), InitiativeController.listByOrg);
   v1.get('/organizations/:orgId/projects/:projectId/initiatives', apiLimiter, authorize('viewer'), InitiativeController.listByProject);
   v1.put('/organizations/:orgId/projects/:projectId/initiatives/:initiativeId', apiLimiter, authorize('member'), InitiativeController.update);
+
+  // Activities
+  v1.get('/organizations/:orgId/activities', apiLimiter, authorize('viewer'), ActivityController.listByOrg);
+  v1.post('/organizations/:orgId/activities', apiLimiter, authorize('member'), ActivityController.log);
+  v1.post('/activities/:activityId/comments', apiLimiter, authorize('member'), ActivityController.addComment);
 
   // Audit Logs — admin only; field-level change history for all org mutations
   v1.get('/organizations/:orgId/audit-logs', apiLimiter, authorize('admin'), async (req, res) => {
@@ -219,7 +226,7 @@ export function createApp() {
   v1.get('/organizations/:orgId/tasks/failed', apiLimiter, authorize('admin'), async (req, res) => {
     try {
       const { orgId } = req.params;
-      const tasks = await TaskQueue.getDlqTasks(orgId);
+      const tasks = await TaskQueue.getDlqTasks(orgId as string);
       res.json({ tasks });
     } catch (err) {
       safeError(res, err, 'Get DLQ Tasks');
@@ -239,7 +246,7 @@ export function createApp() {
       if (!content || typeof content !== 'string') return res.status(400).json({ error: 'content is required' });
       if (!vector || !Array.isArray(vector) || vector.length === 0) return res.status(400).json({ error: 'vector (number[]) is required' });
       if (!type || !['fact', 'decision', 'insight'].includes(type)) return res.status(400).json({ error: 'type must be fact | decision | insight' });
-      const memory = await ServerMemoryService.addMemory(orgId, content, vector, type, metadata);
+      const memory = await ServerMemoryService.addMemory(orgId as string, content as string, vector as number[], type as any, metadata);
       res.status(201).json({ memory });
     } catch (error) {
       safeError(res, error, 'Memory Store');
@@ -251,7 +258,7 @@ export function createApp() {
       const { orgId } = req.params;
       const { vector, limit } = req.body as { vector?: number[]; limit?: number };
       if (!vector || !Array.isArray(vector) || vector.length === 0) return res.status(400).json({ error: 'vector (number[]) is required' });
-      const results = await ServerMemoryService.search(orgId, vector, limit ?? 5);
+      const results = await ServerMemoryService.search(orgId as string, vector as number[], limit ?? 5);
       res.json({ results });
     } catch (error) {
       safeError(res, error, 'Memory Search');
@@ -266,7 +273,7 @@ export function createApp() {
       if (!email || typeof email !== 'string') return res.status(400).json({ error: 'email is required' });
       if (!role || !['admin', 'member', 'viewer'].includes(role)) return res.status(400).json({ error: 'role must be admin | member | viewer' });
       const userId = (req as any).user?.uid ?? 'unknown';
-      const invitation = await InvitationService.createInvitation(orgId, email, role as any, userId);
+      const invitation = await InvitationService.createInvitation(orgId as string, email, role as any, userId);
       res.status(201).json({ invitation });
     } catch (error) {
       safeError(res, error, 'Create Invitation');
@@ -288,7 +295,7 @@ export function createApp() {
     try {
       const { invitationId } = req.params;
       const userId = (req as any).user?.uid ?? 'unknown';
-      await InvitationService.revokeInvitation(invitationId, userId);
+      await InvitationService.revokeInvitation(invitationId as string, userId);
       res.json({ status: 'revoked' });
     } catch (error) {
       safeError(res, error, 'Revoke Invitation');
@@ -303,7 +310,7 @@ export function createApp() {
       if (!authHeader?.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
       const idToken = authHeader.split('Bearer ')[1];
       const decoded = await (await import('./lib/firebaseAdmin')).getAdminAuth().verifyIdToken(idToken);
-      const result = await InvitationService.acceptInvitation(token, decoded.uid);
+      const result = await InvitationService.acceptInvitation(token as string, decoded.uid);
       res.json({ status: 'accepted', ...result });
     } catch (error) {
       safeError(res, error, 'Accept Invitation');
@@ -314,7 +321,7 @@ export function createApp() {
   v1.get('/organizations/:orgId/members', apiLimiter, authorize('viewer'), async (req, res) => {
     try {
       const { orgId } = req.params;
-      const members = await MemberService.listMembers(orgId);
+      const members = await MemberService.listMembers(orgId as string);
       res.json({ members });
     } catch (error) {
       safeError(res, error, 'List Members');
@@ -325,7 +332,7 @@ export function createApp() {
     try {
       const { orgId, userId: targetUserId } = req.params;
       const actorId = (req as any).user?.uid ?? 'unknown';
-      await MemberService.removeMember(orgId, targetUserId, actorId);
+      await MemberService.removeMember(orgId as string, targetUserId as string, actorId);
       res.json({ status: 'removed' });
     } catch (error) {
       safeError(res, error, 'Remove Member');
@@ -338,7 +345,7 @@ export function createApp() {
       const { role } = req.body as { role?: string };
       if (!role || !['admin', 'member', 'viewer'].includes(role)) return res.status(400).json({ error: 'role must be admin | member | viewer' });
       const actorId = (req as any).user?.uid ?? 'unknown';
-      await MemberService.changeMemberRole(orgId, targetUserId, role as any, actorId);
+      await MemberService.changeMemberRole(orgId as string, targetUserId as string, role as any, actorId);
       res.json({ status: 'updated', role });
     } catch (error) {
       safeError(res, error, 'Change Member Role');
@@ -351,7 +358,8 @@ export function createApp() {
       const userId = (req as any).user?.uid;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
       const unreadOnly = req.query.unreadOnly === 'true';
-      const limit = Number(req.query.limit ?? 50);
+      const limitRaw = req.query.limit;
+      const limit = Number(typeof limitRaw === 'string' ? limitRaw : 50);
       const notifications = await NotificationService.getNotifications(userId, { unreadOnly, limit: isNaN(limit) ? 50 : limit });
       res.json({ notifications });
     } catch (error) {
@@ -386,7 +394,7 @@ export function createApp() {
     try {
       const { orgId } = req.params;
       const month = req.query.month as string | undefined;
-      const usage = await UsageMeteringService.getUsage(orgId, month);
+      const usage = await UsageMeteringService.getUsage(orgId as string, month);
       res.json({ usage: usage ?? { orgId, month: month ?? 'current', aiCalls: 0, tokenCount: 0 } });
     } catch (error) {
       safeError(res, error, 'Get Usage');
@@ -759,7 +767,7 @@ export function createApp() {
   });
 
   // Gemini AI Proxy
-  app.post('/api/gemini/generate', aiLimiter, authorize('viewer'), async (req, res) => {
+  app.post('/api/gemini/generate', aiLimiter, requireAuth, async (req, res) => {
     try {
       const { prompt, model, config } = req.body as { prompt: string; model?: 'flash' | 'pro'; config?: Record<string, unknown> };
       if (!prompt || typeof prompt !== 'string') return res.status(400).json({ error: 'prompt is required and must be a string' });
@@ -781,7 +789,7 @@ export function createApp() {
   });
 
   // Mistral Proxy
-  app.post('/api/mistral/chat', aiLimiter, authorize('viewer'), async (req, res) => {
+  app.post('/api/mistral/chat', aiLimiter, requireAuth, async (req, res) => {
     try {
       const apiKey = process.env.MISTRAL_API_KEY;
       if (!apiKey) return res.status(500).json({ error: 'MISTRAL_API_KEY is not configured' });
@@ -802,7 +810,7 @@ export function createApp() {
   });
 
   // Azure OpenAI Proxy
-  app.post('/api/azure-openai/chat', async (req, res) => {
+  app.post('/api/azure-openai/chat', aiLimiter, requireAuth, async (req, res) => {
     try {
       const apiKey = process.env.AZURE_OPENAI_API_KEY;
       const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
@@ -829,7 +837,7 @@ export function createApp() {
 
   // --- Gemini Embedding Proxy ---
   // Unblocks vector memory (Phase 2). Uses text-embedding-004 model.
-  app.post('/api/gemini/embed', aiLimiter, authorize('viewer'), async (req, res) => {
+  app.post('/api/gemini/embed', aiLimiter, requireAuth, async (req, res) => {
     try {
       const { text } = req.body as { text?: string };
       if (!text || typeof text !== 'string') {
@@ -867,7 +875,7 @@ export function createApp() {
   // --- Async AI Generation with SSE progress ---
   // POST /api/gemini/generate/stream  → 202 { operationId }
   // Caller then opens GET /api/ai/stream/:operationId to receive SSE events.
-  app.post('/api/gemini/generate/stream', aiLimiter, authorize('viewer'), (req, res) => {
+  app.post('/api/gemini/generate/stream', aiLimiter, requireAuth, (req, res) => {
     const { prompt, model, config } = req.body as { prompt: string; model?: 'flash' | 'pro'; config?: Record<string, unknown> };
     if (!prompt || typeof prompt !== 'string') {
       return res.status(400).json({ error: 'prompt is required and must be a string' });
@@ -902,7 +910,7 @@ export function createApp() {
 
   // GET /api/ai/stream/:operationId  → SSE stream
   // Emits: progress | complete | error events, then closes.
-  app.get('/api/ai/stream/:operationId', authorize('viewer'), (req, res) => {
+  app.get('/api/ai/stream/:operationId', requireAuth, (req, res) => {
     const { operationId } = req.params;
     const op = getOperation(operationId);
     if (!op) {

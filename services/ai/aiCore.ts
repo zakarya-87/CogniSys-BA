@@ -571,9 +571,17 @@ export async function generateText(
 // --- Embedding Generation ---
 export const getEmbedding = async (text: string): Promise<number[]> => {
   try {
+    let token = '';
+    const user = (await import('../../firebase')).auth.currentUser;
+    if (user) {
+      try { token = await user.getIdToken(); } catch (e) {}
+    }
     const fetchWithTimeout = withTimeout((signal) => fetch('/api/gemini/embed', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
       body: JSON.stringify({ text }),
       signal,
     }), AI_CONFIG.timeouts.embedding);

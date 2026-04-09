@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx server.ts",
+    "dev": "tsx watch server.ts",
     "build": "vite build",
     "build:functions": "esbuild functions/src/index.ts --bundle --platform=node --target=node20 --outfile=functions/lib/index.js --external:firebase-admin --external:firebase-functions --external:@grpc/grpc-js --external:@grpc/proto-loader",
     "build:all": "npm run build && npm run build:functions",

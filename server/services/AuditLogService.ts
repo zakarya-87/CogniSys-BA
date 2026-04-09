@@ -1,5 +1,5 @@
 import { getAdminDb } from '../lib/firebaseAdmin';
-import * as admin from 'firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 export type AuditResourceType = 'organization' | 'project' | 'initiative';
 export type AuditAction = 'create' | 'update' | 'delete';
@@ -28,7 +28,7 @@ export interface AuditLogEntry {
   changes: AuditChange[];
   context: AuditContext;
   severity: AuditSeverity;
-  timestamp: admin.firestore.FieldValue;
+  timestamp: FieldValue;
 }
 
 /** Compute a flat list of changed fields between two plain objects. */
@@ -46,6 +46,19 @@ function diffObjects(
     }
   }
   return changes;
+}
+
+/** Recursively remove 'undefined' values from an object for Firestore compatibility. */
+function cleanObject(obj: any): any {
+  if (Array.isArray(obj)) return obj.map(cleanObject);
+  if (obj !== null && typeof obj === 'object') {
+    return Object.fromEntries(
+      Object.entries(obj)
+        .filter(([_, v]) => v !== undefined)
+        .map(([k, v]) => [k, cleanObject(v)])
+    );
+  }
+  return obj;
 }
 
 export class AuditLogService {
@@ -83,10 +96,10 @@ export class AuditLogService {
       resourceType,
       resourceId,
       action,
-      changes,
-      context,
+      changes: cleanObject(changes),
+      context: cleanObject(context),
       severity: resolvedSeverity,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      timestamp: FieldValue.serverTimestamp(),
     };
 
     await getAdminDb().collection('audit_logs').add(entry);
@@ -122,7 +135,7 @@ export class AuditLogService {
       userId,
       action,
       severity: 'INFO',
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      timestamp: FieldValue.serverTimestamp(),
     });
   }
 }

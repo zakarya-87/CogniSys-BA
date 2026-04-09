@@ -6,7 +6,8 @@ const MembersView = lazy(() => import('./MembersView').then(m => ({ default: m.M
 const BillingView = lazy(() => import('./BillingView').then(m => ({ default: m.BillingView })));
 import { Button } from './ui/Button';
 import { Spinner } from './ui/Spinner';
-import { useCatalyst, useTheme } from '../context/CatalystContext';
+import { useCatalyst } from '../context/CatalystContext';
+import { useTheme } from '../context/UIContext';
 import { generateMonteCarloSimulation, runEthicalCheck, generateText, generateAnalysisPlan } from '../services/geminiService';
 import { Microservices } from '../services/microservices';
 import { OracleService } from '../services/oracleService';
