@@ -4,7 +4,6 @@ import { useAuth } from './AuthContext';
 import { useUI } from './UIContext';
 import { useOrg } from './OrgContext';
 import { 
-  firestoreWatchInitiatives, 
   firestoreWatchActivities,
   firestoreGetUserPrefs,
   firestoreSetUserPrefs
@@ -19,6 +18,7 @@ import { logger } from '../src/utils/logger';
 export interface InitiativeContextType {
   initiatives: TInitiative[];
   selectedInitiative: TInitiative | null;
+  initiativesNextCursor: string | null;
   activities: TActivity[];
   unreadActivities: number;
   setInitiatives: (initiatives: TInitiative[]) => void;
@@ -29,10 +29,12 @@ export interface InitiativeContextType {
   updateInitiativeStatus: (id: string, status: InitiativeStatus) => void;
   saveArtifact: (initiativeId: string, key: string, data: any) => void;
   loading: boolean;
+  loadingMore: boolean;
   resetData: () => void;
   saveWbs: (initiativeId: string, wbs: TWorkBreakdown) => void;
   triggerWBS: (orgId: string, initiativeId: string) => Promise<void>;
   triggerRisks: (orgId: string, initiativeId: string) => Promise<void>;
+  loadMoreInitiatives: () => Promise<void>;
   exportData: () => Promise<string>;
   importData: (json: string) => void;
 }
@@ -46,9 +48,11 @@ export const InitiativeProvider: React.FC<{ children: ReactNode }> = ({ children
 
   const [initiatives, setInitiativesState] = useState<TInitiative[]>([]);
   const [selectedInitiative, setSelectedInitiative] = useState<TInitiative | null>(null);
+  const [initiativesNextCursor, setInitiativesNextCursor] = useState<string | null>(null);
   const [activities, setActivities] = useState<TActivity[]>([]);
   const [lastReadTimestamp, setLastReadTimestamp] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
 
   // Real-time Firestore sync 
   useEffect(() => {
@@ -59,10 +63,21 @@ export const InitiativeProvider: React.FC<{ children: ReactNode }> = ({ children
       return;
     }
     setLoading(true);
-    const unsubInits = firestoreWatchInitiatives(user.orgId, (inits) => {
-      setInitiativesState(inits);
-      setLoading(false);
-    });
+    
+    // Initial fetch (paginated)
+    const fetchInitialInitiatives = async () => {
+        try {
+            const { data } = await InitiativeAPI.listByOrg(user.orgId!, { limit: 20 });
+            setInitiativesState(data.data);
+            setInitiativesNextCursor(data.nextCursor);
+        } catch (e) {
+            logger.error('Failed to fetch initiatives', e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    fetchInitialInitiatives();
     
     const unsubActivities = firestoreWatchActivities(user.orgId, (acts) => {
         setActivities(acts);
@@ -73,10 +88,28 @@ export const InitiativeProvider: React.FC<{ children: ReactNode }> = ({ children
     });
     
     return () => {
-        unsubInits();
         unsubActivities();
     };
   }, [user]);
+
+  const loadMoreInitiatives = useCallback(async () => {
+    if (!user?.orgId || !initiativesNextCursor || loadingMore) return;
+    
+    setLoadingMore(true);
+    try {
+        const { data } = await InitiativeAPI.listByOrg(user.orgId, { 
+            limit: 20, 
+            cursor: initiativesNextCursor 
+        });
+        setInitiativesState(prev => [...prev, ...data.data]);
+        setInitiativesNextCursor(data.nextCursor);
+    } catch (e: any) {
+        logger.error('Failed to load more initiatives', e);
+        setToastMessage('Failed to load more initiatives');
+    } finally {
+        setLoadingMore(false);
+    }
+  }, [user?.orgId, initiativesNextCursor, loadingMore, setToastMessage]);
 
   // Sync selectedInitiative with updated data from the initiatives list
   useEffect(() => {
@@ -312,6 +345,7 @@ export const InitiativeProvider: React.FC<{ children: ReactNode }> = ({ children
       value={{
         initiatives,
         selectedInitiative,
+        initiativesNextCursor,
         activities,
         unreadActivities,
         setInitiatives: setInitiativesState,
@@ -322,10 +356,12 @@ export const InitiativeProvider: React.FC<{ children: ReactNode }> = ({ children
         updateInitiativeStatus,
         saveArtifact,
         loading,
+        loadingMore,
         resetData,
         saveWbs,
         triggerWBS,
         triggerRisks,
+        loadMoreInitiatives,
         exportData,
         importData
       }}

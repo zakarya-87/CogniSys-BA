@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { TOrganization, TProject } from '../types';
 import { useAuth } from './AuthContext';
-import { firestoreWatchOrganization, firestoreWatchProjects } from '../services/firestoreService';
+import { firestoreWatchOrganization } from '../services/firestoreService';
 import { OrganizationAPI, ProjectAPI } from '../src/services/api';
 import { logger } from '../src/utils/logger';
 
@@ -9,9 +9,12 @@ export interface OrgContextType {
   organizations: TOrganization[];
   projects: TProject[];
   loading: boolean;
+  loadingMore: boolean;
   apiError: string | null;
+  projectsNextCursor: string | null;
   addOrganization: (org: Partial<TOrganization>) => Promise<TOrganization>;
   addProject: (orgId: string, project: Partial<TProject>) => Promise<void>;
+  loadMoreProjects: () => Promise<void>;
 }
 
 export const OrgContext = createContext<OrgContextType | undefined>(undefined);
@@ -21,7 +24,9 @@ export const OrgProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   
   const [organizations, setOrganizations] = useState<TOrganization[]>([]);
   const [projects, setProjects] = useState<TProject[]>([]);
+  const [projectsNextCursor, setProjectsNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -41,15 +46,42 @@ export const OrgProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setLoading(false);
     });
 
-    const unsubProjects = firestoreWatchProjects(user.orgId, (projs) => {
-      setProjects(projs);
-    });
+    // Initial projects fetch (paginated)
+    const fetchInitialProjects = async () => {
+      try {
+        const { data } = await ProjectAPI.list(user.orgId!, { limit: 20 });
+        setProjects(data.data);
+        setProjectsNextCursor(data.nextCursor);
+      } catch (e) {
+        logger.error('Failed to fetch projects', e);
+      }
+    };
+
+    fetchInitialProjects();
 
     return () => {
       unsubOrg();
-      unsubProjects();
     };
   }, [user]);
+
+  const loadMoreProjects = useCallback(async () => {
+    if (!user?.orgId || !projectsNextCursor || loadingMore) return;
+    
+    setLoadingMore(true);
+    try {
+      const { data } = await ProjectAPI.list(user.orgId, { 
+        limit: 20, 
+        cursor: projectsNextCursor 
+      });
+      setProjects(prev => [...prev, ...data.data]);
+      setProjectsNextCursor(data.nextCursor);
+    } catch (e: any) {
+      logger.error('Failed to load more projects', e);
+      setApiError('Failed to load more projects');
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [user?.orgId, projectsNextCursor, loadingMore]);
 
   const addOrganization = useCallback(async (org: Partial<TOrganization>) => {
     try {
@@ -84,10 +116,13 @@ export const OrgProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       value={{ 
         organizations, 
         projects, 
-        loading, 
+        loading,
+        loadingMore,
         apiError, 
+        projectsNextCursor,
         addOrganization, 
-        addProject 
+        addProject,
+        loadMoreProjects
       }}
     >
       {children}

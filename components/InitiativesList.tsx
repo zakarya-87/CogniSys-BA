@@ -6,6 +6,9 @@ import { ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 interface InitiativesListProps {
   initiatives: TInitiative[];
   onSelectInitiative: (initiative: TInitiative) => void;
+  nextCursor?: string | null;
+  loading?: boolean;
+  onLoadMore?: () => void;
 }
 
 type SortKey = 'title' | 'status';
@@ -18,7 +21,13 @@ const SortIcon: React.FC<{ order: SortOrder | null }> = ({ order }) => {
     return order === 'asc' ? <ArrowUp className="h-4 w-4 text-accent-purple" /> : <ArrowDown className="h-4 w-4 text-accent-purple" />;
 };
 
-export const InitiativesList: React.FC<InitiativesListProps> = ({ initiatives, onSelectInitiative }) => {
+export const InitiativesList: React.FC<InitiativesListProps> = ({ 
+    initiatives, 
+    onSelectInitiative,
+    nextCursor,
+    loading,
+    onLoadMore
+}) => {
     const [sortConfig, setSortConfig] = useState<{ key: SortKey; order: SortOrder } | null>({ key: 'title', order: 'asc' });
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -157,6 +166,18 @@ export const InitiativesList: React.FC<InitiativesListProps> = ({ initiatives, o
                         className="px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-text-main-light dark:text-text-main-dark bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl hover:bg-surface-darker/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm"
                     >
                         Next
+                    </button>
+                </div>
+            )}
+
+            {nextCursor && (
+                <div className="mt-8 flex justify-center">
+                    <button
+                        onClick={onLoadMore}
+                        disabled={loading}
+                        className="flex items-center gap-2 px-8 py-3 bg-accent-purple text-white rounded-xl font-bold text-sm shadow-lg shadow-accent-purple/20 hover:bg-accent-purple/90 transition-all disabled:opacity-50"
+                    >
+                        {loading ? 'Loading...' : 'Load More Initiatives from Server'}
                     </button>
                 </div>
             )}

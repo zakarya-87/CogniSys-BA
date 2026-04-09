@@ -21,6 +21,10 @@ export class InitiativeService {
     return this.repo.getByOrgId(orgId);
   }
 
+  async getInitiativesByOrgPaginated(orgId: string, limit: number, cursor?: string): Promise<{ data: TInitiative[]; nextCursor: string | null }> {
+    return this.repo.getByOrgIdPaginated(orgId, limit, cursor);
+  }
+
   async getInitiativeById(id: string): Promise<TInitiative | null> {
     return this.repo.getById(id);
   }

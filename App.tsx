@@ -64,7 +64,11 @@ const MainLayout: React.FC = () => {
         aiModel,
         setAiModel,
         user,
-        projects
+        projects,
+        loading,
+        loadingMore,
+        initiativesNextCursor,
+        loadMoreInitiatives
     } = useCatalyst();
 
     const [initialHubInitiativeId, setInitialHubInitiativeId] = useState<string | null>(null);
@@ -205,7 +209,15 @@ const MainLayout: React.FC = () => {
         switch (currentView) {
             case 'myWorkspace': return <MyWorkspace initiatives={initiatives} />;
             case 'dashboard': return <Dashboard initiatives={initiatives} onSelectInitiative={selectInitiative} onCreateInitiative={handleCreateInitiative} />;
-            case 'initiatives': return <InitiativesList initiatives={initiatives} onSelectInitiative={selectInitiative} />;
+            case 'initiatives': return (
+                <InitiativesList 
+                    initiatives={initiatives} 
+                    onSelectInitiative={selectInitiative}
+                    nextCursor={initiativesNextCursor}
+                    loading={loadingMore}
+                    onLoadMore={loadMoreInitiatives}
+                />
+            );
             case 'hive': return <TheHive />;
             case 'cortex': return <CortexView initiatives={initiatives} onSelectInitiative={handleSelectInitiativeFromCortex} />;
             case 'predictiveCore': return <PredictiveCoreView />;

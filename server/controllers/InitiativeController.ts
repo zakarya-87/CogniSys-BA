@@ -22,8 +22,11 @@ export class InitiativeController {
   static async listByOrg(req: Request, res: Response) {
     try {
       const { orgId } = req.params as { orgId: string };
-      const initiatives = await initiativeService.getInitiativesByOrg(orgId);
-      res.json(initiatives);
+      const limit = parseInt(req.query.limit as string) || 20;
+      const cursor = req.query.cursor as string | undefined;
+
+      const { data, nextCursor } = await initiativeService.getInitiativesByOrgPaginated(orgId, limit, cursor);
+      res.json({ data, nextCursor });
     } catch (error) {
       safeError(res, error, 'InitiativeController.listByOrg');
     }

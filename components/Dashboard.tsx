@@ -34,7 +34,7 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ initiatives, onSelectInitiative, onCreateInitiative }) => {
-  const { setHiveCommand, setCurrentView, user, loading, apiError, fetchInitialData } = useCatalyst();
+  const { setHiveCommand, setCurrentView, user, loading, apiError } = useCatalyst();
   const { t, i18n } = useTranslation(['dashboard', 'common']);
   const [isIngestorOpen, setIsIngestorOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -125,7 +125,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ initiatives, onSelectIniti
             <span className="text-sm font-medium">{apiError}</span>
           </div>
           <button
-            onClick={() => fetchInitialData()}
+            onClick={() => window.location.reload()}
             disabled={loading}
             className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:opacity-80 transition-opacity disabled:opacity-50"
           >

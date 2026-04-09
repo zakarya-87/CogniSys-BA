@@ -46,13 +46,15 @@ export const OrganizationAPI = {
 
 export const ProjectAPI = {
   create: (orgId: string, project: Partial<TProject>) => api.post(`/organizations/${orgId}/projects`, project),
-  list: (orgId: string) => api.get<TProject[]>(`/organizations/${orgId}/projects`),
+  list: (orgId: string, params?: { limit?: number; cursor?: string }) =>
+    api.get<{ data: TProject[]; nextCursor: string | null }>(`/organizations/${orgId}/projects`, { params }),
 };
 
 export const InitiativeAPI = {
   create: (orgId: string, projectId: string, initiative: Partial<TInitiative>) => 
     api.post(`/organizations/${orgId}/projects/${projectId}/initiatives`, initiative),
-  listByOrg: (orgId: string) => api.get<TInitiative[]>(`/organizations/${orgId}/initiatives`),
+  listByOrg: (orgId: string, params?: { limit?: number; cursor?: string }) =>
+    api.get<{ data: TInitiative[]; nextCursor: string | null }>(`/organizations/${orgId}/initiatives`, { params }),
   listByProject: (orgId: string, projectId: string) => 
     api.get<TInitiative[]>(`/organizations/${orgId}/projects/${projectId}/initiatives`),
   update: (orgId: string, projectId: string, initiativeId: string, data: Partial<TInitiative>) => 

@@ -108,6 +108,7 @@ export interface TProject {
   orgId: string;
   name: string;
   description: string;
+  lastUpdated?: string;
 }
 
 export interface TInitiative {
