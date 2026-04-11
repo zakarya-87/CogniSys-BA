@@ -78,6 +78,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ initiatives, onSelectIniti
   const sortedSectors = Object.keys(groupedInitiatives).sort();
 
   const stats = useMemo(() => {
+    const avgConfidence = initiatives.length > 0
+      ? initiatives.reduce((sum, i) => sum + ((i as any).confidenceScore ?? 0.82), 0) / initiatives.length
+      : 0;
     return [
       { 
         label: t('dashboard:activeInitiatives'), 
@@ -102,6 +105,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ initiatives, onSelectIniti
         color: 'text-accent-green', 
         bg: 'bg-accent-green/10',
         description: t('dashboard:executionEfficiency')
+      },
+      { 
+        label: 'AI Confidence', 
+        value: percentFormatter.format(avgConfidence), 
+        icon: Sparkles, 
+        color: 'text-accent-teal', 
+        bg: 'bg-accent-teal/10',
+        description: 'Average across initiatives'
       },
     ];
   }, [initiatives, t, numberFormatter, percentFormatter]);
@@ -189,17 +200,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ initiatives, onSelectIniti
         </div>
       </motion.div>
 
-      {/* Stats Grid - Technical Dashboard Recipe */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Stats Grid - Glass KPI Widgets */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
           <motion.div 
             key={i}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: i * 0.1 }}
-            className="bg-surface-light dark:bg-surface-dark p-8 rounded-3xl border border-border-light dark:border-border-dark shadow-sm flex flex-col gap-6 hover:shadow-xl hover:border-accent-purple/30 transition-all duration-500 group relative overflow-hidden"
+            className="glass-card-light dark:glass-card metallic-sheen p-8 flex flex-col gap-6 hover:shadow-xl hover:border-accent-teal/30 transition-all duration-500 group relative overflow-hidden"
           >
-            <div className="absolute top-0 end-0 w-32 h-32 bg-accent-purple/5 rounded-full -me-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
+            <div className="absolute top-0 end-0 w-32 h-32 bg-accent-teal/5 rounded-full -me-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
             
             <div className="flex justify-between items-start relative z-10">
               <div className={`${stat.bg} p-4 rounded-2xl transition-all group-hover:scale-110 group-hover:rotate-3 duration-500`}>
