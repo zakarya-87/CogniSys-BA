@@ -16,6 +16,7 @@ import { correlationId } from './middleware/correlationId';
 import { safeError, safeErrorHtml } from './utils/errorHandler';
 import { ModelRouter, ModelType } from './ai-agents/ModelRouter';
 import { createOperation, getOperation, subscribe, updateOperation } from './operationStore';
+import { createSseToken, validateSseToken } from './sseTokenStore';
 import { OrganizationController } from './controllers/OrganizationController';
 import { ProjectController } from './controllers/ProjectController';
 import { InitiativeController } from './controllers/InitiativeController';
@@ -905,12 +906,25 @@ export function createApp() {
       }
     })();
 
-    res.status(202).json({ operationId });
+    res.status(202).json({ operationId, sseToken: createSseToken(req.user!.uid, operationId) });
   });
 
   // GET /api/ai/stream/:operationId  → SSE stream
   // Emits: progress | complete | error events, then closes.
-  app.get('/api/ai/stream/:operationId', requireAuth, (req, res) => {
+  // Accepts either requireAuth (Bearer token) or ?sseToken= (short-lived, single-use)
+  app.get('/api/ai/stream/:operationId', (req, res, next) => {
+    const { operationId } = req.params;
+    const sseToken = req.query.sseToken as string | undefined;
+
+    if (sseToken) {
+      const userId = validateSseToken(sseToken, operationId);
+      if (!userId) return res.status(401).json({ error: 'Invalid or expired SSE token' });
+      (req as any).user = { uid: userId };
+      return next();
+    }
+    // Fall back to standard auth
+    return requireAuth(req, res, next);
+  }, (req, res) => {
     const { operationId } = req.params;
     const op = getOperation(operationId);
     if (!op) {

@@ -64,8 +64,14 @@ export class InitiativeRepository extends BaseRepository<TInitiative> {
           .get();
         const all = querySnapshot.docs.map(doc => doc.data() as TInitiative);
         all.sort((a, b) => (b.lastUpdated ?? '').localeCompare(a.lastUpdated ?? ''));
-        const data = all.slice(0, limit);
-        const nextCursor = all.length > limit ? all[limit - 1].id : null;
+
+        let startIndex = 0;
+        if (cursor) {
+          const cursorIndex = all.findIndex(item => item.id === cursor);
+          if (cursorIndex !== -1) startIndex = cursorIndex + 1;
+        }
+        const data = all.slice(startIndex, startIndex + limit);
+        const nextCursor = startIndex + limit < all.length ? data[data.length - 1]?.id ?? null : null;
         return { data, nextCursor };
       }
       throw err;
