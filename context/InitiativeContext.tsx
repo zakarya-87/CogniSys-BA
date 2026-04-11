@@ -14,6 +14,7 @@ import { AI_TEAM_MEMBERS } from '../constants';
 import { generateAgentComment } from '../services/geminiService';
 import { MemoryService } from '../services/memoryService';
 import { logger } from '../src/utils/logger';
+import { cacheInitiatives, getCachedInitiatives, cacheInitiative } from '../services/offlineCache';
 
 export interface InitiativeContextType {
   initiatives: TInitiative[];
@@ -64,16 +65,30 @@ export const InitiativeProvider: React.FC<{ children: ReactNode }> = ({ children
     }
     setLoading(true);
     
-    // Initial fetch (paginated)
+    // Initial fetch with stale-while-revalidate
     const fetchInitialInitiatives = async () => {
+        let hasCachedData = false;
+
+        // Serve stale data from IndexedDB cache immediately
+        try {
+            const cached = await getCachedInitiatives();
+            if (cached && cached.length > 0) {
+                setInitiativesState(cached);
+                setLoading(false);
+                hasCachedData = true;
+            }
+        } catch (_) { /* cache miss is fine */ }
+
+        // Revalidate from server
         try {
             const { data } = await InitiativeAPI.listByOrg(user.orgId!, { limit: 20 });
             setInitiativesState(data.data);
             setInitiativesNextCursor(data.nextCursor);
+            cacheInitiatives(data.data).catch(() => {});
         } catch (e) {
             logger.error('Failed to fetch initiatives', e);
         } finally {
-            setLoading(false);
+            if (!hasCachedData) setLoading(false);
         }
     };
 
@@ -138,6 +153,7 @@ export const InitiativeProvider: React.FC<{ children: ReactNode }> = ({ children
     // State updates immediately via local state for UI feedback.
     // It'll be silently reconciled by Firestore when the write goes through.
     setInitiativesState(prev => [initiative, ...prev]);
+    cacheInitiative(initiative.id, initiative).catch(() => {});
     setToastMessage(`Initiative "${initiative.title}" created.`);
     
     const activity: TActivity = {
@@ -160,6 +176,7 @@ export const InitiativeProvider: React.FC<{ children: ReactNode }> = ({ children
 
   const updateInitiative = useCallback((initiative: TInitiative) => {
     setInitiativesState(prev => prev.map(i => i.id === initiative.id ? initiative : i));
+    cacheInitiative(initiative.id, initiative).catch(() => {});
     if (selectedInitiative?.id === initiative.id) {
         setSelectedInitiative(initiative);
     }
@@ -227,6 +244,12 @@ export const InitiativeProvider: React.FC<{ children: ReactNode }> = ({ children
         return i;
     }));
     
+    // Cache the updated initiative after artifact save
+    const updated = initiatives.find(i => i.id === initiativeId);
+    if (updated) {
+        cacheInitiative(updated.id, updated).catch(() => {});
+    }
+
     setToastMessage('Artifact saved.');
 
     // PULSE SYSTEM

@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { THiveState, THiveMessage, THiveStep } from '../types';
+import { cacheHiveState, getCachedHiveState } from '../services/offlineCache';
 
 const INITIAL_STATE: THiveState = {
     goal: '',
@@ -16,7 +17,7 @@ export const useHivePersistence = (initiativeId: string) => {
     const [state, setState] = useState<THiveState>(INITIAL_STATE);
     const [isLoaded, setIsLoaded] = useState(false);
 
-    // Load from LocalStorage on mount or initiative change
+    // Load from LocalStorage first, then fall back to IndexedDB
     useEffect(() => {
         if (!initiativeId) {
             setState(INITIAL_STATE);
@@ -24,21 +25,39 @@ export const useHivePersistence = (initiativeId: string) => {
             return;
         }
 
+        let loaded = false;
         try {
             const saved = localStorage.getItem(`hive_state_${initiativeId}`);
             if (saved) {
-                const parsed = JSON.parse(saved);
-                // Hydrate logic to ensure types match (optional migrations could go here)
-                setState(parsed);
-            } else {
-                setState(INITIAL_STATE);
+                setState(JSON.parse(saved));
+                loaded = true;
             }
         } catch (e) {
-            console.error("Failed to load Hive state:", e);
-            setState(INITIAL_STATE);
-        } finally {
-            setIsLoaded(true);
+            console.error("Failed to load Hive state from localStorage:", e);
         }
+
+        if (loaded) {
+            setIsLoaded(true);
+            return;
+        }
+
+        // Fall back to IndexedDB if localStorage had nothing
+        const loadFromCache = async () => {
+            try {
+                const cached = await getCachedHiveState(initiativeId);
+                if (cached) {
+                    setState(cached);
+                } else {
+                    setState(INITIAL_STATE);
+                }
+            } catch (e) {
+                console.error("Failed to load Hive state from IndexedDB:", e);
+                setState(INITIAL_STATE);
+            } finally {
+                setIsLoaded(true);
+            }
+        };
+        loadFromCache();
     }, [initiativeId]);
 
     // Save to LocalStorage whenever state changes
@@ -50,12 +69,14 @@ export const useHivePersistence = (initiativeId: string) => {
         } catch (e) {
             console.error("Failed to save Hive state:", e);
         }
+        cacheHiveState(initiativeId, state).catch(() => {});
     }, [state, initiativeId, isLoaded]);
 
     const resetState = useCallback(() => {
         setState(INITIAL_STATE);
         if (initiativeId) {
             localStorage.removeItem(`hive_state_${initiativeId}`);
+            cacheHiveState(initiativeId, INITIAL_STATE).catch(() => {});
         }
     }, [initiativeId]);
 

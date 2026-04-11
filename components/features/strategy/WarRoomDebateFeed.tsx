@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, Send, Pause, Play, RotateCcw } from 'lucide-react';
+import { ChevronDown, Send, Pause, Play, RotateCcw, MessageSquare, Zap, FileText, Users } from 'lucide-react';
 
 export type AgentRole = 'orchestrator' | 'scout' | 'guardian';
 export type Sentiment = 'agree' | 'challenge' | 'neutral';
@@ -42,9 +42,23 @@ const PHASE_LABEL: Record<DebatePhase, string> = {
   consensus: 'Building Consensus',
 };
 
+export type DebateSpeed = 'fast' | 'normal' | 'detailed';
+
+const SPEED_OPTIONS: { value: DebateSpeed; icon: React.ReactNode; label: string }[] = [
+  { value: 'fast', icon: <Zap className="w-3 h-3" />, label: 'Fast' },
+  { value: 'normal', icon: <Play className="w-3 h-3" />, label: 'Normal' },
+  { value: 'detailed', icon: <FileText className="w-3 h-3" />, label: 'Detailed' },
+];
+
+const ALL_AGENTS: AgentRole[] = ['orchestrator', 'scout', 'guardian'];
+
 interface WarRoomDebateFeedProps {
   debate: DebateState;
+  suggestedTopics?: string[];
   onSendMessage?: (text: string) => void;
+  onSetTopic?: (topic: string) => void;
+  onSelectAgents?: (agents: AgentRole[]) => void;
+  onSetSpeed?: (speed: DebateSpeed) => void;
   onPause?: () => void;
   onResume?: () => void;
   onReset?: () => void;
@@ -52,15 +66,22 @@ interface WarRoomDebateFeedProps {
 
 export const WarRoomDebateFeed: React.FC<WarRoomDebateFeedProps> = ({
   debate,
+  suggestedTopics,
   onSendMessage,
+  onSetTopic,
+  onSelectAgents,
+  onSetSpeed,
   onPause,
   onResume,
   onReset,
 }) => {
   const feedRef = useRef<HTMLDivElement>(null);
   const [userInput, setUserInput] = useState('');
+  const [topicInput, setTopicInput] = useState('');
   const [autoScroll, setAutoScroll] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
+  const [activeAgents, setActiveAgents] = useState<AgentRole[]>([...ALL_AGENTS]);
+  const [speed, setSpeed] = useState<DebateSpeed>('normal');
 
   useEffect(() => {
     if (autoScroll && feedRef.current) {
@@ -89,6 +110,27 @@ export const WarRoomDebateFeed: React.FC<WarRoomDebateFeedProps> = ({
     setIsPaused(!isPaused);
   }, [isPaused, onPause, onResume]);
 
+  const handleSetTopic = useCallback(() => {
+    if (!topicInput.trim()) return;
+    onSetTopic?.(topicInput.trim());
+    setTopicInput('');
+  }, [topicInput, onSetTopic]);
+
+  const handleToggleAgent = useCallback((agent: AgentRole) => {
+    setActiveAgents((prev) => {
+      const isActive = prev.includes(agent);
+      if (isActive && prev.length <= 2) return prev;
+      const next = isActive ? prev.filter((a) => a !== agent) : [...prev, agent];
+      onSelectAgents?.(next);
+      return next;
+    });
+  }, [onSelectAgents]);
+
+  const handleSetSpeed = useCallback((s: DebateSpeed) => {
+    setSpeed(s);
+    onSetSpeed?.(s);
+  }, [onSetSpeed]);
+
   return (
     <div className="flex flex-col h-full rounded-2xl overflow-hidden border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark">
       {/* Header */}
@@ -107,7 +149,53 @@ export const WarRoomDebateFeed: React.FC<WarRoomDebateFeedProps> = ({
             Round {debate.round}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* Agent Selector */}
+          <div className="flex items-center gap-1">
+            <Users className="w-3 h-3 text-text-muted-light dark:text-text-muted-dark mr-1" />
+            {ALL_AGENTS.map((role) => {
+              const cfg = AGENT_CONFIG[role];
+              const isActive = activeAgents.includes(role);
+              return (
+                <button
+                  key={role}
+                  onClick={() => handleToggleAgent(role)}
+                  title={`${isActive ? 'Deactivate' : 'Activate'} ${cfg.name}`}
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm border transition-all ${
+                    isActive
+                      ? 'border-accent-teal bg-accent-teal/10 opacity-100'
+                      : 'border-dashed border-slate-300 dark:border-slate-600 opacity-50'
+                  }`}
+                >
+                  {cfg.avatar}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="w-px h-5 bg-border-light dark:bg-border-dark" />
+
+          {/* Speed Control */}
+          <div className="flex items-center gap-0.5">
+            {SPEED_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => handleSetSpeed(opt.value)}
+                title={opt.label}
+                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium border transition-all ${
+                  speed === opt.value
+                    ? 'bg-accent-teal/10 text-accent-teal border-accent-teal/30'
+                    : 'border-transparent text-text-muted-light dark:text-text-muted-dark hover:bg-slate-100 dark:hover:bg-white/5'
+                }`}
+              >
+                {opt.icon}
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="w-px h-5 bg-border-light dark:bg-border-dark" />
+
           <button onClick={handleTogglePause} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors" title={isPaused ? 'Resume' : 'Pause'}>
             {isPaused ? <Play className="w-3.5 h-3.5" /> : <Pause className="w-3.5 h-3.5" />}
           </button>
@@ -129,6 +217,46 @@ export const WarRoomDebateFeed: React.FC<WarRoomDebateFeedProps> = ({
             style={{ width: `${debate.consensusPercent}%` }}
           />
         </div>
+      </div>
+
+      {/* Topic Input Bar */}
+      <div className="px-5 py-3 border-b border-border-light dark:border-border-dark space-y-2">
+        {debate.topic ? (
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-3.5 h-3.5 text-accent-teal shrink-0" />
+            <span className="text-xs font-semibold text-text-light dark:text-text-dark truncate">{debate.topic}</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <input
+              value={topicInput}
+              onChange={(e) => setTopicInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSetTopic()}
+              placeholder="Set debate topic..."
+              className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark focus:outline-none focus:ring-2 focus:ring-accent-teal/20 transition-all"
+            />
+            <button
+              onClick={handleSetTopic}
+              disabled={!topicInput.trim()}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-accent-teal text-white hover:bg-accent-teal/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              Set
+            </button>
+          </div>
+        )}
+        {suggestedTopics && suggestedTopics.length > 0 && !debate.topic && (
+          <div className="flex gap-1.5 flex-wrap">
+            {suggestedTopics.map((topic, i) => (
+              <button
+                key={i}
+                onClick={() => onSetTopic?.(topic)}
+                className="text-[10px] px-2 py-1 rounded-full bg-accent-teal/5 hover:bg-accent-teal/10 text-accent-teal border border-accent-teal/20 transition-colors"
+              >
+                {topic}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Messages */}
