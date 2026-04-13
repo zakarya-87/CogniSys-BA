@@ -28,11 +28,14 @@ export function validateSseToken(token: string, operationId: string): string | n
   const entry = sseTokens.get(token);
   if (!entry) return null;
 
-  sseTokens.delete(token);
-
-  if (Date.now() > entry.expiresAt) return null;
+  if (Date.now() > entry.expiresAt) {
+    sseTokens.delete(token); // clean up expired token
+    return null;
+  }
+  // Don't consume the token on wrong operationId — prevents DoS via token invalidation
   if (entry.operationId !== operationId) return null;
 
+  sseTokens.delete(token); // single-use: consume only on successful validation
   return entry.userId;
 }
 
