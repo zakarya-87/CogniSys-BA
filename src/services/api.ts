@@ -34,6 +34,9 @@ api.interceptors.request.use(async (config) => {
   const user = auth.currentUser;
   if (user) {
     const token = await user.getIdToken();
+    if (!config.headers) {
+      config.headers = {} as any;
+    }
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -55,8 +58,8 @@ export const InitiativeAPI = {
     api.post(`/organizations/${orgId}/projects/${projectId}/initiatives`, initiative),
   listByOrg: (orgId: string, params?: { limit?: number; cursor?: string }) =>
     api.get<{ data: TInitiative[]; nextCursor: string | null }>(`/organizations/${orgId}/initiatives`, { params }),
-  listByProject: (orgId: string, projectId: string) => 
-    api.get<TInitiative[]>(`/organizations/${orgId}/projects/${projectId}/initiatives`),
+  listByProject: (orgId: string, projectId: string, params?: { limit?: number; cursor?: string }) => 
+    api.get<{ data: TInitiative[]; nextCursor: string | null }>(`/organizations/${orgId}/projects/${projectId}/initiatives`, { params }),
   update: (orgId: string, projectId: string, initiativeId: string, data: Partial<TInitiative>) => 
     api.put(`/organizations/${orgId}/projects/${projectId}/initiatives/${initiativeId}`, { ...data, orgId }),
 };
@@ -69,7 +72,8 @@ export const AIAPI = {
 };
 export const ActivityAPI = {
   create: (orgId: string, activity: any) => api.post(`/organizations/${orgId}/activities`, activity),
-  list: (orgId: string, limit = 50) => api.get<any[]>(`/organizations/${orgId}/activities`, { params: { limit } }),
+  list: (orgId: string, params?: { limit?: number; cursor?: string }) => 
+    api.get<{ data: any[]; nextCursor: string | null }>(`/organizations/${orgId}/activities`, { params }),
   addComment: (activityId: string, comment: any) => api.post(`/activities/${activityId}/comments`, { comment }),
 };
 
@@ -130,6 +134,17 @@ export const AnalyticsAPI = {
 export const UsageAPI = {
   get: (orgId: string, month?: string) =>
     api.get(`/v1/organizations/${orgId}/usage`, { params: { month } }),
+};
+
+export const MissionAPI = {
+  save: (orgId: string, mission: any) => 
+    api.post(`/organizations/${orgId}/missions`, { mission }),
+  getById: (orgId: string, id: string) => 
+    api.get(`/organizations/${orgId}/missions/${id}`),
+  listByInitiative: (orgId: string, initiativeId: string) => 
+    api.get<{ data: any[] }>(`/organizations/${orgId}/initiatives/${initiativeId}/missions`),
+  logAudit: (orgId: string, userId: string, agent: string, action: string, metadata: any) =>
+    api.post(`/organizations/${orgId}/missions/audit`, { userId, agent, action, metadata }),
 };
 
 /** Build an authenticated EventSource URL for SSE. Returns null if no user is logged in. */

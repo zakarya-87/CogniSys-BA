@@ -27,6 +27,7 @@ import { AuthService } from './services/AuthService';
 import { AuditLogService } from './services/AuditLogService';
 import { InvitationService } from './services/InvitationService';
 import { MemberService } from './services/MemberService';
+import { MissionController } from './controllers/MissionController';
 import { NotificationService } from './services/NotificationService';
 import { UsageMeteringService } from './services/UsageMeteringService';
 import { EmailService } from './services/EmailService';
@@ -234,6 +235,12 @@ export function createApp() {
     }
   });
 
+  // Missions (The Hive Persistence)
+  v1.post('/organizations/:orgId/missions', apiLimiter, authorize('member'), MissionController.save);
+  v1.post('/organizations/:orgId/missions/audit', apiLimiter, authorize('member'), MissionController.logAudit);
+  v1.get('/organizations/:orgId/missions/:id', apiLimiter, authorize('viewer'), MissionController.getById);
+  v1.get('/organizations/:orgId/initiatives/:initiativeId/missions', apiLimiter, authorize('viewer'), MissionController.getByInitiative);
+
   // Vector Memory
   v1.post('/organizations/:orgId/memory', apiLimiter, authorize('member'), async (req, res) => {
     try {
@@ -402,6 +409,24 @@ export function createApp() {
     }
   });
 
+  v1.get('/organizations/:orgId/usage/logs', apiLimiter, authorize('admin'), async (req, res) => {
+    try {
+      const { orgId } = req.params;
+      const limit = Math.min(Number(req.query.limit ?? 50), 200);
+      const logs = await getAdminDb()
+        .collection('ai_usage_logs')
+        .where('orgId', '==', orgId)
+        .orderBy('timestamp', 'desc')
+        .limit(isNaN(limit) ? 50 : limit)
+        .get();
+      
+      const results = logs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      res.json({ logs: results });
+    } catch (error) {
+      safeError(res, error, 'Get Usage Logs');
+    }
+  });
+
   // ── SSE — Real-time notification stream ───────────────────────────────────
   v1.get('/notifications/stream', authorize('viewer'), (req, res) => {
     const userId = (req as any).user?.uid;
@@ -467,12 +492,21 @@ export function createApp() {
       const { orgId } = req.params;
       const { url, events } = req.body as { url?: string; events?: string[] };
       if (!url || typeof url !== 'string') return res.status(400).json({ error: 'url is required' });
+      // Basic webhook URL validation to reduce SSRF risk
+      try {
+        const parsed = new URL(url);
+        if (parsed.protocol !== 'https:') return res.status(400).json({ error: 'webhook url must use https' });
+        const host = parsed.hostname.toLowerCase();
+        if (host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local')) return res.status(400).json({ error: 'webhook url hostname not allowed' });
+      } catch (e) {
+        return res.status(400).json({ error: 'invalid url' });
+      }
       if (!events || !Array.isArray(events) || events.length === 0) return res.status(400).json({ error: 'events[] is required' });
       const actorId = (req as any).user?.uid ?? 'unknown';
       const webhook = await WebhookService.registerWebhook(orgId, url, events as any, actorId);
       // Return webhook without secret in response — secret is for verification only
       const { secret: _s, ...safe } = webhook;
-      res.status(201).json({ webhook: safe, secret: webhook.secret });
+      res.status(201).json({ webhook: safe });
     } catch (error) {
       safeError(res, error, 'Register Webhook');
     }
@@ -769,20 +803,37 @@ export function createApp() {
 
   // Gemini AI Proxy
   app.post('/api/gemini/generate', aiLimiter, requireAuth, async (req, res) => {
+    const startTime = Date.now();
     try {
       const { prompt, model, config } = req.body as { prompt: string; model?: 'flash' | 'pro'; config?: Record<string, unknown> };
       if (!prompt || typeof prompt !== 'string') return res.status(400).json({ error: 'prompt is required and must be a string' });
+      
       const modelType = model === 'pro' ? ModelType.REASONING : ModelType.SPEED;
       const router = new ModelRouter();
-      let text: string;
+      let result: { text: string; usage: UsageMetrics };
+
       if (config?.inlineImage) {
-        text = await router.generateContentWithImage(prompt, modelType, config.inlineImage as { mimeType: string; data: string });
+        result = await router.generateContentWithImage(prompt, modelType, config.inlineImage as { mimeType: string; data: string });
       } else if (config?.tools) {
-        text = await router.generateContentWithConfig(prompt, modelType, config);
+        result = await router.generateContentWithConfig(prompt, modelType, config);
       } else {
-        text = await router.generateContent(prompt, modelType);
+        result = await router.generateContent(prompt, modelType);
       }
-      res.json({ text });
+
+      const latencyMs = Date.now() - startTime;
+      const actualModel = model === 'pro' ? 'gemini-1.5-pro' : 'gemini-1.5-flash';
+
+      // Log detailed usage asynchronously
+      void UsageMeteringService.trackDetailedUsage({
+        orgId: (req as any).user?.orgId || 'unknown',
+        userId: (req as any).user?.uid || 'unknown',
+        model: actualModel,
+        usage: result.usage,
+        latencyMs,
+        correlationId: req.headers['x-correlation-id'],
+      });
+
+      res.json({ text: result.text, usage: result.usage });
     } catch (error) {
       logger.error({ err: error }, 'Gemini Proxy Error');
       res.status(500).json({ error: 'AI generation failed. Please try again.' });
@@ -791,20 +842,28 @@ export function createApp() {
 
   // Mistral Proxy
   app.post('/api/mistral/chat', aiLimiter, requireAuth, async (req, res) => {
+    const startTime = Date.now();
     try {
       const apiKey = process.env.MISTRAL_API_KEY;
       if (!apiKey) return res.status(500).json({ error: 'MISTRAL_API_KEY is not configured' });
-      const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: JSON.stringify(req.body),
+      
+      const router = new ModelRouter();
+      const lastMessage = req.body.messages?.[(req.body.messages?.length ?? 1) - 1];
+      const promptText = req.body.prompt || lastMessage?.content;
+      const result = await router.generateContent(promptText, ModelType.MISTRAL);
+      
+      const latencyMs = Date.now() - startTime;
+
+      void UsageMeteringService.trackDetailedUsage({
+        orgId: (req as any).user?.orgId || 'unknown',
+        userId: (req as any).user?.uid || 'unknown',
+        model: 'mistral-large-latest',
+        usage: result.usage,
+        latencyMs,
+        correlationId: req.headers['x-correlation-id'],
       });
-      const data = await response.json();
-      if (!response.ok) {
-        logger.error({ status: response.status, body: JSON.stringify(data) }, 'Mistral API error');
-        return res.status(502).json({ error: 'Upstream AI service error' });
-      }
-      res.json(data);
+
+      res.json({ text: result.text, usage: result.usage, choices: [{ message: { content: result.text } }] });
     } catch (error) {
       safeError(res, error, 'Mistral Proxy');
     }
@@ -812,25 +871,28 @@ export function createApp() {
 
   // Azure OpenAI Proxy
   app.post('/api/azure-openai/chat', aiLimiter, requireAuth, async (req, res) => {
+    const startTime = Date.now();
     try {
       const apiKey = process.env.AZURE_OPENAI_API_KEY;
-      const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
-      const deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT_NAME;
-      if (!apiKey || !endpoint || !deploymentName) {
-        return res.status(500).json({ error: 'Azure OpenAI configuration is missing.' });
-      }
-      const url = `${endpoint.replace(/\/$/, '')}/openai/deployments/${deploymentName}/chat/completions?api-version=2024-02-15-preview`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'api-key': apiKey },
-        body: JSON.stringify(req.body),
+      if (!apiKey) return res.status(500).json({ error: 'Azure OpenAI configuration is missing.' });
+      
+      const router = new ModelRouter();
+      const lastMessage = req.body.messages?.[(req.body.messages?.length ?? 1) - 1];
+      const promptText = req.body.prompt || lastMessage?.content;
+      const result = await router.generateContent(promptText, ModelType.AZURE);
+
+      const latencyMs = Date.now() - startTime;
+
+      void UsageMeteringService.trackDetailedUsage({
+        orgId: (req as any).user?.orgId || 'unknown',
+        userId: (req as any).user?.uid || 'unknown',
+        model: 'azure-gpt-4o',
+        usage: result.usage,
+        latencyMs,
+        correlationId: req.headers['x-correlation-id'],
       });
-      const data = await response.json();
-      if (!response.ok) {
-        logger.error({ status: response.status, body: JSON.stringify(data) }, 'Azure OpenAI API error');
-        return res.status(502).json({ error: 'Upstream AI service error' });
-      }
-      res.json(data);
+
+      res.json({ text: result.text, usage: result.usage, choices: [{ message: { content: result.text } }] });
     } catch (error) {
       safeError(res, error, 'Azure OpenAI Proxy');
     }
@@ -888,25 +950,42 @@ export function createApp() {
 
     // Fire-and-forget background generation
     (async () => {
+      const startTime = Date.now();
       try {
         const modelType = model === 'pro' ? ModelType.REASONING : ModelType.SPEED;
         const router = new ModelRouter();
-        let text: string;
+        let result: { text: string; usage: UsageMetrics };
+        
         if (config?.inlineImage) {
-          text = await router.generateContentWithImage(prompt, modelType, config.inlineImage as { mimeType: string; data: string });
+          result = await router.generateContentWithImage(prompt, modelType, config.inlineImage as { mimeType: string; data: string });
         } else if (config?.tools) {
-          text = await router.generateContentWithConfig(prompt, modelType, config);
+          result = await router.generateContentWithConfig(prompt, modelType, config);
         } else {
-          text = await router.generateContent(prompt, modelType);
+          result = await router.generateContent(prompt, modelType);
         }
-        updateOperation(operationId, { status: 'complete', result: text });
+
+        const latencyMs = Date.now() - startTime;
+        const actualModel = model === 'pro' ? 'gemini-1.5-pro' : 'gemini-1.5-flash';
+
+        void UsageMeteringService.trackDetailedUsage({
+          orgId: (req as any).user?.orgId || 'unknown',
+          userId: (req as any).user?.uid || 'unknown',
+          model: actualModel,
+          usage: result.usage,
+          latencyMs,
+          correlationId: req.headers['x-correlation-id'],
+        });
+
+        updateOperation(operationId, { status: 'complete', result: result.text, usage: result.usage });
       } catch (err) {
         logger.error({ err }, 'Async Gemini generation failed');
         updateOperation(operationId, { status: 'error', error: 'AI generation failed. Please try again.' });
       }
     })();
 
-    res.status(202).json({ operationId, sseToken: createSseToken(req.user!.uid, operationId) });
+    const userId = (req as any).user?.uid;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    res.status(202).json({ operationId, sseToken: createSseToken(userId, operationId) });
   });
 
   // GET /api/ai/stream/:operationId  → SSE stream
@@ -960,6 +1039,7 @@ export function createApp() {
   });
 
   // JSON 404 for unknown /api/* routes — must come before SPA catch-all
+    // Redirect root to health endpoint (quick dev convenience) removed as it masks SPA index.html
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
 
   // Sentry error handler must come AFTER all routes (captures unhandled errors)
