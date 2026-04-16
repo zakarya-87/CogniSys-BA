@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { useCatalyst } from '../../context/CatalystContext';
-import { Search, ArrowLeft, PanelLeftClose, PanelLeftOpen, ChevronRight, Home, LayoutGrid } from 'lucide-react';
+import { Search, ArrowLeft, PanelLeftClose, PanelLeftOpen, ChevronRight, Home, LayoutGrid, Minimize2 } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageSwitcher } from '../../src/components/ui/LanguageSwitcher';
 import { NotificationBell } from './NotificationBell';
@@ -12,10 +12,11 @@ interface HeaderProps {
   onOpenCommandPalette?: () => void;
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
+  isFocusModeActive?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = React.memo(({ onOpenCommandPalette, onToggleSidebar, isSidebarOpen = true }) => {
-  const { currentView, setCurrentView, selectedInitiative, selectInitiative, user } = useCatalyst();
+export const Header: React.FC<HeaderProps> = React.memo(({ onOpenCommandPalette, onToggleSidebar, isSidebarOpen = true, isFocusModeActive = false }) => {
+  const { currentView, setCurrentView, selectedInitiative, selectInitiative, user, toggleFocusMode } = useCatalyst();
 
   const breadcrumbs = useMemo(() => {
     const list = [{ label: 'Dashboard', view: 'dashboard', icon: Home }];
@@ -38,9 +39,12 @@ export const Header: React.FC<HeaderProps> = React.memo(({ onOpenCommandPalette,
   };
 
   return (
-    <header className="h-24 flex items-center justify-between px-10 glass-surface z-10 flex-shrink-0 transition-all duration-500 sticky top-0 rounded-b-[3.5rem] mt-4 mx-6 border-b border-white/5 shadow-2xl backdrop-blur-3xl metallic-sheen">
-        <div className="flex items-center overflow-hidden gap-8">
-            {onToggleSidebar && (
+    <header className={`flex items-center justify-between px-6 glass-surface z-10 flex-shrink-0 transition-all duration-300 sticky top-0 rounded-b-[3.5rem] mt-4 mx-6 border-b border-white/5 shadow-2xl backdrop-blur-3xl metallic-sheen ${
+      isFocusModeActive ? 'h-12 px-4' : 'h-24 px-10'
+    }`}>
+        <div className="flex items-center overflow-hidden gap-4">
+            {/* Sidebar toggle — repurposed as Exit Focus in focus mode */}
+            {onToggleSidebar && !isFocusModeActive && (
             <button 
               onClick={onToggleSidebar} 
               title={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
@@ -72,6 +76,8 @@ export const Header: React.FC<HeaderProps> = React.memo(({ onOpenCommandPalette,
             </nav>
         </div>
         
+        {/* Right controls — hidden in focus mode */}
+        {!isFocusModeActive && (
         <div className="flex items-center gap-10">
             {/* Intelligence Swarm Trigger */}
             <motion.div 
@@ -128,6 +134,20 @@ export const Header: React.FC<HeaderProps> = React.memo(({ onOpenCommandPalette,
               </div>
             </div>
         </div>
+        )}
+
+        {/* Focus Mode Exit Button — shown only in focus mode */}
+        {isFocusModeActive && (
+          <button
+            onClick={toggleFocusMode}
+            aria-label="Exit Focus Mode"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold text-accent-teal/60 hover:text-accent-teal border border-accent-teal/10 hover:border-accent-teal/30 hover:bg-accent-teal/5 transition-all duration-200"
+          >
+            <Minimize2 className="h-3.5 w-3.5" />
+            <span className="uppercase tracking-widest">Exit Focus</span>
+            <span className="ml-1 text-white/20">Esc</span>
+          </button>
+        )}
     </header>
   );
 });

@@ -10,6 +10,7 @@ import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { InitiativeForm } from './components/InitiativeForm';
 import { QuotaBanner } from './components/ui/QuotaBanner';
 import { Spinner } from './components/ui/Spinner';
+import { FocusModeButton } from './components/ui/FocusModeButton';
 
 // Routed views — lazy-loaded on first navigation (~40-60% initial bundle reduction)
 const Dashboard = lazy(() => import('./components/Dashboard').then(m => ({ default: m.Dashboard })));
@@ -68,7 +69,9 @@ const MainLayout: React.FC = () => {
         loading,
         loadingMore,
         initiativesNextCursor,
-        loadMoreInitiatives
+        loadMoreInitiatives,
+        isFocusModeActive,
+        toggleFocusMode,
     } = useCatalyst();
 
     const [initialHubInitiativeId, setInitialHubInitiativeId] = useState<string | null>(null);
@@ -92,17 +95,26 @@ const MainLayout: React.FC = () => {
         setAiModelId(aiModel);
     }, [aiModel]);
 
-    // Keyboard shortcut
+    // Keyboard shortcut — Command Palette ⌘K / Ctrl+K
+    // Keyboard shortcut — Focus Mode Ctrl+Shift+F
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
                 e.preventDefault();
                 setIsCommandPaletteOpen(prev => !prev);
             }
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') {
+                e.preventDefault();
+                toggleFocusMode();
+            }
+            // Escape exits Focus Mode (sidebar ESC is handled within Sidebar itself)
+            if (e.key === 'Escape' && isFocusModeActive) {
+                toggleFocusMode();
+            }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
+    }, [isFocusModeActive, toggleFocusMode]);
 
     // Error Formatting Utility
     const getFriendlyErrorMessage = (error: unknown, context: string): string => {
@@ -132,7 +144,7 @@ const MainLayout: React.FC = () => {
             const sectors = Object.values(Sector);
             const randomSector = sectors[Math.floor(Math.random() * sectors.length)];
             const orgId = user?.orgId || 'org-0';
-            const projectId = projects[0]?.id || 'proj-0';
+            const projectId = projects?.[0]?.id || 'proj-0';
 
             const newInitiative: TInitiative = {
                 id: `init-${Date.now()}`,
@@ -247,14 +259,14 @@ const MainLayout: React.FC = () => {
         <ApiStatusProvider>
             <QuotaBanner />
             <div className="flex h-screen bg-background-light dark:bg-background-dark text-gray-900 dark:text-gray-100 font-sans overflow-hidden selection:bg-accent-teal selection:text-white relative">
-                {/* Global Ambient Background */}
-                <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
-                <div className="absolute inset-0 bg-gradient-to-tr from-accent-teal/5 via-transparent to-accent-cyan/5 pointer-events-none" />
+                {/* Global Ambient Background — dim in focus mode */}
+                <div className={`absolute inset-0 bg-grid-pattern pointer-events-none transition-opacity duration-500 ${isFocusModeActive ? 'opacity-5' : 'opacity-10'}`} />
+                <div className={`absolute inset-0 bg-gradient-to-tr from-accent-teal/5 via-transparent to-accent-cyan/5 pointer-events-none transition-opacity duration-500 ${isFocusModeActive ? 'opacity-30' : 'opacity-100'}`} />
 
                 {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
                 
-                {/* Mobile backdrop — dims content and closes drawer on tap */}
-                {isSidebarOpen && (
+                {/* Mobile backdrop — dims content, closes drawer on tap; hidden in focus mode */}
+                {isSidebarOpen && !isFocusModeActive && (
                     <div
                         className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
                         onClick={() => setIsSidebarOpen(false)}
@@ -267,6 +279,7 @@ const MainLayout: React.FC = () => {
                     onNavigate={handleNavigate}
                     isCollapsed={!isSidebarOpen}
                     onClose={() => setIsSidebarOpen(false)}
+                    isFocusModeActive={isFocusModeActive}
                 />
                 
                 {isCreatingInitiative && (
@@ -283,17 +296,22 @@ const MainLayout: React.FC = () => {
                 )}
                 
                 <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-                    <Header 
-                        initiativeName={selectedInitiative?.title} 
-                        onBack={selectedInitiative ? () => selectInitiative(null) : undefined}
-                        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-                        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-                        isSidebarOpen={isSidebarOpen}
-                        title={currentView === 'predictiveCore' ? 'Predictive Core' : undefined}
-                        subtitle={currentView === 'predictiveCore' ? 'Phase 11 Roadmap' : undefined}
-                    />
+                    {!isFocusModeActive && (
+                        <Header 
+                            initiativeName={selectedInitiative?.title} 
+                            onBack={selectedInitiative ? () => selectInitiative(null) : undefined}
+                            onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+                            onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+                            isSidebarOpen={isSidebarOpen}
+                            title={currentView === 'predictiveCore' ? 'Predictive Core' : undefined}
+                            subtitle={currentView === 'predictiveCore' ? 'Phase 11 Roadmap' : undefined}
+                            isFocusModeActive={isFocusModeActive}
+                        />
+                    )}
                     
-                    <main className="flex-1 flex flex-col overflow-y-auto relative custom-scrollbar p-4 xl:p-6">
+                    <main className={`flex-1 flex flex-col overflow-y-auto relative custom-scrollbar transition-all duration-300 ${isFocusModeActive ? 'p-0' : 'p-4 xl:p-6'}`}>
+                        {/* Scroll Progress Indicator — visible only in Focus Mode */}
+                        {isFocusModeActive && <div className="focus-scroll-indicator" aria-hidden="true" />}
                         <ErrorBoundary componentName="Main Content Area">
                             <AnimatePresence mode="wait">
                                 <motion.div 
@@ -316,6 +334,9 @@ const MainLayout: React.FC = () => {
                             </AnimatePresence>
                         </ErrorBoundary>
                     </main>
+
+                    {/* Focus Mode FAB — always visible */}
+                    <FocusModeButton />
                     
                     <ErrorBoundary componentName="Global Assistant">
                         <Suspense fallback={null}>

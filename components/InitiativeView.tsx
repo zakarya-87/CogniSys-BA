@@ -6,6 +6,7 @@ import { MODULE_GROUPS, MOCK_BACKLOG, MOCK_SHOWCASE, THINK_PLAN_ACT_MAPPING } fr
 import { InitiativeActions } from './InitiativeActions';
 import { InitiativeForm } from './InitiativeForm';
 import { useCatalyst } from '../context/CatalystContext';
+import { useUI } from '../context/UIContext';
 import { ErrorBoundary } from './ui/ErrorBoundary';
 import { Spinner } from './ui/Spinner';
 import { Brain, ClipboardList, Rocket, ChevronRight, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
@@ -106,6 +107,7 @@ interface InitiativeViewProps {
 
 export const InitiativeView: React.FC<InitiativeViewProps> = ({ initiative, onUpdateStatus, onEditInitiative, setToastMessage, onViewProjectPlan, requestedModule }) => {
   const { saveArtifact, updateInitiative } = useCatalyst();
+  const { isFocusModeActive } = useUI();
   const { t } = useTranslation(['common', 'dashboard']);
   const [activePhase, setActivePhase] = useState('THINK');
   const [activeCategory, setActiveCategory] = useState('General');
@@ -288,10 +290,12 @@ export const InitiativeView: React.FC<InitiativeViewProps> = ({ initiative, onUp
   };
 
   return (
-    <div className="flex flex-col h-full">
-        <div className="mb-6">
-            <InitiativeActions initiative={initiative} onUpdateStatus={onUpdateStatus} onViewProjectPlan={onViewProjectPlan} onEditInitiative={onEditInitiative} />
-        </div>
+    <div className={`flex flex-col h-full transition-all duration-300 ${isFocusModeActive ? 'gap-0' : 'gap-0'}`}>
+        {!isFocusModeActive && (
+            <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                <InitiativeActions initiative={initiative} onUpdateStatus={onUpdateStatus} onViewProjectPlan={onViewProjectPlan} onEditInitiative={handleEditInitiative} />
+            </div>
+        )}
         
         {isEditing && editingInitiative && (
             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -306,115 +310,124 @@ export const InitiativeView: React.FC<InitiativeViewProps> = ({ initiative, onUp
                 />
             </div>
         )}
-        <div className="flex bg-surface-darker/5 dark:bg-surface-darker/30 p-1.5 rounded-2xl mb-8 w-fit border border-border-light dark:border-border-dark">
-            {Object.keys(THINK_PLAN_ACT_MAPPING).map(phase => {
-                const phaseIcons: { [key: string]: any } = {
-                    'THINK': <Brain className="w-4 h-4" />,
-                    'PLAN': <ClipboardList className="w-4 h-4" />,
-                    'ACT': <Rocket className="w-4 h-4" />
-                };
 
-                const isActive = activePhase === phase;
+        {!isFocusModeActive && (
+            <div className="flex bg-surface-darker/5 dark:bg-surface-darker/30 p-1.5 rounded-2xl mb-8 w-fit border border-border-light dark:border-border-dark animate-in fade-in slide-in-from-top-2 duration-700">
+                {Object.keys(THINK_PLAN_ACT_MAPPING).map(phase => {
+                    const phaseIcons: { [key: string]: any } = {
+                        'THINK': <Brain className="w-4 h-4" />,
+                        'PLAN': <ClipboardList className="w-4 h-4" />,
+                        'ACT': <Rocket className="w-4 h-4" />
+                    };
 
-                return (
-                    <button
-                        key={phase}
-                        onClick={() => {
-                            setActivePhase(phase);
-                            const firstCategory = THINK_PLAN_ACT_MAPPING[phase][0];
-                            setActiveCategory(firstCategory);
-                            setActiveTab(MODULE_GROUPS[firstCategory][0]);
-                        }}
-                        className={`flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-300 ${
-                            isActive
-                                ? 'bg-surface-light dark:bg-surface-dark text-accent-teal shadow-sm ring-1 ring-border-light dark:ring-border-dark'
-                                : 'text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-text-dark'
-                        }`}
-                    >
-                        {phaseIcons[phase]}
-                        <span>{t(`common:phases.${phase.toLowerCase()}`)}</span>
-                    </button>
-                );
-            })}
-        </div>
+                    const isActive = activePhase === phase;
 
-        <div className="flex flex-1 gap-8 overflow-hidden">
-            {/* Sidebar Navigation - Grouped by Category within Phase */}
-            <div className={`flex-shrink-0 bg-surface-light dark:bg-surface-dark rounded-2xl shadow-sm border border-border-light dark:border-border-dark overflow-y-auto custom-scrollbar h-full transition-all duration-300 ease-in-out relative ${isNavCollapsed ? 'w-14 p-2' : 'w-72 p-6'}`}>
-                {/* Toggle button */}
-                <button
-                    onClick={() => setIsNavCollapsed(v => !v)}
-                    title={isNavCollapsed ? 'Expand menu' : 'Collapse menu'}
-                    className={`absolute top-3 right-3 z-10 p-1.5 rounded-lg text-text-muted-light dark:text-text-muted-dark hover:bg-slate-100 dark:hover:bg-surface-darker hover:text-accent-teal transition-all ${isNavCollapsed ? 'static w-full flex justify-center mb-2' : ''}`}
-                >
-                    {isNavCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-                </button>
-
-                {isNavCollapsed ? (
-                    /* Collapsed: icon dots per active module */
-                    <div className="mt-2 flex flex-col items-center gap-1">
-                        {THINK_PLAN_ACT_MAPPING[activePhase].flatMap(category =>
-                            MODULE_GROUPS[category].map(module => (
-                                <button
-                                    key={module}
-                                    title={module}
-                                    onClick={() => { setActiveCategory(category); setActiveTab(module); }}
-                                    className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all text-[10px] font-bold group relative ${
-                                        activeTab === module
-                                            ? 'bg-accent-teal/10 text-accent-teal ring-1 ring-accent-teal/30'
-                                            : 'text-text-muted-light dark:text-text-muted-dark hover:bg-slate-100 dark:hover:bg-surface-darker'
-                                    }`}
-                                >
-                                    {module.charAt(0)}
-                                    <span className="absolute left-full ms-2 px-2 py-1 text-xs font-semibold text-white bg-gray-900 dark:bg-gray-700 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-lg transition-opacity duration-150">
-                                        {module}
-                                    </span>
-                                </button>
-                            ))
-                        )}
-                    </div>
-                ) : (
-                    /* Expanded: full category + module list */
-                    <div className="space-y-8">
-                        {THINK_PLAN_ACT_MAPPING[activePhase].map(category => (
-                            <div key={category} className="space-y-3">
-                                <h4 className="text-[10px] font-bold text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em] px-2 flex items-center gap-2">
-                                    <div className="w-1 h-1 rounded-full bg-accent-teal" />
-                                    {t(`common:categories.${category.toLowerCase().replace(/ & /g, '_').replace(/ /g, '_')}`)}
-                                </h4>
-                                <nav className="space-y-1">
-                                    {MODULE_GROUPS[category].map(module => (
-                                        <button
-                                            key={module}
-                                            onClick={() => {
-                                                setActiveCategory(category);
-                                                setActiveTab(module);
-                                            }}
-                                            className={`w-full flex items-center justify-between px-3 py-2.5 text-xs font-medium rounded-xl transition-all duration-200 group ${
-                                                activeTab === module
-                                                    ? 'bg-accent-teal/5 text-accent-teal dark:bg-accent-teal/10'
-                                                    : 'text-text-muted-light dark:text-text-muted-dark hover:bg-surface-darker/5 dark:hover:bg-surface-darker/20 hover:text-text-light dark:hover:text-text-dark'
-                                            }`}
-                                        >
-                                            <span>{t(`common:modules.${module.toLowerCase().replace(/ & /g, '_').replace(/ /g, '_')}`)}</span>
-                                            {activeTab === module && (
-                                                <ChevronRight className="w-3 h-3 animate-in slide-in-from-start-1 rtl:rotate-180" />
-                                            )}
-                                        </button>
-                                    ))}
-                                </nav>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                    return (
+                        <button
+                            key={phase}
+                            onClick={() => {
+                                setActivePhase(phase);
+                                const firstCategory = THINK_PLAN_ACT_MAPPING[phase][0];
+                                setActiveCategory(firstCategory);
+                                setActiveTab(MODULE_GROUPS[firstCategory][0]);
+                            }}
+                            className={`flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-300 ${
+                                isActive
+                                    ? 'bg-surface-light dark:bg-surface-dark text-accent-teal shadow-sm ring-1 ring-border-light dark:ring-border-dark'
+                                    : 'text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-text-dark'
+                            }`}
+                        >
+                            {phaseIcons[phase]}
+                            <span>{t(`common:phases.${phase.toLowerCase()}`)}</span>
+                        </button>
+                    );
+                })}
             </div>
+        )}
 
-            {/* Main Content */}
-            <div className="flex-1 overflow-y-auto rounded-2xl custom-scrollbar">
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 h-full">
+        <div className={`flex flex-1 overflow-hidden transition-all duration-300 ${isFocusModeActive ? 'gap-0' : 'gap-8'}`}>
+            {/* Sidebar Navigation - Grouped by Category within Phase */}
+            {!isFocusModeActive && (
+                <div className={`flex-shrink-0 bg-surface-light dark:bg-surface-dark rounded-2xl shadow-sm border border-border-light dark:border-border-dark overflow-y-auto custom-scrollbar h-full transition-all duration-300 ease-in-out relative ${isNavCollapsed ? 'w-14 p-2' : 'w-72 p-6'}`}>
+                    {/* Toggle button */}
+                    <button
+                        onClick={() => setIsNavCollapsed(v => !v)}
+                        title={isNavCollapsed ? 'Expand menu' : 'Collapse menu'}
+                        className={`absolute top-3 right-3 z-10 p-1.5 rounded-lg text-text-muted-light dark:text-text-muted-dark hover:bg-slate-100 dark:hover:bg-surface-darker hover:text-accent-teal transition-all ${isNavCollapsed ? 'static w-full flex justify-center mb-2' : ''}`}
+                    >
+                        {isNavCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+                    </button>
+
+                    {isNavCollapsed ? (
+                        /* Collapsed: icon dots per active module */
+                        <div className="mt-2 flex flex-col items-center gap-1">
+                            {THINK_PLAN_ACT_MAPPING[activePhase].flatMap(category =>
+                                MODULE_GROUPS[category].map(module => (
+                                    <button
+                                        key={module}
+                                        title={module}
+                                        onClick={() => { setActiveCategory(category); setActiveTab(module); }}
+                                        className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all text-[10px] font-bold group relative ${
+                                            activeTab === module
+                                                ? 'bg-accent-teal/10 text-accent-teal ring-1 ring-accent-teal/30'
+                                                : 'text-text-muted-light dark:text-text-muted-dark hover:bg-slate-100 dark:hover:bg-surface-darker'
+                                        }`}
+                                    >
+                                        {module.charAt(0)}
+                                        <span className="absolute left-full ms-2 px-2 py-1 text-xs font-semibold text-white bg-gray-900 dark:bg-gray-700 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-lg transition-opacity duration-150">
+                                            {module}
+                                        </span>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+                    ) : (
+                        /* Expanded: full category + module list */
+                        <div className="space-y-8">
+                            {THINK_PLAN_ACT_MAPPING[activePhase].map(category => (
+                                <div key={category} className="space-y-3">
+                                    <h4 className="text-[10px] font-bold text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em] px-2 flex items-center gap-2">
+                                        <div className="w-1 h-1 rounded-full bg-accent-teal" />
+                                        {category}
+                                    </h4>
+                                    <nav className="space-y-1">
+                                        {MODULE_GROUPS[category].map(module => (
+                                            <button
+                                                key={module}
+                                                onClick={() => {
+                                                    setActiveCategory(category);
+                                                    setActiveTab(module);
+                                                }}
+                                                className={`w-full flex items-center justify-between px-3 py-2.5 text-xs font-medium rounded-xl transition-all duration-200 group ${
+                                                    activeTab === module
+                                                        ? 'bg-accent-teal/5 text-accent-teal dark:bg-accent-teal/10'
+                                                        : 'text-text-muted-light dark:text-text-muted-dark hover:bg-surface-darker/5 dark:hover:bg-surface-darker/20 hover:text-text-light dark:hover:text-text-dark'
+                                                }`}
+                                            >
+                                                <span>{module}</span>
+                                                {activeTab === module && (
+                                                    <ChevronRight className="w-3 h-3 animate-in slide-in-from-start-1" />
+                                                )}
+                                            </button>
+                                        ))}
+                                    </nav>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Main Content Area */}
+            <div className={`flex-1 overflow-y-auto custom-scrollbar transition-all duration-500 ${isFocusModeActive ? 'rounded-none' : 'rounded-2xl'}`}>
+                <div className={`animate-in fade-in slide-in-from-bottom-4 duration-500 h-full`}>
                     <ErrorBoundary componentName={`Module: ${activeTab}`}>
                         <Suspense fallback={<div className="flex justify-center items-center h-full"><Spinner /></div>}>
-                            <div key={initiative.id} className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-border-light dark:border-border-dark p-8 min-h-full shadow-sm">
+                            <div key={initiative.id} className={`bg-surface-light dark:bg-surface-dark min-h-full transition-all duration-500 overflow-hidden ${
+                                isFocusModeActive 
+                                    ? 'p-0 !border-none !shadow-none !rounded-none' 
+                                    : 'p-8 rounded-2xl border border-border-light dark:border-border-dark shadow-sm'
+                            }`}>
                                 {renderContent()}
                             </div>
                         </Suspense>

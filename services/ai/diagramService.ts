@@ -38,7 +38,8 @@ export const generateWireframe = async (requirements: string, sector: Sector = S
     "JSON",
     language
   );
-  return generateJson<TWireframeElement>(prompt, generatedSchemas['TWireframeElement'], ['type']);
+  const result = await generateJson<TWireframeElement>(prompt, generatedSchemas['TWireframeElement'], ['type']);
+  return result.data;
 };
 
 export const generateDataModel = async (description: string, sector: Sector = Sector.GENERAL, language?: string): Promise<TDataModel> => {
@@ -54,7 +55,7 @@ export const generateDataModel = async (description: string, sector: Sector = Se
        language
   );
   const response = await generateJson<DoublePassResponse<TDataModel>>(prompt);
-  return response.final_diagram;
+  return response.data.final_diagram;
 };
 
 export const generateBpmnFlow = async (description: string, sector: Sector = Sector.GENERAL, language?: string): Promise<TBpmnFlow> => {
@@ -70,7 +71,7 @@ export const generateBpmnFlow = async (description: string, sector: Sector = Sec
     language
   );
   const response = await generateJson<DoublePassResponse<TBpmnFlow>>(prompt);
-  return response.final_diagram;
+  return response.data.final_diagram;
 };
 
 export const generateSequenceDiagram = async (title: string, sector: string, scenario: string): Promise<TSequenceDiagram> => {
@@ -79,7 +80,8 @@ export const generateSequenceDiagram = async (title: string, sector: string, sce
         title,
         sector as Sector
     );
-    return generateJson<TSequenceDiagram>(prompt, generatedSchemas['TSequenceDiagram'], generatedSchemas['TSequenceDiagram']?.required || []);
+    const result = await generateJson<TSequenceDiagram>(prompt, generatedSchemas['TSequenceDiagram'], generatedSchemas['TSequenceDiagram']?.required || []);
+    return result.data;
 };
 
 export const generateC4Model = async (desc: string, level: string, sector: string): Promise<TC4Model> => {
@@ -88,7 +90,8 @@ export const generateC4Model = async (desc: string, level: string, sector: strin
         "Software Architecture",
         sector as Sector
     );
-    return generateJson<TC4Model>(prompt, generatedSchemas['TC4Model'], generatedSchemas['TC4Model']?.required || []);
+    const result = await generateJson<TC4Model>(prompt, generatedSchemas['TC4Model'], generatedSchemas['TC4Model']?.required || []);
+    return result.data;
 };
 
 export const generateMindMap = async (topic: string, sector: string): Promise<TMindMapNode> => {
@@ -97,7 +100,8 @@ export const generateMindMap = async (topic: string, sector: string): Promise<TM
         "Brainstorming",
         sector as Sector
     );
-    return generateJson<TMindMapNode>(prompt, generatedSchemas['TMindMapNode'], generatedSchemas['TMindMapNode']?.required || []);
+    const result = await generateJson<TMindMapNode>(prompt, generatedSchemas['TMindMapNode'], generatedSchemas['TMindMapNode']?.required || []);
+    return result.data;
 };
 
 export const generateJourneyMap = async (title: string, sector: string, persona: string, scenario: string): Promise<TJourneyMap> => {
@@ -106,7 +110,8 @@ export const generateJourneyMap = async (title: string, sector: string, persona:
         title,
         sector as Sector
     );
-    return generateJson<TJourneyMap>(prompt, generatedSchemas['TJourneyMap'], generatedSchemas['TJourneyMap']?.required || []);
+    const result = await generateJson<TJourneyMap>(prompt, generatedSchemas['TJourneyMap'], generatedSchemas['TJourneyMap']?.required || []);
+    return result.data;
 };
 
 export const generateServiceBlueprint = async (scenario: string, sector: string): Promise<TServiceBlueprint> => {
@@ -115,7 +120,8 @@ export const generateServiceBlueprint = async (scenario: string, sector: string)
         "Service Design",
         sector as Sector
     );
-    return generateJson<TServiceBlueprint>(prompt, generatedSchemas['TServiceBlueprint'], generatedSchemas['TServiceBlueprint']?.required || []);
+    const result = await generateJson<TServiceBlueprint>(prompt, generatedSchemas['TServiceBlueprint'], generatedSchemas['TServiceBlueprint']?.required || []);
+    return result.data;
 };
 
 export const generateSIPOC = async (processName: string, sector: string): Promise<TSIPOC> => {
@@ -124,7 +130,8 @@ export const generateSIPOC = async (processName: string, sector: string): Promis
         "Process Analysis",
         sector as Sector
     );
-    return generateJson<TSIPOC>(prompt, generatedSchemas['TSIPOC'], generatedSchemas['TSIPOC']?.required || []);
+    const result = await generateJson<TSIPOC>(prompt, generatedSchemas['TSIPOC'], generatedSchemas['TSIPOC']?.required || []);
+    return result.data;
 };
 
 export const runProcessSimulation = async (context: string, sector: string): Promise<TSimulationRun> => {
@@ -133,7 +140,8 @@ export const runProcessSimulation = async (context: string, sector: string): Pro
         "Process Optimization",
         sector as Sector
     );
-    return generateJson<TSimulationRun>(prompt, generatedSchemas['TSimulationRun'], generatedSchemas['TSimulationRun']?.required || []);
+    const result = await generateJson<TSimulationRun>(prompt, generatedSchemas['TSimulationRun'], generatedSchemas['TSimulationRun']?.required || []);
+    return result.data;
 };
 
 export const generateUserStoryMap = async (title: string, sector: string): Promise<TStoryMap> => {
@@ -142,7 +150,8 @@ export const generateUserStoryMap = async (title: string, sector: string): Promi
         title,
         sector as Sector
     );
-    return generateJson<TStoryMap>(prompt, generatedSchemas['TStoryMap'], generatedSchemas['TStoryMap']?.required || []);
+    const result = await generateJson<TStoryMap>(prompt, generatedSchemas['TStoryMap'], generatedSchemas['TStoryMap']?.required || []);
+    return result.data;
 };
 
 export const generateOrgChart = async (context: string, sector: string): Promise<TOrgNode> => {
@@ -151,7 +160,8 @@ export const generateOrgChart = async (context: string, sector: string): Promise
         "Organizational Analysis",
         sector as Sector
     );
-    return generateJson<TOrgNode>(prompt, generatedSchemas['TOrgNode'], generatedSchemas['TOrgNode']?.required || []);
+    const result = await generateJson<TOrgNode>(prompt, generatedSchemas['TOrgNode'], generatedSchemas['TOrgNode']?.required || []);
+    return result.data;
 };
 
 export const generateDFD = async (title: string, sector: string): Promise<TDFDModel> => {
@@ -160,7 +170,8 @@ export const generateDFD = async (title: string, sector: string): Promise<TDFDMo
         title,
         sector as Sector
     );
-    return generateJson<TDFDModel>(prompt, generatedSchemas['TDFDModel'], generatedSchemas['TDFDModel']?.required || []);
+    const result = await generateJson<TDFDModel>(prompt, generatedSchemas['TDFDModel'], generatedSchemas['TDFDModel']?.required || []);
+    return result.data;
 };
 
 export const generateConceptModel = async (domain: string, sector: string): Promise<TConceptModel> => {
@@ -169,7 +180,8 @@ export const generateConceptModel = async (domain: string, sector: string): Prom
         "Information Management",
         sector as Sector
     );
-    return generateJson<TConceptModel>(prompt, generatedSchemas['TConceptModel'], generatedSchemas['TConceptModel']?.required || []);
+    const result = await generateJson<TConceptModel>(prompt, generatedSchemas['TConceptModel'], generatedSchemas['TConceptModel']?.required || []);
+    return result.data;
 };
 
 export const generateUserPersonas = async (audience: string, sector: string): Promise<TUserPersona[]> => {
@@ -178,7 +190,8 @@ export const generateUserPersonas = async (audience: string, sector: string): Pr
         "UX Design",
         sector as Sector
     );
-    return generateJson<TUserPersona[]>(prompt, { type: 'array', items: generatedSchemas['TUserPersona'] }, []);
+    const result = await generateJson<TUserPersona[]>(prompt, { type: 'array', items: generatedSchemas['TUserPersona'] }, []);
+    return result.data;
 };
 
 export const generateAPMAnalysis = async (apps: string[], sector: string): Promise<TAPMAnalysis> => {
@@ -187,7 +200,8 @@ export const generateAPMAnalysis = async (apps: string[], sector: string): Promi
         "IT Strategy",
         sector as Sector
     );
-    return generateJson<TAPMAnalysis>(prompt, generatedSchemas['TAPMAnalysis'], generatedSchemas['TAPMAnalysis']?.required || []);
+    const result = await generateJson<TAPMAnalysis>(prompt, generatedSchemas['TAPMAnalysis'], generatedSchemas['TAPMAnalysis']?.required || []);
+    return result.data;
 };
 
 export const generateRoadmap = async (title: string, sector: string): Promise<TRoadmap> => {
@@ -196,7 +210,8 @@ export const generateRoadmap = async (title: string, sector: string): Promise<TR
         title,
         sector as Sector
     );
-    return generateJson<TRoadmap>(prompt, generatedSchemas['TRoadmap'], generatedSchemas['TRoadmap']?.required || []);
+    const result = await generateJson<TRoadmap>(prompt, generatedSchemas['TRoadmap'], generatedSchemas['TRoadmap']?.required || []);
+    return result.data;
 };
 
 export const generateMigrationPlan = async (source: string, target: string, sector: string): Promise<TMigrationPlan> => {
@@ -205,5 +220,6 @@ export const generateMigrationPlan = async (source: string, target: string, sect
         "Data Engineering",
         sector as Sector
     );
-    return generateJson<TMigrationPlan>(prompt, generatedSchemas['TMigrationPlan'], generatedSchemas['TMigrationPlan']?.required || []);
+    const result = await generateJson<TMigrationPlan>(prompt, generatedSchemas['TMigrationPlan'], generatedSchemas['TMigrationPlan']?.required || []);
+    return result.data;
 };

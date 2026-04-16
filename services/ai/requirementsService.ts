@@ -137,7 +137,8 @@ export const generateUserStories = async (title: string, sector: string, additio
       `${title}\n${additionalContext}`,
       sector as Sector
   );
-  return generateJson<{title: string, priority: any}[]>(prompt);
+  const result = await generateJson<{title: string, priority: any}[]>(prompt);
+  return result.data;
 };
 
 export const generateAcceptanceCriteria = async (story: string, sector: Sector = Sector.GENERAL, language?: string): Promise<string> => {
@@ -148,7 +149,8 @@ export const generateAcceptanceCriteria = async (story: string, sector: Sector =
     "Text",
     language
   );
-  return generateText(prompt);
+  const result = await generateText(prompt);
+  return result.text;
 };
 
 export const generateWbs = async (initiative: TInitiative, backlog: any[]): Promise<TWorkBreakdown> => {
@@ -160,7 +162,8 @@ export const generateWbs = async (initiative: TInitiative, backlog: any[]): Prom
         "Project Planning",
         initiative.sector
     );
-    return generateJson<TWorkBreakdown>(prompt, generatedSchemas['TWorkBreakdown'], ['sprints', 'dependencies']);
+    const result = await generateJson<TWorkBreakdown>(prompt, generatedSchemas['TWorkBreakdown'], ['sprints', 'dependencies']);
+    return result.data;
 };
 
 export const analyzeCriticalPath = async (wbs: string, sector: string): Promise<TProjectVitalsAdvanced> => {
@@ -170,7 +173,8 @@ export const analyzeCriticalPath = async (wbs: string, sector: string): Promise<
       "Project Execution",
       sector as Sector
   );
-  return generateJson<TProjectVitalsAdvanced>(prompt, generatedSchemas['TProjectVitalsAdvanced'], ['tasks', 'resources', 'criticalPathDuration', 'riskAnalysis']);
+  const result = await generateJson<TProjectVitalsAdvanced>(prompt, generatedSchemas['TProjectVitalsAdvanced'], ['tasks', 'resources', 'criticalPathDuration', 'riskAnalysis']);
+  return result.data;
 };
 
 export const autoPrioritizeTasks = async (tasks: any[], strategicGoal: string, sector: string): Promise<any[]> => {
@@ -183,7 +187,7 @@ export const autoPrioritizeTasks = async (tasks: any[], strategicGoal: string, s
       sector as Sector
   );
   const result = await generateJson<{tasks: any[]}>(prompt, undefined, ['tasks']);
-  return result.tasks;
+  return result.data.tasks;
 };
 
 export const generateBABOKRoadmap = async (ka: string, sector: Sector = Sector.GENERAL, currentArtifacts: string[], missingModules: string[], language?: string): Promise<string> => {
@@ -201,7 +205,8 @@ export const generateBABOKRoadmap = async (ka: string, sector: Sector = Sector.G
         language
     );
 
-    return generateText(prompt);
+    const result = await generateText(prompt);
+    return result.text;
 };
 
 export const generateTraceabilityData = async (title: string, sector: string): Promise<TTraceabilityGraphData> => {
@@ -215,7 +220,7 @@ export const generateTraceabilityData = async (title: string, sector: string): P
        sector as Sector
   );
   const response = await generateJson<DoublePassResponse<TTraceabilityGraphData>>(prompt);
-  return response.final_diagram;
+  return response.data.final_diagram;
 };
 
 export const analyzeTraceabilityGaps = async (data: TTraceabilityGraphData, sector: string): Promise<TGapAnalysisResult> => {
@@ -224,7 +229,8 @@ export const analyzeTraceabilityGaps = async (data: TTraceabilityGraphData, sect
       "Traceability Audit",
       sector as Sector
   );
-  return generateJson<TGapAnalysisResult>(prompt, generatedSchemas['TGapAnalysisResult'], generatedSchemas['TGapAnalysisResult']?.required || []);
+  const result = await generateJson<TGapAnalysisResult>(prompt, generatedSchemas['TGapAnalysisResult'], generatedSchemas['TGapAnalysisResult']?.required || []);
+  return result.data;
 };
 
 export const validateRequirement = async (req: string, sector: Sector = Sector.GENERAL, language?: string): Promise<TValidationResult> => {
@@ -235,7 +241,8 @@ export const validateRequirement = async (req: string, sector: Sector = Sector.G
       "JSON",
       language
   );
-  return generateJson<TValidationResult>(prompt, generatedSchemas['TValidationResult'], ['score', 'critique', 'improvedVersion']);
+  const result = await generateJson<TValidationResult>(prompt, generatedSchemas['TValidationResult'], ['score', 'critique', 'improvedVersion']);
+  return result.data;
 };
 
 export const generateEstimates = async (stories: string[], sector: string): Promise<TEstimationReport> => {
@@ -244,7 +251,8 @@ export const generateEstimates = async (stories: string[], sector: string): Prom
         "Project Management",
         sector as Sector
     );
-    return generateJson<TEstimationReport>(prompt, generatedSchemas['TEstimationReport'], generatedSchemas['TEstimationReport']?.required || []);
+    const result = await generateJson<TEstimationReport>(prompt, generatedSchemas['TEstimationReport'], generatedSchemas['TEstimationReport']?.required || []);
+    return result.data;
 };
 
 export const generateRiskAssessment = async (title: string, desc: string, sector: string, additionalContext: string = ''): Promise<any[]> => {
@@ -253,7 +261,8 @@ export const generateRiskAssessment = async (title: string, desc: string, sector
       title,
       sector as Sector
   );
-  return generateJson<any[]>(prompt, { type: 'array', items: generatedSchemas['TRisk'] }, []);
+  const result = await generateJson<any[]>(prompt, { type: 'array', items: generatedSchemas['TRisk'] }, []);
+  return result.data;
 };
 
 export const generateNfrs = async (title: string, desc: string, sector: string): Promise<TNfr[]> => {
@@ -262,7 +271,8 @@ export const generateNfrs = async (title: string, desc: string, sector: string):
         title,
         sector as Sector
     );
-    return generateJson<TNfr[]>(prompt, { type: 'array', items: generatedSchemas['TNfr'] }, []);
+    const result = await generateJson<TNfr[]>(prompt, { type: 'array', items: generatedSchemas['TNfr'] }, []);
+    return result.data;
 };
 
 export const generateRbacMatrix = async (title: string, desc: string, sector: string): Promise<TRbacMatrix> => {
@@ -271,7 +281,8 @@ export const generateRbacMatrix = async (title: string, desc: string, sector: st
         title,
         sector as Sector
     );
-    return generateJson<TRbacMatrix>(prompt, generatedSchemas['TRbacMatrix'], generatedSchemas['TRbacMatrix']?.required || []);
+    const result = await generateJson<TRbacMatrix>(prompt, generatedSchemas['TRbacMatrix'], generatedSchemas['TRbacMatrix']?.required || []);
+    return result.data;
 };
 
 export const generateApiSpec = async (title: string, desc: string, sector: string): Promise<TApiEndpoint[]> => {
@@ -280,7 +291,8 @@ export const generateApiSpec = async (title: string, desc: string, sector: strin
         title,
         sector as Sector
     );
-    return generateJson<TApiEndpoint[]>(prompt, { type: 'array', items: generatedSchemas['TApiEndpoint'] }, []);
+    const result = await generateJson<TApiEndpoint[]>(prompt, { type: 'array', items: generatedSchemas['TApiEndpoint'] }, []);
+    return result.data;
 };
 
 export const generateStateModel = async (title: string, sector: string, entityName: string): Promise<TStateModel> => {
@@ -289,7 +301,8 @@ export const generateStateModel = async (title: string, sector: string, entityNa
         title,
         sector as Sector
     );
-    return generateJson<TStateModel>(prompt, generatedSchemas['TStateModel'], generatedSchemas['TStateModel']?.required || []);
+    const result = await generateJson<TStateModel>(prompt, generatedSchemas['TStateModel'], generatedSchemas['TStateModel']?.required || []);
+    return result.data;
 };
 
 export const generateComplianceMatrix = async (title: string, sector: string): Promise<TComplianceMatrix> => {
@@ -298,7 +311,8 @@ export const generateComplianceMatrix = async (title: string, sector: string): P
         title,
         sector as Sector
     );
-    return generateJson<TComplianceMatrix>(prompt, generatedSchemas['TComplianceMatrix'], generatedSchemas['TComplianceMatrix']?.required || []);
+    const result = await generateJson<TComplianceMatrix>(prompt, generatedSchemas['TComplianceMatrix'], generatedSchemas['TComplianceMatrix']?.required || []);
+    return result.data;
 };
 
 export const generateComplianceReport = async (initiative: TInitiative): Promise<TComplianceReport> => {
@@ -307,7 +321,8 @@ export const generateComplianceReport = async (initiative: TInitiative): Promise
         initiative.title,
         initiative.sector as Sector
     );
-    return generateJson<TComplianceReport>(prompt, ComplianceReportSchema, ['initiativeId', 'initiativeTitle', 'generatedAt', 'overallScore', 'matrices', 'executiveSummary', 'actionItems']);
+    const result = await generateJson<TComplianceReport>(prompt, ComplianceReportSchema, ['initiativeId', 'initiativeTitle', 'generatedAt', 'overallScore', 'matrices', 'executiveSummary', 'actionItems']);
+    return result.data;
 };
 
 export const generateADR = async (title: string, problem: string, sector: string): Promise<TADR> => {
@@ -316,7 +331,8 @@ export const generateADR = async (title: string, problem: string, sector: string
         "Architecture",
         sector as Sector
     );
-    return generateJson<TADR>(prompt, generatedSchemas['TADR'], generatedSchemas['TADR']?.required || []);
+    const result = await generateJson<TADR>(prompt, generatedSchemas['TADR'], generatedSchemas['TADR']?.required || []);
+    return result.data;
 };
 
 export const generateStorySplits = async (epic: string, sector: string): Promise<TSplitSuggestion[]> => {
@@ -325,7 +341,8 @@ export const generateStorySplits = async (epic: string, sector: string): Promise
         "Agile Analysis",
         sector as Sector
     );
-    return generateJson<TSplitSuggestion[]>(prompt, { type: 'array', items: generatedSchemas['TSplitSuggestion'] }, []);
+    const result = await generateJson<TSplitSuggestion[]>(prompt, { type: 'array', items: generatedSchemas['TSplitSuggestion'] }, []);
+    return result.data;
 };
 
 export const generateUseCaseDiagram = async (context: string, sector: string): Promise<TUseCaseDiagram> => {
@@ -334,7 +351,8 @@ export const generateUseCaseDiagram = async (context: string, sector: string): P
         "Requirements Modeling",
         sector as Sector
     );
-    return generateJson<TUseCaseDiagram>(prompt, UseCaseDiagramSchema, ['title', 'actors', 'useCases', 'links']);
+    const result = await generateJson<TUseCaseDiagram>(prompt, UseCaseDiagramSchema, ['title', 'actors', 'useCases', 'links']);
+    return result.data;
 };
 
 export const generateSurvey = async (goal: string, audience: string, sector: string): Promise<TSurvey> => {
@@ -343,7 +361,8 @@ export const generateSurvey = async (goal: string, audience: string, sector: str
         "Elicitation",
         sector as Sector
     );
-    return generateJson<TSurvey>(prompt, generatedSchemas['TSurvey'], generatedSchemas['TSurvey']?.required || []);
+    const result = await generateJson<TSurvey>(prompt, generatedSchemas['TSurvey'], generatedSchemas['TSurvey']?.required || []);
+    return result.data;
 };
 
 export const generateWorkshopAgenda = async (goal: string, duration: string, audience: string, sector: string): Promise<TWorkshopPlan> => {
@@ -352,7 +371,8 @@ export const generateWorkshopAgenda = async (goal: string, duration: string, aud
         "Facilitation",
         sector as Sector
     );
-    return generateJson<TWorkshopPlan>(prompt, generatedSchemas['TWorkshopPlan'], generatedSchemas['TWorkshopPlan']?.required || []);
+    const result = await generateJson<TWorkshopPlan>(prompt, generatedSchemas['TWorkshopPlan'], generatedSchemas['TWorkshopPlan']?.required || []);
+    return result.data;
 };
 
 export const generateObservationPlan = async (role: string, activity: string, sector: string): Promise<TObservationPlan> => {
@@ -361,7 +381,8 @@ export const generateObservationPlan = async (role: string, activity: string, se
         "Elicitation",
         sector as Sector
     );
-    return generateJson<TObservationPlan>(prompt, generatedSchemas['TObservationPlan'], generatedSchemas['TObservationPlan']?.required || []);
+    const result = await generateJson<TObservationPlan>(prompt, generatedSchemas['TObservationPlan'], generatedSchemas['TObservationPlan']?.required || []);
+    return result.data;
 };
 
 export const runFocusGroup = async (topic: string, sector: string): Promise<TFocusGroupResult> => {
@@ -370,7 +391,8 @@ export const runFocusGroup = async (topic: string, sector: string): Promise<TFoc
         "Elicitation",
         sector as Sector
     );
-    return generateJson<TFocusGroupResult>(prompt, generatedSchemas['TFocusGroupResult'], generatedSchemas['TFocusGroupResult']?.required || []);
+    const result = await generateJson<TFocusGroupResult>(prompt, generatedSchemas['TFocusGroupResult'], generatedSchemas['TFocusGroupResult']?.required || []);
+    return result.data;
 };
 
 export const generateFunctionalDecomposition = async (context: string, sector: string): Promise<any> => {
@@ -379,7 +401,8 @@ export const generateFunctionalDecomposition = async (context: string, sector: s
         "System Analysis",
         sector as Sector
     );
-    return generateJson<any>(prompt, generatedSchemas['TDecompositionNode'], generatedSchemas['TDecompositionNode']?.required || []);
+    const result = await generateJson<any>(prompt, generatedSchemas['TDecompositionNode'], generatedSchemas['TDecompositionNode']?.required || []);
+    return result.data;
 };
 
 export const suggestReusablePackages = async (sector: string): Promise<TRequirementPackage[]> => {
@@ -388,7 +411,8 @@ export const suggestReusablePackages = async (sector: string): Promise<TRequirem
         "Requirements Reuse",
         sector as Sector
     );
-    return generateJson<TRequirementPackage[]>(prompt, { type: 'array', items: generatedSchemas['TRequirementPackage'] }, []);
+    const result = await generateJson<TRequirementPackage[]>(prompt, { type: 'array', items: generatedSchemas['TRequirementPackage'] }, []);
+    return result.data;
 };
 
 export const generateTechniqueGuide = async (technique: string, desc: string, sector: string): Promise<TTechniqueGuide> => {
@@ -405,7 +429,8 @@ export const generateTechniqueGuide = async (technique: string, desc: string, se
     );
     const schema = generatedSchemas['TTechniqueGuide'];
     const required = schema?.required || ['definition', 'draftContent', 'steps', 'technique'];
-    return generateJson<TTechniqueGuide>(prompt, schema, required);
+    const result = await generateJson<TTechniqueGuide>(prompt, schema, required);
+    return result.data;
 };
 
 export const generateDMNModel = async (context: string, sector: string): Promise<TDMNModel> => {
@@ -414,7 +439,8 @@ export const generateDMNModel = async (context: string, sector: string): Promise
         "Decision Modeling",
         sector as Sector
     );
-    return generateJson<TDMNModel>(prompt, generatedSchemas['TDMNModel'], generatedSchemas['TDMNModel']?.required || []);
+    const result = await generateJson<TDMNModel>(prompt, generatedSchemas['TDMNModel'], generatedSchemas['TDMNModel']?.required || []);
+    return result.data;
 };
 
 export const generateThreatModel = async (context: string, sector: string): Promise<TThreat[]> => {
@@ -423,7 +449,8 @@ export const generateThreatModel = async (context: string, sector: string): Prom
         "Security Architecture",
         sector as Sector
     );
-    return generateJson<TThreat[]>(prompt, { type: 'array', items: generatedSchemas['TThreat'] }, []);
+    const result = await generateJson<TThreat[]>(prompt, { type: 'array', items: generatedSchemas['TThreat'] }, []);
+    return result.data;
 };
 
 export const generateDPIA = async (title: string, sector: string): Promise<TDPIA> => {
@@ -432,7 +459,8 @@ export const generateDPIA = async (title: string, sector: string): Promise<TDPIA
         title,
         sector as Sector
     );
-    return generateJson<TDPIA>(prompt, generatedSchemas['TDPIA'], generatedSchemas['TDPIA']?.required || []);
+    const result = await generateJson<TDPIA>(prompt, generatedSchemas['TDPIA'], generatedSchemas['TDPIA']?.required || []);
+    return result.data;
 };
 
 export const generateUatScripts = async (stories: {title: string}[], sector: string): Promise<TUatTestCase[]> => {
@@ -441,7 +469,8 @@ export const generateUatScripts = async (stories: {title: string}[], sector: str
       "UAT Planning",
       sector as Sector
   );
-  return generateJson<TUatTestCase[]>(prompt, { type: 'array', items: generatedSchemas['TUatTestCase'] }, []);
+  const result = await generateJson<TUatTestCase[]>(prompt, { type: 'array', items: generatedSchemas['TUatTestCase'] }, []);
+  return result.data;
 };
 
 export const generateScopeStatement = async (title: string, sector: string): Promise<TScopeStatement> => {
@@ -450,5 +479,6 @@ export const generateScopeStatement = async (title: string, sector: string): Pro
         title,
         sector as Sector
     );
-    return generateJson<TScopeStatement>(prompt, generatedSchemas['TScopeStatement'], generatedSchemas['TScopeStatement']?.required || []);
+    const result = await generateJson<TScopeStatement>(prompt, generatedSchemas['TScopeStatement'], generatedSchemas['TScopeStatement']?.required || []);
+    return result.data;
 };

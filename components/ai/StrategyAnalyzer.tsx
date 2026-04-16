@@ -6,6 +6,7 @@ import { generateSwotAnalysis, generateBusinessModelCanvas, generateInvestmentAn
 import { Button } from '../ui/Button';
 import { Spinner } from '../ui/Spinner';
 import { RecommendedTechniques } from '../ui/RecommendedTechniques';
+import { useUI } from '../../context/UIContext';
 
 
 interface StrategyAnalyzerProps {
@@ -20,6 +21,7 @@ const MOCK_DOCS = {
 
 export const StrategyAnalyzer: React.FC<StrategyAnalyzerProps> = ({ initiative, onNavigateToTechnique }) => {
   const { t, i18n } = useTranslation(['common', 'dashboard']);
+  const { isFocusModeActive } = useUI();
   const currentLanguage = i18n.language;
   const sector = initiative.sector;
   const [context, setContext] = useState(
@@ -151,12 +153,15 @@ export const StrategyAnalyzer: React.FC<StrategyAnalyzerProps> = ({ initiative, 
         </ul>
     </div>
   );
-
   return (
-    <div className="flex gap-6">
-        <div className="flex-1 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md space-y-4">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{t('dashboard:strategy.title')}</h2>
-            <p className="text-gray-600 dark:text-gray-400">{t('dashboard:strategy.description')}</p>
+    <div className={`flex flex-col md:flex-row gap-6 ${isFocusModeActive ? 'gap-0' : 'gap-6'}`}>
+        <div className={`flex-1 space-y-4 transition-all duration-500 ${isFocusModeActive ? 'p-0 shadow-none border-none' : 'bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md'}`}>
+            {!isFocusModeActive && (
+                <div className="mb-6">
+                    <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{t('dashboard:strategy.title')}</h2>
+                    <p className="text-gray-600 dark:text-gray-400">{t('dashboard:strategy.description')}</p>
+                </div>
+            )}
             
             <div className="space-y-4">
                 <div>
@@ -323,13 +328,15 @@ export const StrategyAnalyzer: React.FC<StrategyAnalyzerProps> = ({ initiative, 
                 </div>
             )}
         </div>
-        <div className="w-80 flex-shrink-0">
-            <RecommendedTechniques
-                techniques={recommendedTechniques}
-                isLoading={isLoadingRecs}
-                onSelectTechnique={onNavigateToTechnique}
-            />
-        </div>
+        {!isFocusModeActive && (
+            <div className="w-80 flex-shrink-0 animate-in slide-in-from-right-4 duration-500">
+                <RecommendedTechniques
+                    techniques={recommendedTechniques}
+                    isLoading={isLoadingRecs}
+                    onSelectTechnique={onNavigateToTechnique}
+                />
+            </div>
+        )}
     </div>
   );
 };

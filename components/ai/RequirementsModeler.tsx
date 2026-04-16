@@ -1,48 +1,91 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { 
+    Layout, 
+    Layers, 
+    Cpu, 
+    Database, 
+    ShieldCheck, 
+    Zap, 
+    Target, 
+    Plus, 
+    CheckCircle2, 
+    AlertCircle, 
+    ArrowRight, 
+    Activity,
+    ListTodo,
+    Clipboard,
+    MousePointer2,
+    Maximize2,
+    RotateCcw
+} from 'lucide-react';
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { generateAcceptanceCriteria, generateWireframe, validateRequirement, generateDataModel } from '../../services/geminiService';
 import { TWireframeElement, TValidationResult, TInitiative, TDataModel, Sector } from '../../types';
 import { Button } from '../ui/Button';
 import { Spinner } from '../ui/Spinner';
 import { ProcessModelerTool } from './ProcessModelerTool';
 import { useCatalyst } from '../../context/CatalystContext';
+import { useUI } from '../../context/UIContext';
 
 type Tool = 'criteria' | 'wireframe' | 'bpmn' | 'validator' | 'data';
 
-// Recursive component to render the wireframe
+// Recursive component to render the wireframe with Blueprint Aesthetic
 const RenderWireframeElement: React.FC<{ element: TWireframeElement }> = ({ element }) => {
   const { t } = useTranslation(['common', 'dashboard']);
   const { type, props = {}, children = [] } = element;
 
-  const baseClasses = "border-dashed border-2 border-gray-400 dark:border-gray-600";
+  const baseClasses = "border border-accent-cyan/30 bg-accent-cyan/5 relative";
+  const labelClasses = "absolute -top-2 -left-2 px-1 text-[8px] font-black uppercase tracking-tighter bg-accent-cyan text-white";
+  
   const elementClasses: { [key: string]: string } = {
-    div: `${baseClasses} p-4 space-y-4 flex flex-col items-start w-full`,
-    h1: `text-2xl font-bold p-2 text-gray-800 dark:text-gray-200`,
-    p: `p-2 text-gray-600 dark:text-gray-400`,
-    button: `bg-accent-cyan text-white font-bold py-2 px-4 rounded w-full text-center`,
-    input: `border-2 border-gray-300 bg-white dark:bg-gray-700 p-2 rounded w-full`,
-    img: `${baseClasses} w-full h-32 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500`,
+    div: `${baseClasses} p-6 space-y-4 flex flex-col items-start w-full min-h-[100px] bg-[radial-gradient(#22d3ee22_1px,transparent_1px)] [background-size:16px_16px]`,
+    h1: `text-xl font-black tracking-tight p-2 text-white border-b border-white/10 w-full`,
+    p: `p-2 text-gray-400 text-sm leading-relaxed`,
+    button: `bg-accent-cyan/20 border border-accent-cyan/40 text-accent-cyan font-bold py-3 px-4 rounded-xl w-full text-center text-xs tracking-widest uppercase hover:bg-accent-cyan hover:text-white transition-all`,
+    input: `border border-white/10 bg-black/40 p-3 rounded-lg w-full text-sm text-white placeholder:text-gray-600 outline-none`,
+    img: `${baseClasses} w-full h-40 bg-black/20 flex flex-col items-center justify-center text-gray-500 border-dashed`,
   };
 
   const Component = type;
-  const componentProps: any = {};
 
   switch (type) {
     case 'input':
-      componentProps.placeholder = props.placeholder || t('dashboard:requirements.input_field');
-      componentProps.className = elementClasses.input;
-      return <input {...componentProps} readOnly />;
+      return (
+        <div className="relative w-full">
+            <span className={labelClasses}>Field Input</span>
+            <input placeholder={props.placeholder || t('dashboard:requirements.input_field')} className={elementClasses.input} readOnly />
+        </div>
+      );
     case 'img':
-        return <div className={elementClasses.img}>{t('dashboard:requirements.image_placeholder')}</div>;
+        return (
+            <div className={elementClasses.img}>
+                <span className={labelClasses}>Media Asset</span>
+                <Layout className="h-8 w-8 opacity-20" />
+                <span className="text-[10px] mt-2 font-bold uppercase tracking-widest opacity-30">{t('dashboard:requirements.image_placeholder')}</span>
+            </div>
+        );
     case 'button':
+        return (
+            <div className="relative w-full">
+                <span className={labelClasses}>Interaction</span>
+                <button className={elementClasses.button}>{props.text || type}</button>
+            </div>
+        );
     case 'h1':
     case 'p':
-      return <Component className={elementClasses[type]}>{props.text || type}</Component>;
+        return (
+            <div className="relative w-full">
+                <span className={labelClasses}>{type === 'h1' ? 'Header' : 'Body Copy'}</span>
+                <div className={elementClasses[type]}>{props.text || type}</div>
+            </div>
+        );
     case 'div':
     default:
       return (
         <div className={elementClasses.div}>
+          <span className={labelClasses}>Container</span>
           {(children || []).map((child, index) => (
             <RenderWireframeElement key={index} element={child} />
           ))}
@@ -57,10 +100,11 @@ const AcceptanceCriteriaGenerator: React.FC<{ initiative: TInitiative, language:
     const [criteria, setCriteria] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    
+    const elicitationReport = initiative.artifacts?.elicitation_report;
 
     const handleGenerate = useCallback(async () => {
         if (!userStory) return;
-        setError(null);
         setIsLoading(true);
         setError(null);
         setCriteria('');
@@ -69,50 +113,133 @@ const AcceptanceCriteriaGenerator: React.FC<{ initiative: TInitiative, language:
             setCriteria(result);
         } catch (err) {
             setError(t('dashboard:requirements.error_criteria'));
-            console.error(err);
         } finally {
             setIsLoading(false);
         }
-    }, [userStory, language, t]);
+    }, [userStory, initiative.sector, language, t]);
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(criteria);
+        // Toast handled by parent if needed, but we keep it simple here
+    };
 
     const formattedCriteria = (criteria && typeof criteria === 'string') 
         ? criteria.split('\n').filter(line => line.trim() !== '').map((line, index) => {
-            if (line.toLowerCase().startsWith('given')) {
-            return <div key={index} className="mt-3"><span className="font-semibold text-accent-cyan">GIVEN</span> {line.substring(5)}</div>;
+            const cleanLine = line.trim();
+            if (cleanLine.toLowerCase().startsWith('given')) {
+                return (
+                    <div key={index} className="flex gap-4 group/line py-1">
+                        <span className="w-16 shrink-0 text-[10px] font-black tracking-widest text-accent-cyan uppercase pt-1 opacity-50">Given</span>
+                        <span className="text-gray-300 font-medium">{cleanLine.substring(5).trim()}</span>
+                    </div>
+                );
             }
-            if (line.toLowerCase().startsWith('when')) {
-            return <div key={index}><span className="font-semibold text-accent-cyan">WHEN</span> {line.substring(4)}</div>;
+            if (cleanLine.toLowerCase().startsWith('when')) {
+                return (
+                    <div key={index} className="flex gap-4 group/line py-1">
+                        <span className="w-16 shrink-0 text-[10px] font-black tracking-widest text-accent-purple uppercase pt-1 opacity-50">When</span>
+                        <span className="text-gray-200">{cleanLine.substring(4).trim()}</span>
+                    </div>
+                );
             }
-            if (line.toLowerCase().startsWith('then')) {
-            return <div key={index}><span className="font-semibold text-accent-purple">THEN</span> {line.substring(4)}</div>;
+            if (cleanLine.toLowerCase().startsWith('then')) {
+                return (
+                    <div key={index} className="flex gap-4 group/line py-1">
+                        <span className="w-16 shrink-0 text-[10px] font-black tracking-widest text-accent-teal uppercase pt-1 opacity-50">Then</span>
+                        <span className="text-white font-bold">{cleanLine.substring(4).trim()}</span>
+                    </div>
+                );
             }
-            return <div key={index}>{line}</div>;
+            if (cleanLine.toLowerCase().startsWith('and')) {
+                return (
+                    <div key={index} className="flex gap-4 group/line py-1">
+                        <span className="w-16 shrink-0 text-[10px] font-black tracking-widest text-gray-600 uppercase pt-1 opacity-50">And</span>
+                        <span className="text-gray-400 italic">{cleanLine.substring(3).trim()}</span>
+                    </div>
+                );
+            }
+            return <div key={index} className="text-gray-600 ml-20 text-[11px] py-0.5">{line}</div>;
         }) 
         : [];
 
     return (
-        <div className="space-y-4">
-             <div>
-                <label htmlFor="userStory" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">User Story</label>
-                <textarea
-                id="userStory"
-                rows={3}
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-cyan"
-                value={userStory}
-                onChange={(e) => setUserStory(e.target.value)}
-                placeholder="As a [type of user], I want to [perform some task] so that I can [achieve some goal]."
-                />
-            </div>
-            <Button onClick={handleGenerate} disabled={isLoading || !userStory}>
-                {isLoading ? <Spinner /> : 'Generate Acceptance Criteria'}
-            </Button>
-            {error && <p className="text-accent-red text-sm">{error}</p>}
-            {criteria && (
-                <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg mt-4">
-                <h3 className="text-lg font-semibold mb-2">Generated Acceptance Criteria</h3>
-                <div className="text-gray-700 dark:text-gray-300 space-y-1 font-mono text-sm">
-                    {formattedCriteria}
+        <div className="space-y-8 slide-up">
+            <div className="relative group p-6 bg-white/[0.03] border border-white/5 rounded-[2rem] hover:bg-white/[0.05] transition-all duration-500">
+                <div className="absolute top-0 right-10 transform -translate-y-1/2 px-4 py-1.5 bg-black/40 backdrop-blur-md rounded-full border border-white/10 opacity-60 flex items-center gap-2">
+                    <Activity className="h-3 w-3 text-accent-cyan" />
+                    <span className="text-[9px] font-black text-white uppercase tracking-widest italic">User Story Input</span>
                 </div>
+
+                <div className="space-y-4">
+                    {elicitationReport && (
+                        <div className="flex flex-wrap gap-2 mb-2 p-1 bg-black/20 rounded-xl w-fit border border-white/5">
+                            {elicitationReport.requirements?.slice(0, 3).map((r: string, i: number) => (
+                                <button 
+                                    key={i} 
+                                    onClick={() => setUserStory(r)} 
+                                    className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[9px] font-black text-gray-500 hover:text-white uppercase tracking-widest transition-all"
+                                >
+                                    Requirement {i + 1}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="flex flex-col lg:flex-row gap-4">
+                        <textarea
+                            className="flex-grow bg-black/40 border-none rounded-2xl p-6 text-sm text-white placeholder:text-gray-700 focus:outline-none transition-all resize-none font-medium custom-scrollbar"
+                            rows={3}
+                            value={userStory}
+                            onChange={(e) => setUserStory(e.target.value)}
+                            placeholder="Describe the user's intent..."
+                        />
+                        <button 
+                            onClick={handleGenerate} 
+                            disabled={isLoading || !userStory}
+                            className="lg:w-48 flex items-center justify-center gap-3 bg-accent-cyan text-black text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-[#34e2cf] hover:shadow-[0_0_20px_rgba(45,212,191,0.3)] transition-all disabled:opacity-20"
+                        >
+                            {isLoading ? <Spinner className="h-5 w-5" /> : <><Sparkles className="h-4 w-4" /> Generate Spec</>}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {error && (
+                <div className="p-4 bg-accent-red/10 text-accent-red rounded-2xl border border-accent-red/20 text-[10px] font-black uppercase tracking-widest">
+                    {error}
+                </div>
+            )}
+            
+            {criteria && (
+                <div className="relative group overflow-hidden bg-white/[0.02] border border-white/5 rounded-[3rem] p-10 slide-up">
+                    <div className="absolute inset-0 bg-grid-pattern opacity-[0.03] pointer-events-none" />
+                    
+                    <div className="relative z-10">
+                        <div className="flex justify-between items-center mb-10">
+                            <div className="flex items-center gap-4">
+                                <div className="p-2.5 bg-accent-cyan/20 rounded-xl border border-accent-cyan/30">
+                                    <ListTodo className="h-5 w-5 text-accent-cyan" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black tracking-tighter uppercase italic">Specification Terminal</h3>
+                                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Behavioral Logic Output</p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={handleCopy}
+                                className="flex items-center gap-2 px-6 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:border-accent-cyan hover:bg-accent-cyan/10 transition-all group"
+                            >
+                                <Clipboard className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                                Copy Spec
+                            </button>
+                        </div>
+                        
+                        <div className="bg-black/40 rounded-[2rem] p-8 border border-white/5 font-mono text-xs leading-relaxed overflow-hidden group/term">
+                            <div className="space-y-2">
+                                {formattedCriteria}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
@@ -121,14 +248,15 @@ const AcceptanceCriteriaGenerator: React.FC<{ initiative: TInitiative, language:
 
 const WireframeGenerator: React.FC<{ initiative: TInitiative, language: string }> = ({ initiative, language }) => {
     const { t } = useTranslation(['common', 'dashboard']);
-    const [requirements, setRequirements] = useState('A login screen with a title "Welcome Back!", an email input, a password input, and a "Log In" button. There should also be a paragraph of text below the button for a "Forgot Password?" link.');
+    const [requirements, setRequirements] = useState('A login screen with a title "Welcome Back!", an email input, a password input, and a "Log In" button.');
     const [wireframe, setWireframe] = useState<TWireframeElement | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const elicitationReport = initiative.artifacts?.elicitation_report;
+
     const handleGenerate = useCallback(async () => {
         if (!requirements) return;
-        setError(null);
         setIsLoading(true);
         setError(null);
         setWireframe(null);
@@ -137,34 +265,82 @@ const WireframeGenerator: React.FC<{ initiative: TInitiative, language: string }
             setWireframe(result);
         } catch (err) {
             setError(t('dashboard:requirements.error_wireframe'));
-            console.error(err);
         } finally {
             setIsLoading(false);
         }
     }, [requirements, initiative.sector, language, t]);
 
     return (
-        <div className="space-y-4">
-            <div>
-                <label htmlFor="wireframeReqs" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Functional Requirements for Screen</label>
-                <textarea
-                id="wireframeReqs"
-                rows={4}
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-cyan"
-                value={requirements}
-                onChange={(e) => setRequirements(e.target.value)}
-                placeholder="List the components and layout for the screen..."
-                />
+        <div className="space-y-8 slide-up">
+            <div className="relative group p-6 bg-white/[0.03] border border-white/5 rounded-[2rem] hover:bg-white/[0.05] transition-all duration-500">
+                <div className="absolute top-0 right-10 transform -translate-y-1/2 px-4 py-1.5 bg-black/40 backdrop-blur-md rounded-full border border-white/10 opacity-60 flex items-center gap-2">
+                    <Layers className="h-3 w-3 text-accent-cyan" />
+                    <span className="text-[9px] font-black text-white uppercase tracking-widest italic">Mockup Architect</span>
+                </div>
+
+                <div className="space-y-4">
+                    {elicitationReport && (
+                        <div className="flex flex-wrap gap-2 mb-2 p-1 bg-black/20 rounded-xl w-fit border border-white/5">
+                            {elicitationReport.requirements?.slice(0, 3).map((r: string, i: number) => (
+                                <button 
+                                    key={i} 
+                                    onClick={() => setRequirements(r)} 
+                                    className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[9px] font-black text-gray-500 hover:text-white uppercase tracking-widest transition-all"
+                                >
+                                    Req {i + 1}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="flex flex-col lg:flex-row gap-4">
+                        <textarea
+                            className="flex-grow bg-black/40 border-none rounded-2xl p-6 text-sm text-white placeholder:text-gray-700 focus:outline-none transition-all resize-none font-medium custom-scrollbar"
+                            rows={3}
+                            value={requirements}
+                            onChange={(e) => setRequirements(e.target.value)}
+                            placeholder="Describe the UI layout..."
+                        />
+                        <button 
+                            onClick={handleGenerate} 
+                            disabled={isLoading || !requirements}
+                            className="lg:w-48 flex items-center justify-center gap-3 bg-accent-cyan text-black text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-[#34e2cf] hover:shadow-[0_0_20px_rgba(45,212,191,0.3)] transition-all disabled:opacity-20"
+                        >
+                            {isLoading ? <Spinner className="h-5 w-5" /> : <><Layout className="h-4 w-4" /> Build Blueprint</>}
+                        </button>
+                    </div>
+                </div>
             </div>
-            <Button onClick={handleGenerate} disabled={isLoading || !requirements}>
-                {isLoading ? <Spinner /> : 'Generate Wireframe'}
-            </Button>
-            {error && <p className="text-accent-red text-sm">{error}</p>}
+
+            {error && (
+                <div className="p-4 bg-accent-red/10 text-accent-red rounded-2xl border border-accent-red/20 text-[10px] font-black uppercase tracking-widest">
+                    {error}
+                </div>
+            )}
+            
             {wireframe && (
-                <div className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-lg mt-4 border border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-semibold mb-4 text-center">Generated Low-Fidelity Wireframe</h3>
-                    <div className="max-w-md mx-auto bg-white dark:bg-gray-800 p-4 rounded shadow-lg">
-                        <RenderWireframeElement element={wireframe} />
+                <div className="relative group overflow-hidden bg-black/60 border border-white/10 rounded-[3rem] p-1 slide-up min-h-[600px] flex flex-col">
+                    <div className="absolute inset-0 bg-grid-pattern opacity-[0.05] pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-accent-cyan/10 to-transparent pointer-events-none" />
+                    
+                    <div className="px-10 pt-10 pb-4 relative z-10 flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <div className="p-1.5 bg-accent-cyan/20 rounded-lg">
+                                <Layers className="h-4 w-4 text-accent-cyan" />
+                            </div>
+                            <span className="text-[10px] font-black text-white/50 tracking-[0.3em] uppercase">Tactical Low-Fidelity Synthesis</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="h-1.5 w-1.5 rounded-full bg-accent-cyan animate-pulse" />
+                            <span className="text-[8px] font-black text-accent-cyan uppercase tracking-tighter">Draft Rev 2.1</span>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 flex items-center justify-center p-10 relative z-10">
+                        <div className="w-full max-w-lg bg-black/40 p-8 rounded-[2.5rem] border border-accent-cyan/30 shadow-2xl backdrop-blur-md relative transform hover:rotate-1 transition-transform duration-700">
+                             <div className="absolute -top-4 -right-4 bg-accent-cyan text-black text-[8px] font-black px-2 py-1 rounded-md rotate-12 shadow-lg">CALIBRATED</div>
+                             <RenderWireframeElement element={wireframe} />
+                        </div>
                     </div>
                 </div>
             )}
@@ -181,7 +357,6 @@ const ValidationTool: React.FC<{ sector: string, language: string }> = ({ sector
 
     const handleValidate = async () => {
         if(!text) return;
-        setError(null);
         setIsLoading(true);
         setError(null);
         setResult(null);
@@ -195,56 +370,97 @@ const ValidationTool: React.FC<{ sector: string, language: string }> = ({ sector
         }
     };
 
-    const scoreColor = (score: number) => {
-        if (score >= 80) return 'text-accent-emerald';
-        if (score >= 50) return 'text-accent-amber';
-        return 'text-accent-red';
-    };
-
     return (
-        <div className="space-y-4">
-            <div className="bg-surface-dark dark:bg-surface-darker p-3 rounded-md border border-surface-dark dark:border-surface-darker/30 text-sm text-accent-cyan dark:text-accent-cyan">
-                <strong>Context:</strong> Auditing against <strong>{sector}</strong> standards.
+        <div className="space-y-8 slide-up">
+            <div className="relative group p-6 bg-white/[0.03] border border-white/5 rounded-[2rem] hover:bg-white/[0.05] transition-all duration-500">
+                <div className="absolute top-0 right-10 transform -translate-y-1/2 px-4 py-1.5 bg-black/40 backdrop-blur-md rounded-full border border-white/10 opacity-60 flex items-center gap-2">
+                    <ShieldCheck className="h-3 w-3 text-accent-cyan" />
+                    <span className="text-[9px] font-black text-white uppercase tracking-widest italic">Quality Audit Engine</span>
+                </div>
+
+                <div className="space-y-4">
+                    <div className="flex flex-col lg:flex-row gap-4">
+                        <textarea
+                            className="flex-grow bg-black/40 border-none rounded-2xl p-6 text-sm text-white placeholder:text-gray-700 focus:outline-none transition-all resize-none font-medium custom-scrollbar"
+                            rows={3}
+                            value={text}
+                            onChange={(e) => setText(e.target.value)}
+                            placeholder="Requirement draft for auditing..."
+                        />
+                        <button 
+                            onClick={handleValidate} 
+                            disabled={isLoading || !text.trim()}
+                            className="lg:w-48 flex items-center justify-center gap-3 bg-accent-purple text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-accent-purple/80 hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all disabled:opacity-20"
+                        >
+                            {isLoading ? <Spinner className="h-5 w-5" /> : <><Activity className="h-4 w-4" /> Run Audit</>}
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Requirement / User Story Draft</label>
-                <textarea
-                    rows={3}
-                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-purple"
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    placeholder="Paste your draft here..."
-                />
-            </div>
-            <Button onClick={handleValidate} disabled={isLoading || !text.trim()}>
-                {isLoading ? <Spinner /> : 'Audit Quality'}
-            </Button>
-            {error && <p className="text-accent-red text-sm">{error}</p>}
+
+            {error && (
+                <div className="p-4 bg-accent-red/10 text-accent-red rounded-2xl border border-accent-red/20 text-[10px] font-black uppercase tracking-widest">
+                    {error}
+                </div>
+            )}
             
             {result && (
-                <div className="mt-6 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden shadow-sm">
-                    <div className="bg-gray-50 dark:bg-gray-900/50 p-4 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
-                        <h3 className="font-bold text-gray-800 dark:text-white">Quality Report Card</h3>
-                        <div className={`text-2xl font-bold ${scoreColor(result.score)}`}>{result.score}/100</div>
-                    </div>
-                    <div className="p-4 space-y-4">
-                        <div>
-                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Critique</h4>
-                            <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                                {(Array.isArray(result.critique) ? result.critique : []).map((c, i) => <li key={i}>{c}</li>)}
-                            </ul>
+                <div className="relative group overflow-hidden bg-white/[0.02] border border-white/5 rounded-[3rem] p-10 slide-up">
+                    <div className="absolute inset-0 bg-grid-pattern opacity-[0.03] pointer-events-none" />
+                    
+                    <div className="relative z-10">
+                        <div className="flex justify-between items-start mb-10">
+                            <div className="flex items-center gap-4">
+                                <div className="p-2.5 bg-accent-purple/20 rounded-xl border border-accent-purple/30">
+                                    <CheckCircle2 className="h-5 w-5 text-accent-purple" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black tracking-tighter uppercase italic text-white">Quality Report Card</h3>
+                                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Formal Verification Results</p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <div className={`text-5xl font-black tracking-tighter ${result.score > 70 ? 'text-accent-teal' : 'text-accent-amber'}`}>
+                                    {result.score}<span className="text-sm opacity-30 ml-1">/100</span>
+                                </div>
+                                <p className="text-[8px] font-black text-gray-500 uppercase tracking-widest mt-1">Compliance Score</p>
+                            </div>
                         </div>
-                        <div className="bg-surface-dark dark:bg-surface-darker p-3 rounded-md border border-surface-dark dark:border-surface-darker">
-                            <h4 className="text-xs font-bold text-accent-purple dark:text-accent-purple uppercase tracking-wide mb-1">AI Rewritten Version</h4>
-                            <p className="text-base font-medium text-gray-900 dark:text-white">{result.improvedVersion}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">{result.reasoning}</p>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div className="space-y-6">
+                                <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Tactical Critique</h4>
+                                <ul className="space-y-4">
+                                    {(Array.isArray(result.critique) ? result.critique : []).map((c, i) => (
+                                        <li key={i} className="flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/5 group/critique hover:bg-white/10 transition-all">
+                                            <ChevronRight className="h-4 w-4 shrink-0 text-accent-purple mt-0.5 opacity-40 group-hover/critique:translate-x-1 transition-transform" />
+                                            <span className="text-xs font-medium text-gray-300 leading-relaxed uppercase tracking-wide">{c}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <div className="space-y-6">
+                                <h4 className="text-[10px] font-black text-accent-teal uppercase tracking-[0.2em]">AI Optimized Definition</h4>
+                                <div className="p-8 bg-accent-teal/5 border border-accent-teal/20 rounded-[2.5rem] relative overflow-hidden group/opt min-h-[160px] flex flex-col justify-center">
+                                    <div className="absolute -top-4 -right-4 bg-accent-teal text-black text-[8px] font-black px-2 py-1 rounded-md rotate-12 shadow-lg opacity-40 group-hover/opt:opacity-100 transition-opacity">VERIFIED</div>
+                                    <p className="text-lg font-bold text-white mb-6 leading-relaxed italic">{result.improvedVersion}</p>
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex items-center gap-2 text-[10px] font-medium text-gray-500 italic uppercase tracking-wider">
+                                            <AlertCircle className="h-3 w-3" />
+                                            {result.reasoning}
+                                        </div>
+                                        <button 
+                                            onClick={() => setText(result.improvedVersion)}
+                                            className="w-fit flex items-center gap-2 px-6 py-2 bg-accent-teal text-black text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-[#34e2cf] transition-all"
+                                        >
+                                            <Zap className="h-3.5 w-3.5" />
+                                            Swap Draft
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <button 
-                            onClick={() => setText(result.improvedVersion)}
-                            className="text-sm text-accent-purple dark:text-accent-purple hover:underline font-medium"
-                        >
-                            Replace Draft with Improved Version
-                        </button>
                     </div>
                 </div>
             )}
@@ -255,30 +471,24 @@ const ValidationTool: React.FC<{ sector: string, language: string }> = ({ sector
 const DataArchitectTool: React.FC<{ initiative: TInitiative, language: string }> = ({ initiative, language }) => {
     const { t } = useTranslation(['common', 'dashboard']);
     const { saveArtifact } = useCatalyst();
-    const [description, setDescription] = useState('A patient management system where patients can book appointments with doctors and view their prescriptions.');
+    const [description, setDescription] = useState('A patient management system where patients can book appointments with doctors.');
     const [model, setModel] = useState<TDataModel | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [showSql, setShowSql] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Load generated model on mount
     useEffect(() => {
-        if (initiative.artifacts?.dataModel) {
-            setModel(initiative.artifacts.dataModel);
-        }
-    }, [initiative.id, initiative.artifacts]);
+        if (initiative.artifacts?.dataModel) setModel(initiative.artifacts.dataModel);
+    }, [initiative.artifacts]);
 
     const handleGenerate = async () => {
-        setError(null);
         setIsLoading(true);
-        setModel(null);
+        setError(null);
         try {
             const result = await generateDataModel(description, initiative.sector, language);
             setModel(result);
-            // Persist
             saveArtifact(initiative.id, 'dataModel', result);
         } catch(e) {
-            console.error(e);
             setError(t('dashboard:requirements.error_data'));
         } finally {
             setIsLoading(false);
@@ -286,121 +496,180 @@ const DataArchitectTool: React.FC<{ initiative: TInitiative, language: string }>
     };
 
     const getEntityPos = (index: number, total: number) => {
-        const radius = 150;
-        const angle = (index / total) * 2 * Math.PI;
-        return {
-            x: 300 + radius * Math.cos(angle),
-            y: 250 + radius * Math.sin(angle)
-        };
+        const radius = 180;
+        const angle = (index / total) * 2 * Math.PI - Math.PI/2;
+        return { x: 350 + radius * Math.cos(angle), y: 250 + radius * Math.sin(angle) };
     };
 
     return (
-        <div className="space-y-4">
-            <div className="bg-surface-dark dark:bg-surface-darker p-3 rounded-md text-sm text-accent-cyan dark:text-accent-cyan border border-surface-dark dark:border-surface-darker">
-                <strong>Data Architect:</strong> Designing schema for <strong>{initiative.sector}</strong> context.
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">System Data Description</label>
-                <textarea
-                    rows={3}
-                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-cyan"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Describe the entities and relationships (e.g., users, orders, products)..."
-                />
-            </div>
-            {error && (
-                <div className="p-3 bg-accent-red/10 text-accent-red rounded-lg border border-accent-red/20 text-sm">
-                    {error}
+        <div className="space-y-8 slide-up">
+            <div className="relative group p-6 bg-white/[0.03] border border-white/5 rounded-[2rem] hover:bg-white/[0.05] transition-all duration-500">
+                <div className="absolute top-0 right-10 transform -translate-y-1/2 px-4 py-1.5 bg-black/40 backdrop-blur-md rounded-full border border-white/10 opacity-60 flex items-center gap-2">
+                    <Database className="h-3 w-3 text-accent-cyan" />
+                    <span className="text-[9px] font-black text-white uppercase tracking-widest italic">Data Architect Console</span>
                 </div>
-            )}
-            <Button onClick={handleGenerate} disabled={isLoading || !description.trim()}>
-                {isLoading ? <Spinner /> : 'Generate Data Model'}
-            </Button>
 
-            {model && (
-                <div className="mt-6 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Entity Relationship Diagram (ERD)</h3>
+                <div className="space-y-4">
+                    <div className="flex flex-col lg:flex-row gap-4">
+                        <textarea
+                            className="flex-grow bg-black/40 border-none rounded-2xl p-6 text-sm text-white placeholder:text-gray-700 focus:outline-none transition-all resize-none font-medium custom-scrollbar"
+                            rows={3}
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Describe entities and relationships..."
+                        />
                         <button 
-                            onClick={() => setShowSql(!showSql)}
-                            className="text-xs font-bold text-accent-purple hover:underline"
+                            onClick={handleGenerate} 
+                            disabled={isLoading || !description.trim()}
+                            className="lg:w-48 flex items-center justify-center gap-3 bg-accent-cyan text-black text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-[#34e2cf] hover:shadow-[0_0_20px_rgba(45,212,191,0.3)] transition-all disabled:opacity-20"
                         >
-                            {showSql ? 'Show Diagram' : 'Show SQL'}
+                            {isLoading ? <Spinner className="h-5 w-5" /> : <><Target className="h-4 w-4" /> Build Schema</>}
                         </button>
                     </div>
+                </div>
+            </div>
 
-                    {showSql ? (
-                        <pre className="p-4 bg-gray-800 text-green-400 rounded-lg overflow-x-auto text-xs font-mono">
-                            {model.sqlPreview}
-                        </pre>
-                    ) : (
-                        <div className="overflow-x-auto custom-scrollbar">
-                            <svg width="600" height="500" className="mx-auto">
-                                <defs>
-                                    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
-                                        <path d="M0,0 L0,6 L9,3 z" fill="#9ca3af" />
-                                    </marker>
-                                </defs>
-                                {(Array.isArray(model?.relationships) ? model.relationships : []).map((rel, i) => {
-                                    const entities = Array.isArray(model?.entities) ? model.entities : [];
-                                    const sourceIdx = entities.findIndex(e => e.name === rel.source);
-                                    const targetIdx = entities.findIndex(e => e.name === rel.target);
-                                    if (sourceIdx === -1 || targetIdx === -1) return null;
-                                    
-                                    const sourcePos = getEntityPos(sourceIdx, entities.length);
-                                    const targetPos = getEntityPos(targetIdx, entities.length);
-
-                                    return (
-                                        <g key={i}>
-                                            <line 
-                                                x1={sourcePos.x} y1={sourcePos.y} 
-                                                x2={targetPos.x} y2={targetPos.y} 
-                                                stroke="#9ca3af" strokeWidth="2" 
-                                                markerEnd="url(#arrow)"
-                                            />
-                                            <text 
-                                                x={(sourcePos.x + targetPos.x)/2} 
-                                                y={(sourcePos.y + targetPos.y)/2 - 5} 
-                                                textAnchor="middle" 
-                                                className="stroke-white dark:stroke-gray-900 text-[10px]"
-                                                strokeWidth="4"
-                                                strokeLinejoin="round"
-                                                fill="none"
-                                            >
-                                                {rel.type}
-                                            </text>
-                                            <text 
-                                                x={(sourcePos.x + targetPos.x)/2} 
-                                                y={(sourcePos.y + targetPos.y)/2 - 5} 
-                                                textAnchor="middle" 
-                                                className="fill-gray-500 text-[10px]"
-                                            >
-                                                {rel.type}
-                                            </text>
-                                        </g>
-                                    );
-                                })}
-                                {(Array.isArray(model?.entities) ? model.entities : []).map((entity, i) => {
-                                    const entities = Array.isArray(model?.entities) ? model.entities : [];
-                                    const pos = getEntityPos(i, entities.length);
-                                    return (
-                                        <g key={entity.id} transform={`translate(${pos.x - 60}, ${pos.y - 40})`}>
-                                            <rect width="120" height="80" rx="5" className="fill-white dark:fill-gray-800 stroke-accent-cyan stroke-2" />
-                                            <text x="60" y="20" textAnchor="middle" fontWeight="bold" className="fill-gray-900 dark:fill-white text-xs">{entity.name}</text>
-                                            <line x1="0" y1="25" x2="120" y2="25" stroke="#e5e7eb" />
-                                            {(Array.isArray(entity?.attributes) ? entity.attributes : []).slice(0, 3).map((attr, idx) => (
-                                                <text key={idx} x="10" y={40 + (idx * 12)} className="fill-gray-600 dark:fill-gray-300 text-[9px]">
-                                                    {attr.isKey ? 'PK ' : ''}{attr.name}: {attr.type}
-                                                </text>
-                                            ))}
-                                            {(Array.isArray(entity?.attributes) ? entity.attributes : []).length > 3 && <text x="10" y={75} className="fill-gray-400 text-[9px]">...</text>}
-                                        </g>
-                                    );
-                                })}
-                            </svg>
+            {model && (
+                <div className="relative group overflow-hidden bg-white/[0.02] border border-white/5 rounded-[3rem] slide-up">
+                    <div className="absolute inset-0 bg-grid-pattern opacity-[0.03] pointer-events-none" />
+                    
+                    <div className="p-10 relative z-10">
+                        <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-6 mb-10">
+                            <div className="flex items-center gap-4">
+                                <div className="p-2.5 bg-accent-cyan/20 rounded-xl border border-accent-cyan/30">
+                                    <Database className="h-5 w-5 text-accent-cyan" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black tracking-tighter uppercase italic text-white">Cloud Architecture Diagram</h3>
+                                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest italic">Multi-Entity Relationship Map</p>
+                                </div>
+                            </div>
+                            <div className="flex bg-white/5 p-1 rounded-xl border border-white/5 gap-1">
+                                <button 
+                                    onClick={() => setShowSql(false)} 
+                                    className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${!showSql ? 'bg-accent-cyan text-black' : 'text-gray-500 hover:text-white'}`}
+                                >
+                                    Diagram
+                                </button>
+                                <button 
+                                    onClick={() => setShowSql(true)} 
+                                    className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${showSql ? 'bg-accent-cyan text-black' : 'text-gray-500 hover:text-white'}`}
+                                >
+                                    SQL Script
+                                </button>
+                            </div>
                         </div>
-                    )}
+
+                        {showSql ? (
+                            <div className="bg-black/60 rounded-[2rem] p-10 border border-white/5 relative overflow-hidden group/sql">
+                                <div className="absolute top-4 right-4 text-[9px] font-black text-accent-emerald uppercase tracking-[0.3em] opacity-40 group-hover/sql:opacity-100 transition-opacity flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-accent-emerald animate-pulse" />
+                                    PostgreSQL Ready
+                                </div>
+                                <pre className="font-mono text-[11px] text-accent-emerald/80 leading-loose overflow-x-auto custom-scrollbar">
+                                    <code>{model.sqlPreview}</code>
+                                </pre>
+                            </div>
+                        ) : (
+                            <div className="relative h-[600px] w-full bg-black/40 rounded-[2rem] border border-white/5 overflow-hidden group/canvas">
+                                {/* Interactivity Controls Overlay */}
+                                <div className="absolute bottom-6 left-6 z-20 flex gap-2">
+                                    <div className="flex bg-black/60 backdrop-blur-md border border-white/10 rounded-xl p-1 gap-1">
+                                        <div className="p-2 text-white/40"><MousePointer2 className="h-4 w-4" /></div>
+                                        <div className="px-3 flex items-center">
+                                            <span className="text-[8px] font-black text-white/30 uppercase tracking-widest">Pan/Zoom Active</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <TransformWrapper initialScale={0.8} minScale={0.2} maxScale={2} centerOnInit>
+                                    {({ zoomIn, zoomOut, resetTransform }) => (
+                                        <>
+                                            <div className="absolute top-6 right-6 z-20 flex flex-col gap-2">
+                                                <button onClick={() => zoomIn()} className="p-2.5 bg-black/60 backdrop-blur-md border border-white/10 rounded-xl text-white hover:border-accent-cyan transition-all"><Maximize2 className="h-4 w-4" /></button>
+                                                <button onClick={() => zoomOut()} className="p-2.5 bg-black/60 backdrop-blur-md border border-white/10 rounded-xl text-white hover:border-accent-cyan transition-all"><Maximize2 className="h-4 w-4 rotate-180" /></button>
+                                                <button onClick={() => resetTransform()} className="p-2.5 bg-black/60 backdrop-blur-md border border-white/10 rounded-xl text-white hover:border-accent-cyan transition-all"><RotateCcw className="h-4 w-4" /></button>
+                                            </div>
+                                            <TransformComponent wrapperClassName="!w-full !h-full" contentClassName="!w-full !h-full flex items-center justify-center">
+                                                <svg width="1000" height="800" viewBox="0 0 1000 800" className="cursor-grab active:cursor-grabbing">
+                                                    <defs>
+                                                        <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                                                            <path d="M0,0 L0,6 L9,3 z" fill="#22d3ee" opacity="0.5" />
+                                                        </marker>
+                                                        <filter id="glow">
+                                                            <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                                                            <feMerge>
+                                                                <feMergeNode in="coloredBlur"/>
+                                                                <feMergeNode in="SourceGraphic"/>
+                                                            </feMerge>
+                                                        </filter>
+                                                    </defs>
+                                                    
+                                                    {/* Background Grid inside SVG */}
+                                                    <pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                                                        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(34,211,238,0.03)" strokeWidth="0.5"/>
+                                                    </pattern>
+                                                    <rect width="100%" height="100%" fill="url(#smallGrid)" />
+
+                                                    {(Array.isArray(model?.relationships) ? model.relationships : []).map((rel, i) => {
+                                                        const entities = Array.isArray(model?.entities) ? model.entities : [];
+                                                        const sIdx = entities.findIndex(e => e.name === rel.source);
+                                                        const tIdx = entities.findIndex(e => e.name === rel.target);
+                                                        if (sIdx === -1 || tIdx === -1) return null;
+                                                        
+                                                        // Offset positioning to handle 1000x800 canvas
+                                                        const getPos = (idx: number, tot: number) => {
+                                                            const rad = 280;
+                                                            const ang = (idx / tot) * 2 * Math.PI - Math.PI/2;
+                                                            return { x: 500 + rad * Math.cos(ang), y: 400 + rad * Math.sin(ang) };
+                                                        };
+                                                        
+                                                        const sPos = getPos(sIdx, entities.length);
+                                                        const tPos = getPos(tIdx, entities.length);
+                                                        
+                                                        return (
+                                                            <g key={i}>
+                                                                <line x1={sPos.x} y1={sPos.y} x2={tPos.x} y2={tPos.y} stroke="#22d3ee" strokeWidth="1" strokeDasharray="4 4" markerEnd="url(#arrow)" opacity="0.4" filter="url(#glow)" />
+                                                                <text x={(sPos.x + tPos.x)/2} y={(sPos.y + tPos.y)/2 - 12} textAnchor="middle" className="fill-accent-cyan text-[9px] font-black uppercase tracking-[0.3em] italic">{rel.type}</text>
+                                                            </g>
+                                                        );
+                                                    })}
+
+                                                    {(Array.isArray(model?.entities) ? model.entities : []).map((entity, i) => {
+                                                        const entities = Array.isArray(model?.entities) ? model.entities : [];
+                                                        const getPos = (idx: number, tot: number) => {
+                                                            const rad = 280;
+                                                            const ang = (idx / tot) * 2 * Math.PI - Math.PI/2;
+                                                            return { x: 500 + rad * Math.cos(ang), y: 400 + rad * Math.sin(ang) };
+                                                        };
+                                                        const pos = getPos(i, entities.length);
+                                                        
+                                                        return (
+                                                            <g key={entity.id} transform={`translate(${pos.x - 80}, ${pos.y - 60})`}>
+                                                                <rect width="160" height="120" rx="20" className="fill-black/90 stroke-accent-cyan/20 stroke-1" filter="url(#glow)" />
+                                                                <rect width="160" height="32" rx="16" className="fill-accent-cyan/10" />
+                                                                <text x="80" y="21" textAnchor="middle" className="fill-white font-black text-[11px] uppercase tracking-tighter italic">{entity.name}</text>
+                                                                
+                                                                <line x1="20" y1="32" x2="140" y2="32" stroke="rgba(255,255,255,0.05)" />
+                                                                
+                                                                {(Array.isArray(entity?.attributes) ? entity.attributes : []).slice(0, 4).map((attr, idx) => (
+                                                                    <text key={idx} x="20" y={52 + (idx * 15)} className="fill-gray-400 text-[10px] font-medium uppercase tracking-wide">
+                                                                        <tspan className="fill-accent-cyan text-[8px] font-black">{attr.isKey ? 'ID ' : '   '}</tspan>
+                                                                        {attr.name} <tspan className="opacity-30 text-[8px]">: {attr.type}</tspan>
+                                                                    </text>
+                                                                ))}
+                                                                {(Array.isArray(entity?.attributes) ? entity.attributes : []).length > 4 && <text x="80" y="110" textAnchor="middle" className="fill-gray-700 text-[10px] font-black">---</text>}
+                                                            </g>
+                                                        );
+                                                    })}
+                                                </svg>
+                                            </TransformComponent>
+                                        </>
+                                    )}
+                                </TransformWrapper>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </div>
@@ -412,67 +681,49 @@ export const RequirementsModeler: React.FC<{ initiative: TInitiative }> = ({ ini
   const [activeTool, setActiveTool] = useState<Tool>('criteria');
 
   const toolConfig = {
-    criteria: {
-        title: t('dashboard:requirements.criteria_title'),
-        description: t('dashboard:requirements.criteria_desc'),
-        component: <AcceptanceCriteriaGenerator initiative={initiative} language={i18n.language} />
-    },
-    wireframe: {
-        title: t('dashboard:requirements.wireframe_title'),
-        description: t('dashboard:requirements.wireframe_desc'),
-        component: <WireframeGenerator initiative={initiative} language={i18n.language} />
-    },
-    bpmn: {
-        title: t('dashboard:requirements.bpmn_title'),
-        description: t('dashboard:requirements.bpmn_desc'),
-        component: <ProcessModelerTool initiative={initiative} />
-    },
-    validator: {
-        title: t('dashboard:requirements.validator_title'),
-        description: t('dashboard:requirements.validator_desc', { sector: initiative.sector }),
-        component: <ValidationTool sector={initiative.sector} language={i18n.language} />
-    },
-    data: {
-        title: t('dashboard:requirements.data_title'),
-        description: t('dashboard:requirements.data_desc'),
-        component: <DataArchitectTool initiative={initiative} language={i18n.language} />
-    }
-  }
+    criteria: { icon: <Plus className="h-4 w-4" />, label: 'Criteria', comp: <AcceptanceCriteriaGenerator initiative={initiative} language={i18n.language} /> },
+    wireframe: { icon: <Layers className="h-4 w-4" />, label: 'Blueprint', comp: <WireframeGenerator initiative={initiative} language={i18n.language} /> },
+    bpmn: { icon: <Layers className="h-4 w-4" />, label: 'Process', comp: <ProcessModelerTool initiative={initiative} /> },
+    validator: { icon: <ShieldCheck className="h-4 w-4" />, label: 'Audit', comp: <ValidationTool sector={initiative.sector} language={i18n.language} /> },
+    data: { icon: <Database className="h-4 w-4" />, label: 'Data', comp: <DataArchitectTool initiative={initiative} language={i18n.language} /> }
+  };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between sm:items-start">
+    <div className="h-full flex flex-col space-y-8 animate-fade-in p-2">
+        <div className="flex flex-col xl:flex-row justify-between xl:items-end gap-6 pb-6 border-b border-white/5">
             <div>
-                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{t('dashboard:requirements.modeler_title')}</h2>
-                <p className="text-gray-600 dark:text-gray-400">{toolConfig[activeTool].description}</p>
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-accent-cyan/20 rounded-xl">
+                        <Layers className="h-6 w-6 text-accent-cyan" />
+                    </div>
+                    <h2 className="text-3xl font-black text-white tracking-tighter uppercase italic">Requirements Modeler</h2>
+                </div>
+                <p className="text-sm text-gray-500 font-medium uppercase tracking-[0.2em]">Technical Synthesis & Structural Orchestration</p>
             </div>
-            <div className="flex-shrink-0 mt-4 sm:mt-0 rounded-md p-1 bg-gray-200 dark:bg-gray-700 flex space-x-1 flex-wrap">
-                <button 
-                    onClick={() => setActiveTool('criteria')} 
-                    className={`px-3 py-1 text-sm font-medium rounded ${activeTool === 'criteria' ? 'bg-white dark:bg-gray-900 shadow text-accent-purple' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'}`}>
-                    {t('dashboard:requirements.tab_criteria')}
-                </button>
-                <button 
-                    onClick={() => setActiveTool('wireframe')}
-                    className={`px-3 py-1 text-sm font-medium rounded ${activeTool === 'wireframe' ? 'bg-white dark:bg-gray-900 shadow text-accent-purple' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'}`}>
-                    {t('dashboard:requirements.tab_wireframe')}
-                </button>
-                 <button 
-                    onClick={() => setActiveTool('bpmn')}
-                    className={`px-3 py-1 text-sm font-medium rounded ${activeTool === 'bpmn' ? 'bg-white dark:bg-gray-900 shadow text-accent-purple' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'}`}>
-                    {t('dashboard:requirements.tab_bpmn')}
-                </button>
-                <button 
-                    onClick={() => setActiveTool('data')}
-                    className={`px-3 py-1 text-sm font-medium rounded ${activeTool === 'data' ? 'bg-white dark:bg-gray-900 shadow text-accent-purple' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'}`}>
-                    {t('dashboard:requirements.tab_data')}
-                </button>
+            
+            <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5 gap-1 shadow-inner backdrop-blur-xl flex-wrap">
+                {(Object.keys(toolConfig) as Tool[]).map((key) => (
+                    <button 
+                        key={key}
+                        onClick={() => setActiveTool(key)} 
+                        className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                            activeTool === key 
+                                ? 'bg-accent-cyan text-black shadow-lg' 
+                                : 'text-gray-500 hover:text-white hover:bg-white/5'
+                        }`}
+                    >
+                        <div className="flex items-center gap-2">
+                            {React.cloneElement(toolConfig[key].icon as React.ReactElement, { className: 'h-3.5 w-3.5' })}
+                            {toolConfig[key].label}
+                        </div>
+                    </button>
+                ))}
             </div>
         </div>
 
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-        {toolConfig[activeTool].component}
-      </div>
+        <div className="flex-1 overflow-auto custom-scrollbar">
+            {toolConfig[activeTool].comp}
+        </div>
     </div>
   );
 };

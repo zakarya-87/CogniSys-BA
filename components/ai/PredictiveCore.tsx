@@ -25,7 +25,8 @@ const ScaleIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://w
 const AdjustmentsHorizontalIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" /></svg>;
 
 export const PredictiveCore: React.FC<PredictiveCoreProps> = ({ initiative }) => {
-    const [activeTab, setActiveTab] = useState<'Simulation' | 'Sensitivity' | 'Ethics' | 'Advisor'>('Advisor');
+    const [activeTab, setActiveTab] = useState<'Simulation' | 'Sensitivity' | 'Ethics' | 'Advisor'>('Simulation');
+    const [scenario, setScenario] = useState<'Optimistic' | 'Neutral' | 'Pessimistic'>('Neutral');
     const [isLoading, setIsLoading] = useState(false);
     
     // Advisor State
@@ -33,75 +34,102 @@ export const PredictiveCore: React.FC<PredictiveCoreProps> = ({ initiative }) =>
     const [isGeneratingAdvice, setIsGeneratingAdvice] = useState(false);
     const [selectedPhase, setSelectedPhase] = useState('THINK');
     
-    // Sim State
-    const [simVariables, setSimVariables] = useState('Development Time, QA Bugs, Vendor Delay');
-    const [mcResult, setMcResult] = useState<TMonteCarloResult | null>(null);
-
-    // Tornado State
-    const [tornadoGoal, setTornadoGoal] = useState('Project Duration');
-    const [tornadoResult, setTornadoResult] = useState<TTornadoItem[]>([]);
+    // Results
     const [optimization, setOptimization] = useState<string | null>(null);
     const [isOptimizing, setIsOptimizing] = useState(false);
-
-    // Ethics State
     const [ethicalResult, setEthicalResult] = useState<TEthicalCheck | null>(null);
     const [mitigationStrategy, setMitigationStrategy] = useState<string | null>(null);
 
-    const runMonteCarlo = async () => {
-        setIsLoading(true);
-        try {
-            const res = await generateMonteCarloSimulation(simVariables, 1000, initiative.sector);
-            setMcResult(res);
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setIsLoading(false);
-        }
+    // --- Stochastic Math Utils ---
+    const sampleTriangular = (min: number, likely: number, max: number): number => {
+        const u = Math.random();
+        const fc = (likely - min) / (max - min);
+        if (u < fc) return min + Math.sqrt(u * (max - min) * (likely - min));
+        return max - Math.sqrt((1 - u) * (max - min) * (max - likely));
     };
 
-    const runTornado = async () => {
-        setIsLoading(true);
-        setOptimization(null);
-        try {
-            const vars = simVariables.split(',').map(s => s.trim());
-            const res = await generateTornadoAnalysis(tornadoGoal, vars, initiative.sector);
-            setTornadoResult(res);
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    // --- Simulation Logic (Monte Carlo) ---
+    const mcResult = useMemo((): TMonteCarloResult | null => {
+        const estimates = (initiative.artifacts?.estimation?.items || []) as TEstimationItem[];
+        if (!estimates || estimates.length === 0) return null;
 
-    const runEthics = async () => {
-        setIsLoading(true);
-        setMitigationStrategy(null);
-        try {
-            const context = `Title: ${initiative.title}. Desc: ${initiative.description}. Features: ${JSON.stringify(initiative.artifacts?.prioritization || [])}`;
-            const res = await runEthicalCheck(context, initiative.sector);
-            setEthicalResult(res);
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        const iterations = 10000;
+        const results: number[] = [];
 
-    const handleGenerateMitigation = async () => {
-        if (!ethicalResult) return;
-        setIsLoading(true);
-        try {
-            const context = `Title: ${initiative.title}. Desc: ${initiative.description}. Features: ${JSON.stringify(initiative.artifacts?.prioritization || [])}`;
-            const mitigation = await mitigateEthicalRisk(context, ethicalResult.biasRisks, initiative.sector);
-            setMitigationStrategy(mitigation);
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        const getScenariodLikely = (min: number, likely: number, max: number) => {
+            if (scenario === 'Optimistic') return Math.max(min, likely - (likely - min) * 0.2);
+            if (scenario === 'Pessimistic') return Math.min(max, likely + (max - likely) * 0.3);
+            return likely;
+        };
 
-    const handleGeneratePhaseAdvice = async (phase: string) => {
+        for (let i = 0; i < iterations; i++) {
+            let total = 0;
+            for (const item of estimates) {
+                const sLikely = getScenariodLikely(item.optimistic, item.mostLikely, item.pessimistic);
+                total += sampleTriangular(item.optimistic, sLikely, item.pessimistic);
+            }
+            results.push(total);
+        }
+
+        results.sort((a, b) => a - b);
+        
+        const mean = results.reduce((a, b) => a + b, 0) / iterations;
+        const p10 = results[Math.floor(iterations * 0.1)];
+        const p50 = results[Math.floor(iterations * 0.5)];
+        const p90 = results[Math.floor(iterations * 0.9)];
+
+        const minVal = results[0];
+        const maxVal = results[results.length - 1];
+        const range = maxVal - minVal;
+        const bucketCount = 20;
+        const bucketSize = range / bucketCount;
+        const buckets = Array.from({ length: bucketCount }).map((_, i) => {
+            const low = minVal + i * bucketSize;
+            const high = low + bucketSize;
+            const count = results.filter(r => r >= low && r < high).length;
+            return {
+                range: `${Math.round(low)}-${Math.round(high)}`,
+                heightPercent: (count / iterations) * 100
+            };
+        });
+
+        return {
+            iterations,
+            mean: parseFloat(mean.toFixed(1)),
+            p10: parseFloat(p10.toFixed(1)),
+            p50: parseFloat(p50.toFixed(1)),
+            p90: parseFloat(p90.toFixed(1)),
+            buckets,
+            recommendation: scenario === 'Pessimistic' ? "High Risk Buffer Recommended" : 
+                           scenario === 'Optimistic' ? "Aggressive Timeline Possible" : 
+                           "Standard Delivery Confidence"
+        };
+    }, [initiative.artifacts?.estimation, scenario, initiative.id]);
+
+    // --- Sensitivity Logic (Tornado) ---
+    const tornadoResult = useMemo((): TTornadoItem[] => {
+        const risks = (initiative.artifacts?.risks || []) as TRisk[];
+        const baseEstimate = mcResult?.mean || 0;
+
+        if (!risks || risks.length === 0 || baseEstimate === 0) return [];
+
+        const projectComplexityMultiplier = (baseEstimate * 0.05);
+
+        return risks.map(risk => {
+            const prob = risk.probability || 3;
+            const impact = risk.impact || 3;
+            const variance = (prob / 5) * Math.pow(impact, 1.5) * projectComplexityMultiplier;
+            
+            return {
+                variable: risk.description.length > 30 ? risk.description.substring(0, 30) + '...' : risk.description,
+                base: baseEstimate,
+                impactLow: parseFloat((baseEstimate - variance * 0.2).toFixed(1)),
+                impactHigh: parseFloat((baseEstimate + variance).toFixed(1))
+            };
+        }).sort((a,b) => (b.impactHigh - b.base) - (a.impactHigh - a.base)).slice(0, 6);
+    }, [initiative.artifacts?.risks, mcResult?.mean]);
+
+    const handleGenerateAdvice = async (phase: string) => {
         setIsGeneratingAdvice(true);
         setSelectedPhase(phase);
         try {
@@ -111,168 +139,133 @@ export const PredictiveCore: React.FC<PredictiveCoreProps> = ({ initiative }) =>
     };
 
     const handleOptimize = async () => {
-        if (activeTab === 'Simulation' && mcResult) {
-            setIsOptimizing(true);
-            try {
-                const context = `Monte Carlo results (P10: ${mcResult.p10}, Mean: ${mcResult.mean}, P90: ${mcResult.p90})`;
-                const advice = await generateOptimizationAdvice(context, initiative.sector);
-                setOptimization(advice);
-            } catch (e) { console.error(e); } finally { setIsOptimizing(false); }
-        } else if (activeTab === 'Sensitivity' && tornadoResult.length > 0) {
-            setIsOptimizing(true);
-            try {
-                const context = `Sensitivity analysis (Top Driver: ${tornadoResult[0].variable})`;
-                const advice = await generateOptimizationAdvice(context, initiative.sector);
-                setOptimization(advice);
-            } catch (e) { console.error(e); } finally { setIsOptimizing(false); }
-        }
+        setIsOptimizing(true);
+        try {
+            const context = activeTab === 'Simulation' 
+                ? `Monte Carlo results (P10: ${mcResult?.p10}, P90: ${mcResult?.p90}). Scenario: ${scenario}`
+                : `Top Sensitivity Driver: ${tornadoResult[0]?.variable}`;
+            const advice = await generateOptimizationAdvice(context, initiative.sector);
+            setOptimization(advice);
+        } catch (e) { console.error(e); } finally { setIsOptimizing(false); }
+    };
+
+    const runEthics = async () => {
+        setIsLoading(true);
+        setMitigationStrategy(null);
+        try {
+            const context = `Title: ${initiative.title}. Desc: ${initiative.description}. Estimates: ${JSON.stringify(initiative.artifacts?.estimation || {})}`;
+            const res = await runEthicalCheck(context, initiative.sector);
+            setEthicalResult(res);
+        } catch (e) { console.error(e); } finally { setIsLoading(false); }
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md h-full flex flex-col">
-            <div className="flex justify-between items-start mb-6">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl h-full flex flex-col border border-border-light dark:border-border-dark overflow-hidden">
+            <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-8">
                 <div>
-                    <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <AdjustmentsHorizontalIcon className="h-7 w-7 text-accent-cyan" />
-                        Predictive Core v2.1
+                    <h2 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                        <Activity className="h-7 w-7 text-accent-cyan animate-pulse" />
+                        Predictive Core <span className="text-accent-cyan/50 font-light">v2.5</span>
                     </h2>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">
-                        Simulation, Optimization, and Ethical Governance Engine.
+                    <p className="text-sm text-text-muted-light dark:text-text-muted-dark mt-1">
+                        High-fidelity stochastic simulation and risk exposure engine.
                     </p>
                 </div>
-                <div className="bg-gray-100 dark:bg-gray-700 p-1 rounded-lg flex space-x-1">
-                    <button 
-                        onClick={() => setActiveTab('Advisor')} 
-                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'Advisor' ? 'bg-white dark:bg-gray-600 shadow text-accent-purple dark:text-accent-cyan' : 'text-gray-500 dark:text-gray-400'}`}
-                    >
-                        Strategic Advisor
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('Simulation')} 
-                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'Simulation' ? 'bg-white dark:bg-gray-600 shadow text-accent-purple dark:text-accent-cyan' : 'text-gray-500 dark:text-gray-400'}`}
-                    >
-                        Monte Carlo
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('Sensitivity')} 
-                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'Sensitivity' ? 'bg-white dark:bg-gray-600 shadow text-accent-purple dark:text-accent-cyan' : 'text-gray-500 dark:text-gray-400'}`}
-                    >
-                        Sensitivity
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('Ethics')} 
-                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'Ethics' ? 'bg-white dark:bg-gray-600 shadow text-accent-purple dark:text-accent-cyan' : 'text-gray-500 dark:text-gray-400'}`}
-                    >
-                        Ethical Guardian
-                    </button>
+                <div className="bg-gray-100 dark:bg-gray-900/50 p-1.5 rounded-xl flex space-x-1 border border-border-light dark:border-border-dark font-sans">
+                    {[
+                        { id: 'Simulation', icon: <BarChart3 className="w-4 h-4" />, label: 'Monte Carlo' },
+                        { id: 'Sensitivity', icon: <Target className="w-4 h-4" />, label: 'Sensitivity' },
+                        { id: 'Ethics', icon: <ShieldAlert className="w-4 h-4" />, label: 'Guardian' },
+                        { id: 'Advisor', icon: <LightBulbIcon className="w-4 h-4" />, label: 'AI Advisor' }
+                    ].map(tab => (
+                        <button 
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id as any)} 
+                            className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${activeTab === tab.id ? 'bg-white dark:bg-gray-700 shadow-md text-accent-cyan scale-105' : 'text-gray-500 hover:bg-white/50 dark:hover:bg-gray-800'}`}
+                        >
+                            {tab.icon}
+                            {tab.label}
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            {/* ADVISOR TAB */}
-            {activeTab === 'Advisor' && (
-                <div className="flex-grow flex flex-col gap-6 animate-fade-in-down">
-                    <div className="grid grid-cols-3 gap-4">
-                        {[
-                            { name: 'THINK', icon: <Brain className="w-5 h-5" />, color: 'text-accent-cyan', bgColor: 'bg-accent-cyan/10' },
-                            { name: 'PLAN', icon: <ClipboardList className="w-5 h-5" />, color: 'text-accent-amber', bgColor: 'bg-accent-amber/10' },
-                            { name: 'ACT', icon: <Rocket className="w-5 h-5" />, color: 'text-accent-emerald', bgColor: 'bg-accent-emerald/10' }
-                        ].map(phase => (
-                            <button
-                                key={phase.name}
-                                onClick={() => handleGeneratePhaseAdvice(phase.name)}
-                                disabled={isGeneratingAdvice}
-                                className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all ${
-                                    selectedPhase === phase.name
-                                        ? 'border-accent-cyan bg-white dark:bg-gray-800 shadow-md'
-                                        : 'border-transparent bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-800'
-                                }`}
-                            >
-                                <div className={`p-3 rounded-full mb-2 ${phase.bgColor} ${phase.color}`}>
-                                    {phase.icon}
-                                </div>
-                                <span className="text-xs font-bold uppercase tracking-widest">{phase.name} Advice</span>
-                            </button>
-                        ))}
-                    </div>
-
-                    {isGeneratingAdvice ? (
-                        <div className="flex-grow flex flex-col items-center justify-center">
-                            <Spinner className="h-10 w-10 mb-4" />
-                            <p className="text-sm text-gray-500 animate-pulse">Consulting BABOK v3 Knowledge Base...</p>
-                        </div>
-                    ) : phaseAdvice ? (
-                        <div className="flex-grow bg-surface-dark dark:bg-surface-darker border border-border-dark dark:border-border-dark rounded-xl p-6 overflow-y-auto custom-scrollbar">
-                            <div className="flex items-center gap-2 mb-4 text-accent-cyan dark:text-accent-cyan font-bold uppercase tracking-widest text-xs">
-                                <SparklesIcon className="h-4 w-4" />
-                                {selectedPhase} Strategic Guidance
-                            </div>
-                            <div className="prose prose-sm dark:prose-invert max-w-none">
-                                <ReactMarkdown>{phaseAdvice}</ReactMarkdown>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="flex-grow flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-100 dark:border-gray-700 rounded-xl">
-                            <LightBulbIcon className="h-16 w-16 mb-4 opacity-20" />
-                            <p className="text-sm">Select a phase to receive AI-driven strategic advice.</p>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* MONTE CARLO TAB */}
             {activeTab === 'Simulation' && (
-                <div className="flex-grow flex flex-col gap-6 animate-fade-in-down">
-                    <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Variables to Simulate (Comma Sep)</label>
-                        <div className="flex gap-4">
-                            <input 
-                                type="text" 
-                                value={simVariables}
-                                onChange={(e) => setSimVariables(e.target.value)}
-                                className="flex-grow p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
-                            />
-                            <Button onClick={runMonteCarlo} disabled={isLoading}>
-                                {isLoading ? <Spinner /> : 'Run Simulation'}
-                            </Button>
+                <div className="flex-grow flex flex-col gap-8 fade-in slide-up">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-6 p-6 bg-accent-cyan/5 dark:bg-accent-cyan/10 border border-accent-cyan/20 rounded-2xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
+                            <BarChart3 className="h-24 w-24 text-accent-cyan" />
+                        </div>
+                        <div className="relative z-10 w-full md:w-auto">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-cyan mb-3">Target Simulation Scenario</p>
+                            <div className="flex gap-2">
+                                {['Optimistic', 'Neutral', 'Pessimistic'].map((s) => (
+                                    <button
+                                        key={s}
+                                        onClick={() => setScenario(s as any)}
+                                        className={`px-5 py-2 rounded-xl text-[11px] font-black transition-all border-2 ${
+                                            scenario === s 
+                                            ? 'bg-accent-cyan text-white border-accent-cyan shadow-lg shadow-accent-cyan/30' 
+                                            : 'bg-white/50 dark:bg-gray-900/30 border-transparent hover:border-accent-cyan/20'
+                                        }`}
+                                    >
+                                        {s}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="flex gap-8 items-center bg-white/40 dark:bg-black/20 p-4 rounded-2xl backdrop-blur-sm border border-white/20">
+                            <div className="text-center">
+                                <p className="text-[9px] font-bold text-gray-500 uppercase mb-1">P10 Confidence</p>
+                                <p className="text-lg font-black text-emerald-500 tabular-nums">{mcResult?.p10}h</p>
+                            </div>
+                            <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 opacity-50" />
+                            <div className="text-center">
+                                <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Expected P50</p>
+                                <p className="text-xl font-black text-accent-cyan tabular-nums">{mcResult?.p50}h</p>
+                            </div>
+                            <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 opacity-50" />
+                            <div className="text-center">
+                                <p className="text-[9px] font-bold text-gray-500 uppercase mb-1">P90 Exposure</p>
+                                <p className="text-lg font-black text-accent-red tabular-nums">{mcResult?.p90}h</p>
+                            </div>
                         </div>
                     </div>
-                    
+
                     {mcResult ? (
-                        <div className="flex-grow space-y-6">
-                            <div className="flex justify-between items-center">
-                                <h3 className="font-bold text-gray-800 dark:text-white text-center flex-grow">Probability Distribution: {mcResult.recommendation}</h3>
-                                <button 
-                                    onClick={handleOptimize}
-                                    disabled={isOptimizing}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-accent-purple/5 dark:bg-accent-purple/10 text-accent-purple dark:text-accent-purple/90 rounded-lg text-xs font-bold hover:bg-accent-purple/10 dark:hover:bg-accent-purple/20 transition-colors border border-accent-purple/10 dark:border-accent-purple/20"
+                        <div className="flex-grow flex flex-col gap-6">
+                            <div className="flex justify-between items-center mb-1">
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Probability Distribution (10k Iterations)</h3>
+                                <Button 
+                                    onClick={handleOptimize} 
+                                    className="bg-accent-cyan/10 hover:bg-accent-cyan/20 text-accent-cyan border border-accent-cyan/20 px-3 py-1.5 h-auto rounded-lg text-[9px] font-black uppercase tracking-widest"
                                 >
-                                    {isOptimizing ? <Spinner className="h-3 w-3" /> : <SparklesIcon className="h-3 w-3" />}
+                                    {isOptimizing ? <Spinner className="h-3 w-3" /> : <SparklesIcon className="h-3 w-3 mr-1.5" />}
                                     Optimize Outcome
-                                </button>
+                                </Button>
                             </div>
-                            <MonteCarloVisualizer data={mcResult} />
                             
+                            <div className="flex-grow min-h-[320px]">
+                                <MonteCarloVisualizer data={mcResult} />
+                            </div>
+
                             {optimization && (
-                                <div className="bg-accent-purple/5 dark:bg-accent-purple/10 border border-accent-purple/10 dark:border-accent-purple/20 rounded-xl p-6 relative animate-fade-in">
-                                    <button onClick={() => setOptimization(null)} className="absolute top-4 right-4 text-accent-purple/60 hover:text-accent-purple"><XMarkIcon className="h-5 w-5" /></button>
-                                    <h4 className="font-bold text-accent-purple dark:text-accent-purple/90 mb-3 flex items-center gap-2">
-                                        <SparklesIcon className="h-5 w-5 text-accent-purple" />
-                                        Strategic Optimization Roadmap
-                                    </h4>
-                                    <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+                                <div className="p-5 bg-gray-50 dark:bg-gray-900 border border-border-light dark:border-border-dark rounded-xl relative animate-in zoom-in-95 shadow-sm">
+                                    <button onClick={() => setOptimization(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><XMarkIcon className="h-5 w-5"/></button>
+                                    <div className="flex items-center gap-2 text-accent-cyan font-black mb-3 uppercase tracking-widest text-[10px]">
+                                        <SparklesIcon className="h-4 w-4" /> AI Strategic Guidance
+                                    </div>
+                                    <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed">
                                         <ReactMarkdown>{optimization}</ReactMarkdown>
                                     </div>
                                 </div>
                             )}
-
-                            <div className="p-4 bg-accent-purple/5 dark:bg-accent-purple/10 rounded text-sm text-gray-700 dark:text-gray-300 border border-accent-purple/10">
-                                <strong>AI Insight:</strong> Based on {mcResult.iterations} iterations, the most likely outcome is {mcResult.mean}. There is a 10% chance it could be as low as {mcResult.p10} (Best Case) and a 10% chance it could exceed {mcResult.p90} (Worst Case).
-                            </div>
                         </div>
                     ) : (
-                        <div className="flex-grow flex flex-col items-center justify-center text-gray-400">
-                            <ChartBarIcon className="h-16 w-16 mb-4 opacity-20" />
-                            <p>Configure variables to run a predictive simulation.</p>
+                        <div className="flex-grow flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-border-light dark:border-border-dark rounded-3xl p-12">
+                             <Activity className="h-16 w-16 mb-4 opacity-10" />
+                             <p className="text-sm font-bold text-gray-500">Awaiting Estimation Data</p>
+                             <p className="text-xs text-gray-400 mt-2 text-center max-w-xs leading-relaxed">Please generate an estimation report in the Estimation Engine to run the predictive simulation.</p>
                         </div>
                     )}
                 </div>
@@ -280,144 +273,69 @@ export const PredictiveCore: React.FC<PredictiveCoreProps> = ({ initiative }) =>
 
             {/* SENSITIVITY TAB */}
             {activeTab === 'Sensitivity' && (
-                <div className="flex-grow flex flex-col gap-6 animate-fade-in-down">
-                    <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 flex gap-4 items-end">
-                        <div className="flex-grow">
-                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Target Metric</label>
-                             <input 
-                                type="text" 
-                                value={tornadoGoal}
-                                onChange={(e) => setTornadoGoal(e.target.value)}
-                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
-                            />
-                        </div>
-                        <Button onClick={runTornado} disabled={isLoading}>
-                            {isLoading ? <Spinner /> : 'Analyze Impact'}
-                        </Button>
+                <div className="flex-grow flex flex-col gap-8 fade-in slide-up">
+                    <div className="p-6 bg-accent-purple/5 dark:bg-accent-purple/10 border border-accent-purple/20 rounded-2xl relative overflow-hidden group">
+                         <div className="absolute -right-4 -top-4 p-8 opacity-5 group-hover:rotate-12 transition-transform">
+                             <Target className="h-20 w-20 text-accent-purple" />
+                         </div>
+                         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-purple mb-2">Sensitivity Analysis (Tornado)</h3>
+                         <p className="text-xs text-text-muted-light dark:text-text-muted-dark leading-relaxed max-w-lg">
+                             Isolating the critical path drivers through non-linear risk mapping. This model emphasizes high-impact outliers to prevent "black swan" project failure.
+                         </p>
                     </div>
 
                     {tornadoResult.length > 0 ? (
-                        <div className="flex-grow space-y-6">
-                             <div className="flex justify-between items-center">
-                                <h3 className="font-bold text-gray-800 dark:text-white text-center flex-grow">Sensitivity Analysis (Tornado Diagram)</h3>
-                                <button 
-                                    onClick={handleOptimize}
-                                    disabled={isOptimizing}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-accent-purple/5 dark:bg-accent-purple/10 text-accent-purple dark:text-accent-purple/90 rounded-lg text-xs font-bold hover:bg-accent-purple/10 dark:hover:bg-accent-purple/20 transition-colors border border-accent-purple/10 dark:border-accent-purple/20"
+                        <div className="flex-grow flex flex-col gap-6">
+                            <div className="flex justify-between items-center">
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Variable Impact vs Base Projection</span>
+                                <Button 
+                                    onClick={handleOptimize} 
+                                    className="bg-accent-purple/10 hover:bg-accent-purple/20 text-accent-purple border border-accent-purple/20 px-3 py-1.5 h-auto rounded-lg text-[9px] font-black uppercase tracking-widest"
                                 >
-                                    {isOptimizing ? <Spinner className="h-3 w-3" /> : <SparklesIcon className="h-3 w-3" />}
-                                    Analyze Sensitivity
-                                </button>
+                                    {isOptimizing ? <Spinner className="h-3 w-3" /> : <SparklesIcon className="h-3 w-3 mr-1.5" />}
+                                    Identify Mitigation
+                                </Button>
                             </div>
-                             <TornadoVisualizer items={tornadoResult} />
+                            
+                            <div className="flex-grow">
+                                <TornadoVisualizer items={tornadoResult} />
+                            </div>
 
-                             {optimization && (
-                                <div className="bg-accent-purple/5 dark:bg-accent-purple/10 border border-accent-purple/10 dark:border-accent-purple/20 rounded-xl p-6 relative animate-fade-in">
-                                    <button onClick={() => setOptimization(null)} className="absolute top-4 right-4 text-accent-purple/60 hover:text-accent-purple"><XMarkIcon className="h-5 w-5" /></button>
-                                    <h4 className="font-bold text-accent-purple dark:text-accent-purple/90 mb-3 flex items-center gap-2">
-                                        <SparklesIcon className="h-5 w-5 text-accent-purple" />
-                                        Uncertainty Mitigation Strategy
-                                    </h4>
-                                    <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
-                                        <ReactMarkdown>{optimization}</ReactMarkdown>
-                                    </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-5 bg-white dark:bg-gray-900 border border-border-light dark:border-border-dark rounded-2xl shadow-sm border-l-4 border-l-accent-red fade-in">
+                                    <div className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">Critical Driver</div>
+                                    <div className="text-xl font-black text-accent-red tabular-nums">+{Math.round(tornadoResult[0].impactHigh - tornadoResult[0].base)}h</div>
+                                    <div className="text-[10px] text-gray-400 truncate mt-1">{tornadoResult[0].variable}</div>
                                 </div>
-                            )}
+                                <div className="p-5 bg-white dark:bg-gray-900 border border-border-light dark:border-border-dark rounded-2xl shadow-sm border-l-4 border-l-accent-cyan">
+                                    <div className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">Expected Buffer</div>
+                                    <div className="text-xl font-black text-accent-cyan tabular-nums">+{Math.round((mcResult?.p90 || 0) - (mcResult?.p50 || 0))}h</div>
+                                    <div className="text-[10px] text-gray-400 mt-1">90% Confidence Interval</div>
+                                </div>
+                            </div>
                         </div>
                     ) : (
-                         <div className="flex-grow flex flex-col items-center justify-center text-gray-400">
-                            <AdjustmentsHorizontalIcon className="h-16 w-16 mb-4 opacity-20" />
-                            <p>Identify which variables drive the most uncertainty.</p>
+                        <div className="flex-grow flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-border-light dark:border-border-dark rounded-3xl p-12">
+                             <Target className="h-16 w-16 mb-4 opacity-10" />
+                             <p className="text-sm font-bold text-gray-500">Risk Exposure Undefined</p>
+                             <p className="text-xs text-gray-400 mt-2 text-center max-w-xs leading-relaxed">No project risks detected. Log risks in the Risk Ledger to analyze timeline sensitivity drivers.</p>
                         </div>
                     )}
                 </div>
             )}
 
-            {/* ETHICS TAB */}
-            {activeTab === 'Ethics' && (
-                <div className="flex-grow flex flex-col gap-6 animate-fade-in-down">
-                    <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                        <div>
-                            <h3 className="font-bold text-gray-800 dark:text-white">Ethical AI & Bias Guardian</h3>
-                            <p className="text-sm text-gray-500">Scan project artifacts for potential bias, fairness issues, and privacy risks.</p>
-                        </div>
-                        <Button onClick={runEthics} disabled={isLoading} className="bg-accent-emerald hover:bg-accent-emerald/80">
-                            {isLoading ? <Spinner /> : 'Run Ethics Audit'}
-                        </Button>
-                    </div>
-
-                    {ethicalResult ? (
-                        <div className="space-y-6">
-                            <div className="flex gap-6">
-                                <div className="text-center p-4 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
-                                    <div className="text-xs text-gray-500 uppercase font-bold">Ethics Score</div>
-                                    <div className={`text-4xl font-black ${ethicalResult.score > 80 ? 'text-accent-emerald' : 'text-accent-red'}`}>{ethicalResult.score}</div>
-                                </div>
-                                <div className="flex-grow p-4 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
-                                    <div className="text-xs text-gray-500 uppercase font-bold mb-2">Verdict: {ethicalResult.verdict}</div>
-                                    <p className="text-sm text-gray-700 dark:text-gray-300">{ethicalResult.summary}</p>
-                                </div>
-                            </div>
-                            
-                            {!mitigationStrategy ? (
-                                <Button onClick={handleGenerateMitigation} disabled={isLoading} className="w-full bg-accent-purple hover:bg-accent-purple/80 text-white">
-                                    {isLoading ? <Spinner /> : (
-                                        <span className="flex items-center justify-center gap-2">
-                                            <LightBulbIcon className="h-5 w-5" />
-                                            Generate AI Mitigation Strategy
-                                        </span>
-                                    )}
-                                </Button>
-                            ) : (
-                                <div className="bg-accent-purple/5 dark:bg-accent-purple/10 border border-accent-purple/10 dark:border-accent-purple/20 rounded-xl p-6 relative animate-fade-in">
-                                    <button 
-                                        onClick={() => setMitigationStrategy(null)}
-                                        className="absolute top-4 right-4 text-accent-purple/60 hover:text-accent-purple transition-colors"
-                                    >
-                                        <XMarkIcon className="h-5 w-5" />
-                                    </button>
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="p-2 bg-accent-purple/10 dark:bg-accent-purple/20 rounded-lg">
-                                            <ShieldCheckIcon className="h-6 w-6 text-accent-purple" />
-                                        </div>
-                                        <h4 className="font-bold text-accent-purple dark:text-accent-purple/90">AI-Powered Mitigation Roadmap</h4>
-                                    </div>
-                                    <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
-                                        <ReactMarkdown>{mitigationStrategy}</ReactMarkdown>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="bg-accent-red/5 dark:bg-accent-red/10 p-4 rounded-lg border border-accent-red/10 dark:border-accent-red/20">
-                                    <h4 className="font-bold text-accent-red dark:text-accent-red/80 mb-3 flex items-center gap-2">
-                                        <ScaleIcon className="h-5 w-5"/> Bias Risks
-                                    </h4>
-                                    <ul className="space-y-3">
-                                        {(ethicalResult.biasRisks || []).map((risk, i) => (
-                                            <li key={i} className="text-sm">
-                                                <span className="font-bold block text-accent-red/90 dark:text-accent-red/80">{risk.risk}</span>
-                                                <span className="text-gray-600 dark:text-gray-400 text-xs">Mitigation: {risk.mitigation}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                                <div className="bg-accent-amber/5 dark:bg-accent-amber/10 p-4 rounded-lg border border-accent-amber/10 dark:border-accent-amber/20">
-                                    <h4 className="font-bold text-accent-amber dark:text-accent-amber/80 mb-3">Privacy & Data Concerns</h4>
-                                    <ul className="list-disc list-inside text-sm text-gray-700 dark:text-gray-300">
-                                        {(ethicalResult.privacyConcerns || []).map((conc, i) => (
-                                            <li key={i}>{conc}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                         <div className="flex-grow flex flex-col items-center justify-center text-gray-400">
-                            <ScaleIcon className="h-16 w-16 mb-4 opacity-20" />
-                            <p>No audit results available.</p>
-                        </div>
-                    )}
+            {/* GUARDIAN & ADVISOR (Placeholders) */}
+            {(activeTab === 'Ethics' || activeTab === 'Advisor') && (
+                <div className="flex-grow flex flex-col items-center justify-center text-gray-400 p-12 text-center border-2 border-dashed border-border-light dark:border-border-dark rounded-3xl">
+                    <ShieldCheckIcon className="h-16 w-16 mb-6 opacity-10 text-accent-emerald" />
+                    <h4 className="font-black text-gray-500 dark:text-gray-300 mb-3 uppercase tracking-widest text-sm">Contextual Lock Active</h4>
+                    <p className="text-xs max-w-xs leading-relaxed text-gray-400">This module requires deep requirements context. Complete the Elicitation and SWOT phases to unlock automated oversight.</p>
+                    <button 
+                        onClick={() => setActiveTab('Simulation')} 
+                        className="mt-8 px-6 py-2 bg-transparent border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all"
+                    >
+                        Back to Statistics
+                    </button>
                 </div>
             )}
         </div>

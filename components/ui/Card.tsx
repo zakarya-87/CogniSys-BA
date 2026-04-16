@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { TInitiative } from '../../types';
+import { motion } from 'motion/react';
+import { TInitiative, InitiativeStatus } from '../../types';
 import { STATUS_STYLES } from '../../constants';
 import { ComplianceBadge } from './ComplianceBadge';
 import { 
@@ -16,6 +17,14 @@ interface CardProps {
   onClick: () => void;
   index?: number;
 }
+
+const STATUS_COLOR_MAP: Record<InitiativeStatus, string> = {
+    [InitiativeStatus.LIVE]: 'bg-accent-teal',
+    [InitiativeStatus.IN_DEVELOPMENT]: 'bg-accent-blue',
+    [InitiativeStatus.ON_HOLD]: 'bg-accent-amber',
+    [InitiativeStatus.AWAITING_APPROVAL]: 'bg-accent-red',
+    [InitiativeStatus.PLANNING]: 'bg-accent-red',
+};
 
 const AIConfidenceRing: React.FC<{ score: number }> = React.memo(({ score }) => {
   const radius = 18;
@@ -35,13 +44,15 @@ const AIConfidenceRing: React.FC<{ score: number }> = React.memo(({ score }) => 
           strokeWidth={stroke}
           className="text-white/5"
         />
-        <circle
+        <motion.circle
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 1.5, ease: "easeOut", delay: 0.5 }}
           cx="26" cy="26" r={radius}
           fill="none"
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={circumference}
-          strokeDashoffset={offset}
           className="transition-all duration-1000 ease-out"
           stroke="url(#cardRingGradient)"
         />
@@ -52,7 +63,7 @@ const AIConfidenceRing: React.FC<{ score: number }> = React.memo(({ score }) => 
           </linearGradient>
         </defs>
       </svg>
-      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-accent-teal">
+      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-accent-teal tabular-nums">
         {score}%
       </span>
     </div>
@@ -61,13 +72,40 @@ const AIConfidenceRing: React.FC<{ score: number }> = React.memo(({ score }) => 
 
 export const Card: React.FC<CardProps>= ({ initiative, onClick, index }) => {
   const readiness = initiative.readinessScore ?? 75;
+  const statusColor = STATUS_COLOR_MAP[initiative.status] || 'bg-white/20';
+
+  const variants = {
+    hidden: { opacity: 0, y: 30, scale: 0.95 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        delay: i * 0.1,
+        duration: 0.6,
+        ease: [0.22, 1, 0.36, 1]
+      }
+    }),
+    hover: { 
+      y: -8, 
+      scale: 1.02,
+      transition: { duration: 0.4, ease: "easeOut" }
+    }
+  };
 
   return (
-    <div
+    <motion.div
+      variants={variants}
+      initial="hidden"
+      animate="visible"
+      whileHover="hover"
+      custom={index}
       onClick={onClick}
-      className="glass-card metallic-sheen hover:shadow-[0_20px_60px_rgba(0,0,0,0.5)] transition-all duration-700 cursor-pointer flex flex-col justify-between group overflow-hidden hover:-translate-y-2 animate-in fade-in slide-in-from-bottom-8"
-      style={index != null ? { animationDelay: `${index * 80}ms`, animationFillMode: 'backwards' } : undefined}
+      className="glass-card metallic-sheen hover:shadow-[0_20px_60px_rgba(0,212,170,0.15)] transition-shadow duration-500 cursor-pointer flex flex-col justify-between group overflow-hidden relative"
     >
+      {/* Dynamic Hover Backdrop Glow */}
+      <div className="absolute inset-0 bg-gradient-to-br from-accent-teal/0 to-accent-teal/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+      
       <div className="p-8 space-y-6 relative z-10">
         <div className="flex justify-between items-start gap-4">
             <div className="space-y-3">
@@ -83,7 +121,7 @@ export const Card: React.FC<CardProps>= ({ initiative, onClick, index }) => {
               </h3>
             </div>
             <div className="flex flex-col items-end gap-4">
-              <span className={`text-[9px] font-black px-3 py-1.5 rounded-xl whitespace-nowrap uppercase tracking-widest border border-white/5 backdrop-blur-xl shadow-lg ${STATUS_STYLES[initiative.status]}`}>
+              <span className={`text-[9px] font-black px-3 py-1.5 rounded-xl whitespace-nowrap uppercase tracking-widest border border-white/5 backdrop-blur-xl shadow-lg relative ${STATUS_STYLES[initiative.status]}`}>
                   {initiative.status}
               </span>
               <AIConfidenceRing score={readiness} />
@@ -101,13 +139,15 @@ export const Card: React.FC<CardProps>= ({ initiative, onClick, index }) => {
                 <Zap className="h-3 w-3 text-accent-teal" />
                 <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Readiness Alignment</span>
             </div>
-            <span className="text-[10px] font-black text-accent-teal">{readiness}%</span>
+            <span className="text-[10px] font-black text-accent-teal tabular-nums">{readiness}%</span>
           </div>
           <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden ring-1 ring-white/5">
-            <div
-              className="h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(0,212,170,0.2)]"
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${readiness}%` }}
+              transition={{ duration: 1.2, ease: "circOut", delay: (index || 0) * 0.1 + 0.3 }}
+              className="h-full rounded-full shadow-[0_0_10px_rgba(0,212,170,0.2)]"
               style={{
-                width: `${readiness}%`,
                 background: 'linear-gradient(90deg, #00D4AA, #00d4ff)',
               }}
             />
@@ -141,7 +181,12 @@ export const Card: React.FC<CardProps>= ({ initiative, onClick, index }) => {
                 <UserCircle className="h-7 w-7 text-accent-teal" />
               </div>
             )}
-            <div className="absolute -bottom-1 -end-1 w-4 h-4 bg-accent-teal border-2 border-primary rounded-full shadow-lg" />
+            {/* Health Indicator Dot */}
+            <motion.div 
+               animate={{ scale: [1, 1.2, 1] }}
+               transition={{ duration: 2, repeat: Infinity }}
+               className={`absolute -bottom-1 -end-1 w-4 h-4 ${statusColor} border-2 border-[#0A2463] rounded-full shadow-lg z-20`} 
+            />
           </div>
           <div>
             <p className="text-sm font-black text-white group-hover:text-accent-teal transition-colors tracking-tight italic">{initiative.owner.name}</p>
@@ -152,6 +197,6 @@ export const Card: React.FC<CardProps>= ({ initiative, onClick, index }) => {
           <ChevronRight className="h-4 w-4 text-white" />
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

@@ -171,7 +171,9 @@ const briefingCache = new Map<string, TDailyBriefing>();
 
 export const generateSwotAnalysis = async (context: string, sector: Sector = Sector.GENERAL, language?: string): Promise<TSwotAnalysis> => {
   const prompt = PromptFactory.createContextAwarePrompt(
-    `Perform a SWOT analysis. Return JSON.`,
+    `Perform a deep-dive SWOT analysis for this initiative. 
+    For each item, if it directly impacts a specific strategic goal mentioned in the context, append "(Aligns with: [Goal Name])" to the text.
+    Return a structured JSON object.`,
     context,
     sector,
     "JSON",

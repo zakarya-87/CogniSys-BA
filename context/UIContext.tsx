@@ -8,11 +8,13 @@ export interface UIContextType {
   toastMessage: string;
   aiModel: string;
   hiveCommand: string | null;
+  isFocusModeActive: boolean;
   setCurrentView: (view: any) => void;
   setTheme: (theme: Theme) => void;
   setToastMessage: (msg: string) => void;
   setAiModel: (model: string) => void;
   setHiveCommand: (command: string | null) => void;
+  toggleFocusMode: () => void;
 }
 
 export const UIContext = createContext<UIContextType | undefined>(undefined);
@@ -22,6 +24,11 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>('dark');
   const [toastMessageState, setToastMessageState] = useState('');
   const [hiveCommand, setHiveCommand] = useState<string | null>(null);
+
+  const [isFocusModeActive, setFocusModeActive] = useState<boolean>(() => {
+    try { return localStorage.getItem('cognisys-focus-mode') === 'true'; }
+    catch { return false; }
+  });
   
   const [aiModel, setAiModelState] = useState<string>(() => {
     try {
@@ -40,6 +47,23 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   }, [theme]);
 
+  // Focus Mode — sync html class + persist
+  useEffect(() => {
+    if (isFocusModeActive) {
+      document.documentElement.classList.add('focus-mode');
+    } else {
+      document.documentElement.classList.remove('focus-mode');
+    }
+  }, [isFocusModeActive]);
+
+  const toggleFocusMode = useCallback(() => {
+    setFocusModeActive(prev => {
+      const next = !prev;
+      try { localStorage.setItem('cognisys-focus-mode', String(next)); } catch {}
+      return next;
+    });
+  }, []);
+
   // AI model persistence and sync
   useEffect(() => {
     localStorage.setItem('cognisys-ai-model', aiModel);
@@ -57,12 +81,14 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     toastMessage: toastMessageState,
     aiModel,
     hiveCommand,
+    isFocusModeActive,
     setCurrentView,
     setTheme: setThemeState,
     setToastMessage,
     setAiModel: setAiModelState,
-    setHiveCommand
-  }), [currentView, theme, toastMessageState, aiModel, hiveCommand, setToastMessage]);
+    setHiveCommand,
+    toggleFocusMode,
+  }), [currentView, theme, toastMessageState, aiModel, hiveCommand, isFocusModeActive, toggleFocusMode, setToastMessage]);
 
   return (
     <UIContext.Provider value={value}>

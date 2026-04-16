@@ -85,9 +85,10 @@ interface SidebarProps {
     onNavigate: (view: View) => void;
     isCollapsed?: boolean;
     onClose?: () => void;
+    isFocusModeActive?: boolean;
 }
 
-export const Sidebar: React.FC<SidebarProps> = React.memo(({ activeView, onNavigate, isCollapsed = false, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = React.memo(({ activeView, onNavigate, isCollapsed = false, onClose, isFocusModeActive = false }) => {
   const { unreadActivities, user, login, loginWithGoogle, logout } = useCatalyst();
   const { t } = useTranslation(['sidebar', 'common']);
 
@@ -111,6 +112,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({ activeView, onNavig
      * Layout strategy:
      *  - md+: inline aside, collapses to icon-rail (w-24) or full (w-80)
      *  - <md:  fixed drawer overlay, slides in from left, sits above content
+     *  - Focus Mode: slides off-screen on ALL breakpoints + pointer-events-none
      */
     <aside
       className={[
@@ -125,10 +127,16 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({ activeView, onNavig
         // Always full-width on mobile (constrained by the m-4 margin)
         'w-[calc(100vw-2rem)] max-w-[20rem]',
         // Slide transition — hidden off-screen when collapsed on mobile, visible on desktop
-        'transition-transform duration-300 ease-in-out',
-        isCollapsed ? '-translate-x-[calc(100%+2rem)] md:translate-x-0' : 'translate-x-0',
+        'transition-all duration-300 ease-in-out',
+        // Focus Mode: slide off-screen + invisible on ALL breakpoints
+        isFocusModeActive
+          ? '-translate-x-[calc(100%+2rem)] opacity-0 pointer-events-none md:-translate-x-[calc(100%+2rem)]'
+          : isCollapsed
+            ? '-translate-x-[calc(100%+2rem)] md:translate-x-0'
+            : 'translate-x-0',
       ].join(' ')}
       aria-label="Main navigation"
+      aria-hidden={isFocusModeActive}
     >
       {/* Brand Identity: Catalyst Hub */}
       <div className={`h-24 flex items-center flex-shrink-0 ${isCollapsed ? 'justify-center px-4' : 'px-8'}`}>

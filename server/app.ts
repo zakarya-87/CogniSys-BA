@@ -606,19 +606,6 @@ export function createApp() {
   // Mount versioned router
   app.use('/api/v1', v1);
 
-  // Backward-compat aliases — /api/* proxies to /api/v1/*
-  app.use('/api', (req, res, next) => {
-    // Only proxy unmatched /api/* routes that aren't auth/health/ai/github/mistral/azure
-    if (
-      req.path.startsWith('/organizations') ||
-      req.path.startsWith('/v1')
-    ) {
-      req.url = req.url; // already handled above or will 404 via catch-all
-    }
-    next();
-  });
-  app.use('/api', v1);
-
   // ── Firebase Auth Session ────────────────────────────────────────────────────
   // Verifies a Firebase ID token (GitHub or Google) and sets a server-side
   // httpOnly session cookie. Client calls this after signInWithPopup succeeds.
@@ -675,6 +662,20 @@ export function createApp() {
       res.status(401).json({ error: 'Invalid token' });
     }
   });
+
+  // Backward-compat aliases — /api/* proxies to /api/v1/*
+  app.use('/api', (req, res, next) => {
+    // Only proxy unmatched /api/* routes that aren't auth/health/ai/github/mistral/azure
+    if (
+      req.path.startsWith('/organizations') ||
+      req.path.startsWith('/v1')
+    ) {
+      req.url = req.url; // already handled above or will 404 via catch-all
+    }
+    next();
+  });
+  app.use('/api', v1);
+
 
   // Legacy GitHub OAuth routes — kept for backward compatibility during migration
   const PORT = process.env.PORT || 5000;

@@ -115,16 +115,16 @@ export const InitiativesList: React.FC<InitiativesListProps> = ({
                 
                 <div className="flex items-center gap-4 bg-white/5 px-6 py-3 rounded-2xl border border-white/5 backdrop-blur-xl group hover:border-white/10 transition-all">
                     <Globe className="h-4 w-4 text-accent-teal animate-pulse" />
-                    <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">{initiatives.length} Active Vectors</span>
+                    <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">{(initiatives || []).length} Active Vectors</span>
                 </div>
             </div>
 
             <div className="glass-surface metallic-sheen border border-border-dark rounded-[2.5rem] overflow-hidden shadow-2xl p-1">
                 <DataTable<TInitiative>
                   columns={columns}
-                  data={initiatives}
+                  data={initiatives || []}
                   pageSize={20}
-                  loading={loading && initiatives.length === 0}
+                  loading={loading && (initiatives || []).length === 0}
                   onRowClick={onSelectInitiative}
                   keyExtractor={(row) => row.id}
                   emptyMessage="No initiatives found. Create your first initiative to get started."

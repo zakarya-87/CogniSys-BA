@@ -25,17 +25,52 @@ export class AnalyticsService {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
-    const snap = await getAdminDb()
-      .collection('auditLogs')
-      .where('orgId', '==', orgId)
-      .where('timestamp', '>=', since.toISOString())
-      .orderBy('timestamp', 'asc')
-      .get();
+    // Query both collections (new audit_logs and legacy auditLogs) for backward compatibility during migration
+    const [newSnap, legacySnap] = await Promise.all([
+      getAdminDb()
+        .collection('audit_logs')
+        .where('orgId', '==', orgId)
+        .where('timestamp', '>=', since)
+        .orderBy('timestamp', 'asc')
+        .get(),
+      getAdminDb()
+        .collection('auditLogs')
+        .where('orgId', '==', orgId)
+        .where('timestamp', '>=', since)
+        .orderBy('timestamp', 'asc')
+        .get()
+    ]);
 
     const counts: Record<string, number> = {};
-    for (const doc of snap.docs) {
-      const ts = (doc.data().timestamp as string).slice(0, 10);
-      counts[ts] = (counts[ts] ?? 0) + 1;
+    
+    // Process new audit_logs collection
+    for (const doc of newSnap.docs) {
+      const data = doc.data();
+      let ts = "";
+      if (data.timestamp && typeof data.timestamp.toDate === 'function') {
+        ts = data.timestamp.toDate().toISOString().slice(0, 10);
+      } else if (typeof data.timestamp === 'string') {
+        ts = data.timestamp.slice(0, 10);
+      }
+      
+      if (ts) {
+        counts[ts] = (counts[ts] ?? 0) + 1;
+      }
+    }
+    
+    // Process legacy auditLogs collection
+    for (const doc of legacySnap.docs) {
+      const data = doc.data();
+      let ts = "";
+      if (data.timestamp && typeof data.timestamp.toDate === 'function') {
+        ts = data.timestamp.toDate().toISOString().slice(0, 10);
+      } else if (typeof data.timestamp === 'string') {
+        ts = data.timestamp.slice(0, 10);
+      }
+      
+      if (ts) {
+        counts[ts] = (counts[ts] ?? 0) + 1;
+      }
     }
 
     // Fill zeros for days with no activity

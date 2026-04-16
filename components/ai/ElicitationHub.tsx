@@ -1,12 +1,33 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { 
+    Mic, 
+    Upload, 
+    Activity, 
+    Sparkles, 
+    Save, 
+    CheckCircle2, 
+    AlertCircle, 
+    ArrowRight, 
+    Plus, 
+    Trash2, 
+    Edit3, 
+    ChevronRight,
+    Search,
+    BrainCircuit,
+    ListChecks,
+    Target,
+    Zap
+} from 'lucide-react';
 import { TElicitationAnalysis, TActionItem, BacklogItemType, TInitiative, Sector } from '../../types';
 import { analyzeTranscript } from '../../services/geminiService';
 import { Button } from '../ui/Button';
 import { Spinner } from '../ui/Spinner';
 import { GoogleGenAI, LiveServerMessage, Modality } from "@google/genai";
 import { createBlob, decode, decodeAudioData } from '../../utils/liveAudioUtils';
+import { useUI } from '../../context/UIContext';
+import { useCatalyst } from '../../context/CatalystContext';
 
 const MOCK_TRANSCRIPT = `[00:01:05] Sarah: Okay team, let's sync on the mobile app revamp. What's the status?
 [00:01:15] Alex: We've completed the initial user research. The main feedback is that the login process is too clunky. Users want biometric login, like Face ID or fingerprint.
@@ -18,7 +39,7 @@ const MOCK_TRANSCRIPT = `[00:01:05] Sarah: Okay team, let's sync on the mobile a
 [00:02:45] Alex: Got it. I'll keep the requirements generic for now.`;
 
 interface ElicitationHubProps {
-    setToastMessage: (message: string) => void;
+    setToastMessage: (message: any) => void;
     onAddToBacklog: (title: string, type: BacklogItemType) => void;
     initiative: TInitiative;
 }
@@ -39,13 +60,15 @@ type EditableItem = {
 
 export const ElicitationHub: React.FC<ElicitationHubProps> = ({ setToastMessage, onAddToBacklog, initiative }) => {
   const { t, i18n } = useTranslation(['common', 'dashboard']);
+  const { isFocusModeActive } = useUI();
   const currentLanguage = i18n.language;
+  const { saveArtifact } = useCatalyst();
+
   const [activeMode, setActiveMode] = useState<'upload' | 'live'>('upload');
-  
-  // Transcript State
   const [transcript, setTranscript] = useState('');
   const [analysis, setAnalysis] = useState<TElicitationAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isUploaded, setIsUploaded] = useState(false);
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
@@ -66,7 +89,6 @@ export const ElicitationHub: React.FC<ElicitationHubProps> = ({ setToastMessage,
   const currentInputTrans = useRef('');
   const currentOutputTrans = useRef('');
 
-  // Cleanup audio on unmount
   useEffect(() => {
     return () => {
         disconnectLiveSession();
@@ -93,7 +115,7 @@ export const ElicitationHub: React.FC<ElicitationHubProps> = ({ setToastMessage,
   const startLiveSession = async () => {
       try {
           setIsLiveConnected(true);
-          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+          const ai = new GoogleGenAI({ apiKey: process.env.VITE_GEMINI_API_KEY || '' });
           
           nextStartTime.current = 0;
           inputAudioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
@@ -110,23 +132,19 @@ export const ElicitationHub: React.FC<ElicitationHubProps> = ({ setToastMessage,
                   speechConfig: {
                       voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } },
                   },
-                  systemInstruction: `You are a helpful, professional Business Analyst Co-pilot. Context: You are assisting with an initiative titled "${initiative.title}" in the ${initiative.sector} sector. Language: ${currentLanguage === 'ar' ? 'Arabic' : 'English'}. Listen to the user's meeting or thoughts. If asked, summarize what was said, capture requirements relevant to ${initiative.sector}, or ask a clarifying question. Otherwise, just acknowledge briefly. Keep responses concise.`,
+                  systemInstruction: `You are a helpful, professional Business Analyst Co-pilot. Context: You are assisting with an initiative titled "${initiative.title}" in the ${initiative.sector} sector. Language: ${currentLanguage === 'ar' ? 'Arabic' : 'English'}. Listen to the user's meeting or thoughts. Summarize key requirements and cross-reference them with the ${initiative.sector} sector standards.`,
                   inputAudioTranscription: {},
                   outputAudioTranscription: {}
               },
               callbacks: {
                   onopen: () => {
-                      console.log("Live Session Connected");
                       const source = inputAudioContext.current!.createMediaStreamSource(stream);
                       const scriptProcessor = inputAudioContext.current!.createScriptProcessor(4096, 1, 1);
-                      
                       scriptProcessor.onaudioprocess = (e) => {
                           const inputData = e.inputBuffer.getChannelData(0);
-                          // Simple volume meter
                           let sum = 0;
                           for(let i = 0; i < inputData.length; i++) sum += inputData[i] * inputData[i];
                           setAudioLevel(Math.sqrt(sum / inputData.length));
-
                           const pcmBlob = createBlob(inputData);
                           sessionPromise.current?.then(session => {
                               session.sendRealtimeInput({ media: pcmBlob });
@@ -136,7 +154,6 @@ export const ElicitationHub: React.FC<ElicitationHubProps> = ({ setToastMessage,
                       scriptProcessor.connect(inputAudioContext.current!.destination);
                   },
                   onmessage: async (msg: LiveServerMessage) => {
-                      // Handle Audio Output
                       const base64Audio = msg.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
                       if (base64Audio) {
                           const ctx = outputAudioContext.current!;
@@ -145,20 +162,11 @@ export const ElicitationHub: React.FC<ElicitationHubProps> = ({ setToastMessage,
                           const source = ctx.createBufferSource();
                           source.buffer = audioBuffer;
                           source.connect(outputNode.current!);
-                          source.addEventListener('ended', () => sources.current.delete(source));
                           source.start(nextStartTime.current);
                           nextStartTime.current += audioBuffer.duration;
-                          sources.current.add(source);
                       }
-
-                      // Handle Transcription
-                      if (msg.serverContent?.inputTranscription) {
-                          currentInputTrans.current += msg.serverContent.inputTranscription.text;
-                      }
-                      if (msg.serverContent?.outputTranscription) {
-                          currentOutputTrans.current += msg.serverContent.outputTranscription.text;
-                      }
-
+                      if (msg.serverContent?.inputTranscription) currentInputTrans.current += msg.serverContent.inputTranscription.text;
+                      if (msg.serverContent?.outputTranscription) currentOutputTrans.current += msg.serverContent.outputTranscription.text;
                       if (msg.serverContent?.turnComplete) {
                           if (currentInputTrans.current.trim()) {
                               setLiveTranscript(prev => [...prev, { speaker: 'You', text: currentInputTrans.current }]);
@@ -170,47 +178,40 @@ export const ElicitationHub: React.FC<ElicitationHubProps> = ({ setToastMessage,
                           }
                       }
                   },
-                  onclose: () => {
-                      console.log("Live Session Closed");
-                      setIsLiveConnected(false);
-                  },
-                  onerror: (e) => {
-                      console.error("Live Session Error", e);
+                  onclose: () => setIsLiveConnected(false),
+                  onerror: () => {
                       setIsLiveConnected(false);
                       setError("Live session disconnected unexpectedly.");
                   }
               }
           });
-
       } catch (e) {
-          console.error("Failed to start live session", e);
           setError("Failed to access microphone or connect to AI.");
           setIsLiveConnected(false);
       }
   };
 
-  // Existing Transcript Analysis Logic
   const handleAnalyze = useCallback(async () => {
     if (!transcript) return;
     setIsLoading(true);
     setError(null);
-    setAnalysis(null);
-    setEditingItem(null);
     try {
       const result = await analyzeTranscript(transcript, initiative.sector as Sector, currentLanguage);
       setAnalysis(result);
+      // Automatically persist to cloud
+      await saveArtifact(initiative.id, 'elicitation_report', result);
+      setToastMessage({ title: "Analysis Finalized", description: "Requirement artifacts updated.", type: 'success' });
     } catch (err) {
       setError(t('dashboard:elicitation.error_analyze'));
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
-  }, [transcript, initiative.sector, currentLanguage, t]);
+  }, [transcript, initiative.id, initiative.sector, currentLanguage, t, saveArtifact, setToastMessage]);
 
   const handleUpload = () => {
     setTranscript(MOCK_TRANSCRIPT);
     setIsUploaded(true);
-    setToastMessage("Mock transcript uploaded successfully.");
+    setToastMessage({ title: "Mock Data Injected", description: "Meeting transcript ready for synthesis.", type: 'info' });
   };
   
   const handleEdit = (type: EditableItem['type'], index: number) => {
@@ -219,9 +220,8 @@ export const ElicitationHub: React.FC<ElicitationHubProps> = ({ setToastMessage,
     setEditingItem({ type, index, content } as EditableItem);
   };
 
-  const handleSave = () => {
+  const handleSaveItem = () => {
     if (!editingItem || !analysis) return;
-
     setAnalysis(prev => {
       if (!prev) return null;
       const newAnalysis = { ...prev };
@@ -230,336 +230,296 @@ export const ElicitationHub: React.FC<ElicitationHubProps> = ({ setToastMessage,
       (newAnalysis[editingItem.type] as any) = items;
       return newAnalysis;
     });
-
     setEditingItem(null);
   };
 
-  const handleCancel = () => {
-    setEditingItem(null);
-  };
-  
-  const handleContentChange = (value: string) => {
-      if (editingItem && (editingItem.type === 'requirements' || editingItem.type === 'decisions' || editingItem.type === 'keyTerms')) {
-          setEditingItem({ ...editingItem, content: value });
-      }
-  };
-
-  const handleActionItemChange = (field: keyof TActionItem, value: string) => {
-      if(editingItem && editingItem.type === 'actionItems') {
-          setEditingItem({
-              ...editingItem,
-              content: { ...editingItem.content, [field]: value }
-          });
-      }
-  };
-
-  const handleAddKeyTerm = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!analysis || !newKeyTerm.trim()) return;
-    setAnalysis(prev => {
-        if (!prev) return null;
-        return {
-            ...prev,
-            keyTerms: [...(prev.keyTerms || []), newKeyTerm.trim()]
-        };
-    });
-    setNewKeyTerm('');
-  };
-
-  const handleDeleteKeyTerm = (indexToDelete: number) => {
-    if (!analysis) return;
-    setAnalysis(prev => {
-        if (!prev) return null;
-        return {
-            ...prev,
-            keyTerms: (prev.keyTerms || []).filter((_, index) => index !== indexToDelete)
-        };
-    });
-  };
-
-  const renderAnalysisCard = (title: string, type: 'requirements' | 'decisions', icon: React.ReactNode) => {
-    const items = analysis ? (analysis[type] || []) : [];
-    return (
-      <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-3 flex items-center">{icon} {t(`dashboard:elicitation.${type}`)}</h3>
-        <ul className="space-y-3">
-          {items.map((item, index) => (
-            <li key={index} className="group text-gray-700 dark:text-gray-300">
-              {editingItem && editingItem.type === type && editingItem.index === index ? (
-                <div className="space-y-2">
-                  <textarea
-                    value={editingItem.content as string}
-                    onChange={(e) => handleContentChange(e.target.value)}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm"
-                    rows={3}
-                  />
-                  <div className="flex items-center space-x-2">
-                    <button onClick={handleSave} className="text-accent-emerald hover:text-accent-emerald/80"><CheckIcon className="h-5 w-5" /></button>
-                    <button onClick={handleCancel} className="text-accent-red hover:text-accent-red/80"><XMarkIcon className="h-5 w-5" /></button>
-                  </div>
+  const SwotQuadrant: React.FC<{ 
+    title: string; 
+    items: string[]; 
+    accentColor: string; 
+    icon: React.ReactNode;
+    type: 'requirements' | 'decisions';
+  }> = ({ title, items, accentColor, icon, type }) => (
+    <div className={`glass-card p-6 border-l-4 ${accentColor} transition-all duration-300 hover:scale-[1.01] hover:shadow-2xl slide-up`}>
+        <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-white/10 shadow-inner">
+                    {React.cloneElement(icon as React.ReactElement, { className: 'h-5 w-5' })}
                 </div>
-              ) : (
-                <div className="flex justify-between items-start">
-                  <span>- {item}</span>
-                  <div className="flex items-center ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => handleEdit(type, index)} className="text-accent-purple hover:text-accent-purple/80">
-                        <PencilIcon className="h-4 w-4" />
-                    </button>
-                    {type === 'requirements' && (
-                        <button onClick={() => onAddToBacklog(item, 'Requirement')} className="ml-2 text-accent-purple hover:text-accent-purple/80">
-                            <WandSparklesIcon className="h-4 w-4" />
-                        </button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  };
-  
-  const renderActionItemsCard = () => {
-    const items = analysis ? (analysis.actionItems || []) : [];
-    return (
-       <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-3 flex items-center"><ClipboardDocumentCheckIcon className="h-5 w-5 mr-2" /> {t('dashboard:elicitation.action_items')}</h3>
-        <ul className="space-y-3">
-            {items.map((item, index) => (
-                <li key={index} className="group border-b border-gray-200 dark:border-gray-600 pb-2 last:border-b-0 last:pb-0">
-                  {editingItem && editingItem.type === 'actionItems' && editingItem.index === index ? (
-                     <div className="space-y-2 text-sm">
-                        <textarea
-                            value={editingItem.content.task}
-                            onChange={(e) => handleActionItemChange('task', e.target.value)}
-                            className="w-full p-1 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700"
-                            rows={2}
-                        />
-                        <input
-                            type="text"
-                            value={editingItem.content.assignee}
-                            onChange={(e) => handleActionItemChange('assignee', e.target.value)}
-                             className="w-full p-1 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700"
-                        />
-                         <input
-                            type="text"
-                            value={editingItem.content.dueDate}
-                            onChange={(e) => handleActionItemChange('dueDate', e.target.value)}
-                             className="w-full p-1 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700"
-                        />
-                        <div className="flex items-center space-x-2">
-                           <button onClick={handleSave} className="text-accent-emerald hover:text-accent-emerald/80"><CheckIcon className="h-5 w-5" /></button>
-                           <button onClick={handleCancel} className="text-accent-red hover:text-accent-red/80"><XMarkIcon className="h-5 w-5" /></button>
-                        </div>
-                     </div>
-                  ) : (
-                    <>
-                        <div className="flex justify-between items-start">
-                            <p className="text-gray-800 dark:text-gray-200">{item.task}</p>
-                            <div className="flex items-center ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleEdit('actionItems', index)} className="text-accent-purple hover:text-accent-purple/80">
-                                    <PencilIcon className="h-4 w-4" />
-                                </button>
-                                <button onClick={() => onAddToBacklog(item.task, 'Task')} className="ml-2 text-accent-purple hover:text-accent-purple/80 flex-shrink-0">
-                                    <WandSparklesIcon className="h-4 w-4" />
-                                </button>
+                <h3 className="text-sm font-black tracking-[0.2em] uppercase">{title}</h3>
+            </div>
+        </div>
+
+        <ul className="space-y-4">
+            {(items || []).map((item, index) => (
+                <li key={index} className="group/item flex gap-3 text-gray-300">
+                    <ChevronRight className="h-3 w-3 mt-1.5 text-gray-500 shrink-0" />
+                    <div className="flex flex-col gap-2 w-full">
+                        {editingItem && editingItem.type === type && editingItem.index === index ? (
+                            <div className="space-y-3">
+                                <textarea
+                                    value={editingItem.content as string}
+                                    onChange={(e) => setEditingItem({ ...editingItem, content: e.target.value } as EditableItem)}
+                                    className="w-full p-3 bg-black/20 border-none rounded-xl text-xs font-medium focus:ring-1 focus:ring-accent-cyan outline-none"
+                                    rows={2}
+                                />
+                                <div className="flex gap-2">
+                                    <button onClick={handleSaveItem} className="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-[10px] font-bold rounded-full uppercase tracking-widest border border-emerald-500/30">Save</button>
+                                    <button onClick={() => setEditingItem(null)} className="px-3 py-1 bg-white/5 text-gray-400 text-[10px] font-bold rounded-full uppercase tracking-widest">Cancel</button>
+                                </div>
                             </div>
-                        </div>
-                        <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-1.5 space-x-4">
-                            <span className="flex items-center">
-                                <UserCircleIcon className="h-4 w-4 mr-1 text-gray-400 dark:text-gray-500" />
-                                {item.assignee}
-                            </span>
-                            <span className="flex items-center">
-                                <CalendarIcon className="h-4 w-4 mr-1 text-gray-400 dark:text-gray-500" />
-                                {item.dueDate}
-                            </span>
-                        </div>
-                    </>
-                  )}
+                        ) : (
+                            <div className="flex justify-between items-start group/controls">
+                                <span className="text-[13px] leading-relaxed">{item}</span>
+                                <div className="flex items-center gap-2 opacity-0 group-hover/controls:opacity-100 transition-opacity translate-x-2 group-hover/controls:translate-x-0">
+                                    <button onClick={() => handleEdit(type, index)} className="p-1.5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors">
+                                        <Edit3 className="h-3 w-3" />
+                                    </button>
+                                    {type === 'requirements' && (
+                                        <button onClick={() => onAddToBacklog(item, 'Requirement')} className="p-1.5 hover:bg-accent-cyan/20 rounded-lg text-accent-cyan transition-colors" title="Send to Backlog">
+                                            <Zap className="h-3 w-3" />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </li>
             ))}
         </ul>
     </div>
-    );
-  }
-
-  const renderKeyTermsCard = () => {
-    const items = analysis ? (analysis.keyTerms || []) : [];
-    return (
-      <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg flex flex-col">
-        <h3 className="text-lg font-semibold mb-3 flex items-center"><BookOpenIcon className="h-5 w-5 mr-2" /> {t('dashboard:elicitation.key_terms')}</h3>
-        <ul className="space-y-3 flex-grow">
-          {items.map((item, index) => (
-            <li key={index} className="group text-gray-700 dark:text-gray-300">
-              {editingItem && editingItem.type === 'keyTerms' && editingItem.index === index ? (
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    value={editingItem.content as string}
-                    onChange={(e) => handleContentChange(e.target.value)}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm"
-                  />
-                  <div className="flex items-center space-x-2">
-                    <button onClick={handleSave} className="text-accent-emerald hover:text-accent-emerald/80"><CheckIcon className="h-5 w-5" /></button>
-                    <button onClick={handleCancel} className="text-accent-red hover:text-accent-red/80"><XMarkIcon className="h-5 w-5" /></button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex justify-between items-start">
-                  <span>- {item}</span>
-                  <div className="flex items-center ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => handleEdit('keyTerms', index)} className="text-accent-purple hover:text-accent-purple/80">
-                        <PencilIcon className="h-4 w-4" />
-                    </button>
-                    <button onClick={() => handleDeleteKeyTerm(index)} className="ml-2 text-accent-red hover:text-accent-red/80">
-                        <TrashIcon className="h-4 w-4" />
-                    </button>
-                    <button onClick={() => setToastMessage(`Term '${item}' added to project glossary.`)} className="ml-2 text-accent-purple hover:text-accent-purple/80">
-                        <WandSparklesIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
-        <form onSubmit={handleAddKeyTerm} className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
-          <div className="flex space-x-2">
-             <input
-                type="text"
-                value={newKeyTerm}
-                onChange={(e) => setNewKeyTerm(e.target.value)}
-                placeholder={t('dashboard:elicitation.add_term_placeholder')}
-                className="flex-grow w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-sm focus:ring-2 focus:ring-accent-purple"
-             />
-             <Button type="submit" disabled={!newKeyTerm.trim()}>{t('common:add')}</Button>
-          </div>
-        </form>
-      </div>
-    );
-  };
-
+  );
+  
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md space-y-4">
-      <div className="flex justify-between items-start">
-        <div>
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{t('dashboard:elicitation.title')}</h2>
-            <p className="text-gray-600 dark:text-gray-400">{t('dashboard:elicitation.description')}</p>
-        </div>
-        <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1 gap-1">
-            <button onClick={() => setActiveMode('upload')} className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${activeMode === 'upload' ? 'bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'}`}>{t('dashboard:elicitation.upload')}</button>
-            <button onClick={() => setActiveMode('live')} className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${activeMode === 'live' ? 'bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'}`}>{t('dashboard:elicitation.live_copilot')}</button>
-        </div>
-      </div>
+    <div className={`space-y-8 fade-in ${isFocusModeActive ? 'p-0' : ''}`}>
+      {!isFocusModeActive && (
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div>
+                <h2 className="text-3xl font-black tracking-tighter flex items-center gap-3">
+                    <BrainCircuit className="h-8 w-8 text-accent-cyan" />
+                    ELICITATION HUB
+                </h2>
+                <p className="text-sm text-gray-400 font-medium">Extracting tactical requirements from conversation dynamics.</p>
+            </div>
+            
+            <div className="flex bg-black/30 p-1.5 rounded-2xl border border-white/5 gap-1 shadow-inner backdrop-blur-xl">
+                <button 
+                    onClick={() => setActiveMode('upload')} 
+                    className={`flex items-center gap-2 px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${activeMode === 'upload' ? 'bg-white shadow-lg text-black' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                >
+                    <Upload className="h-3.5 w-3.5" />
+                    Transcript Sync
+                </button>
+                <button 
+                    onClick={() => setActiveMode('live')} 
+                    className={`flex items-center gap-2 px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${activeMode === 'live' ? 'bg-accent-cyan shadow-lg text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                >
+                    <Activity className="h-3.5 w-3.5" />
+                    Live Co-Pilot
+                </button>
+            </div>
+          </div>
+      )}
       
       {activeMode === 'upload' ? (
-          <div className="animate-fade-in-down space-y-4">
-            <div className="flex justify-end">
-                <Button onClick={handleUpload}>
-                    <ArrowUpTrayIcon className="h-5 w-5 mr-2" />
-                    {t('dashboard:elicitation.upload_recording')}
-                </Button>
+          <div className="glass-card p-8 border border-white/5 relative overflow-hidden slide-up">
+            <div className="absolute top-0 right-0 p-8 opacity-5">
+                <FileText className="h-24 w-24" />
             </div>
-            <div>
-                <label htmlFor="transcript" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('dashboard:elicitation.meeting_transcript')}</label>
+
+            <div className="flex justify-between items-end mb-6">
+                <div className="space-y-1">
+                    <label htmlFor="transcript" className="text-[10px] font-black uppercase text-gray-500 tracking-[0.2em]">Meeting Transcript</label>
+                    <p className="text-[11px] text-gray-500 font-medium">Auto-summarization engine active</p>
+                </div>
+                <button 
+                    onClick={handleUpload}
+                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-accent-cyan hover:underline transition-all"
+                >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Inject Mock Data
+                </button>
+            </div>
+
+            <div className="relative group">
                 <textarea
-                id="transcript"
-                rows={8}
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-purple font-mono text-sm disabled:bg-gray-200 dark:disabled:bg-gray-700/50"
-                value={transcript}
-                onChange={(e) => setTranscript(e.target.value)}
-                placeholder={t('dashboard:elicitation.transcript_placeholder')}
-                disabled={!isUploaded}
+                    id="transcript"
+                    rows={8}
+                    className="w-full p-6 border-none rounded-3xl bg-black/20 text-sm font-medium focus:ring-2 focus:ring-accent-cyan/30 focus:bg-black/30 transition-all placeholder:text-gray-600 outline-none custom-scrollbar mb-8 leading-relaxed font-mono"
+                    value={transcript}
+                    onChange={(e) => setTranscript(e.target.value)}
+                    placeholder="Paste meeting transcript or upload recording for AI synthesis..."
+                    disabled={!isUploaded && transcript === ''}
                 />
             </div>
-            <Button onClick={handleAnalyze} disabled={isLoading || !transcript}>
-                {isLoading ? <Spinner /> : t('dashboard:elicitation.analyze_transcript')}
+
+            <Button 
+                onClick={handleAnalyze} 
+                disabled={isLoading || !transcript}
+                className="bg-accent-cyan hover:bg-accent-cyan/90 text-white px-8 py-3 h-auto rounded-2xl font-black text-xs tracking-widest uppercase transition-all duration-500 shadow-[0_0_20px_rgba(34,211,238,0.2)] hover:shadow-[0_0_30px_rgba(34,211,238,0.4)]"
+            >
+                {isLoading ? <Spinner className="h-4 w-4" /> : <ListChecks className="h-4 w-4 mr-2" />}
+                {t('dashboard:elicitation.analyze_transcript')}
             </Button>
           </div>
       ) : (
-          <div className="animate-fade-in-down space-y-6">
-              <div className="flex flex-col items-center justify-center py-8 bg-gray-900 text-white rounded-xl relative overflow-hidden transition-all duration-500" style={{ height: '400px' }}>
-                  
-                  {!isLiveConnected ? (
-                      <div className="text-center space-y-4 z-10">
-                          <div className="bg-gray-800 p-4 rounded-full inline-block">
-                              <MicrophoneIcon className="h-12 w-12 text-gray-400" />
-                          </div>
-                          <h3 className="text-xl font-bold">{t('dashboard:elicitation.start_live')}</h3>
-                          <p className="text-gray-400 max-w-md">{t('dashboard:elicitation.live_description')}</p>
-                          <Button onClick={startLiveSession} className="bg-accent-emerald hover:bg-accent-emerald/80 text-white border-none">
-                              {t('dashboard:elicitation.connect_copilot')}
-                          </Button>
+          <div className="glass-card p-1 items-center justify-center bg-black/40 relative overflow-hidden rounded-[2.5rem] slide-up border border-white/5" style={{ minHeight: '500px' }}>
+              <div className="absolute inset-0 bg-gradient-to-b from-accent-cyan/5 to-transparent pointer-events-none" />
+              
+              {!isLiveConnected ? (
+                  <div className="flex flex-col items-center justify-center h-full py-16 text-center space-y-8 relative z-10 px-6">
+                      <div className="w-24 h-24 rounded-[30%] bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-accent-cyan transition-colors">
+                          <Mic className="h-10 w-10 text-gray-500" />
                       </div>
-                  ) : (
-                      <div className="flex flex-col items-center w-full h-full p-4 z-10">
-                          {/* Visualizer */}
-                          <div className="flex items-center gap-2 mb-6">
-                              <div className="w-3 h-3 rounded-full bg-accent-red animate-pulse"></div>
-                              <span className="text-sm font-bold text-accent-red">LIVE RECORDING</span>
-                          </div>
-                          
-                          <div className="w-32 h-32 rounded-full bg-accent-purple/20 flex items-center justify-center mb-6 relative">
-                              <div className="absolute w-full h-full rounded-full bg-accent-purple/30 animate-ping" style={{ animationDuration: '2s' }}></div>
-                              <div className="w-24 h-24 rounded-full bg-accent-purple flex items-center justify-center transition-all duration-75"
-                                   style={{ transform: `scale(${1 + audioLevel * 2})` }}
-                              >
-                                  <MicrophoneIcon className="h-10 w-10 text-white" />
+                      <div className="space-y-4">
+                        <h3 className="text-2xl font-black tracking-tighter uppercase">{t('dashboard:elicitation.start_live')}</h3>
+                        <p className="text-gray-500 max-w-sm text-sm font-medium leading-relaxed">{t('dashboard:elicitation.live_description')}</p>
+                      </div>
+                      <Button onClick={startLiveSession} className="bg-accent-cyan text-white border-none px-10 py-4 h-auto rounded-2xl font-black text-xs tracking-widest uppercase shadow-2xl hover:scale-105 transition-all outline-none">
+                          {t('dashboard:elicitation.connect_copilot')}
+                      </Button>
+                  </div>
+              ) : (
+                  <div className="flex flex-col items-center w-full h-[600px] p-8 z-10">
+                      {/* Visualizer Area */}
+                      <div className="flex items-center gap-3 mb-10 px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/20">
+                          <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                          <span className="text-[9px] font-black text-red-500 tracking-[0.2em] uppercase">Tactical Capture Active</span>
+                      </div>
+                      
+                      <div className="w-40 h-40 rounded-full bg-accent-cyan/10 flex items-center justify-center mb-10 relative">
+                          <div className="absolute inset-0 rounded-full border border-accent-cyan/20 scale-150 opacity-20 animate-ping" />
+                          <div className="absolute inset-0 rounded-full border border-accent-cyan/10 scale-125 opacity-40 animate-pulse" />
+                          <div 
+                            className="w-32 h-32 rounded-full bg-accent-cyan/20 flex items-center justify-center transition-all duration-75 shadow-[inset_0_0_20px_rgba(255,255,255,0.1)]"
+                            style={{ transform: `scale(${1 + audioLevel * 1.5})` }}
+                          >
+                              <div className="p-5 rounded-full bg-accent-cyan text-white shadow-xl">
+                                <Activity className="h-10 w-10" />
                               </div>
                           </div>
-
-                          {/* Live Transcript Stream */}
-                          <div className="flex-grow w-full max-w-2xl bg-black/20 rounded-lg p-4 overflow-y-auto custom-scrollbar space-y-2 mb-4 backdrop-blur-sm border border-white/10">
-                              {liveTranscript.length === 0 && (
-                                  <p className="text-gray-500 text-center italic mt-10">Waiting for speech...</p>
-                              )}
-                              {liveTranscript.map((line, i) => (
-                                  <div key={i} className={`flex ${line.speaker === 'AI' ? 'justify-start' : 'justify-end'}`}>
-                                      <div className={`max-w-[80%] p-2 rounded-lg text-sm ${line.speaker === 'AI' ? 'bg-accent-purple/20 text-accent-purple' : 'bg-gray-700/80 text-gray-200'}`}>
-                                          <span className="font-bold text-xs block mb-1 opacity-70">{line.speaker}</span>
-                                          {line.text}
-                                      </div>
-                                  </div>
-                              ))}
-                          </div>
-
-                          <Button onClick={disconnectLiveSession} className="bg-accent-red hover:bg-accent-red/80 text-white border-none">
-                              End Session
-                          </Button>
                       </div>
-                  )}
-              </div>
+
+                      {/* Live Stream */}
+                      <div className="flex-grow w-full max-w-3xl bg-black/40 rounded-[2rem] p-8 overflow-y-auto custom-scrollbar space-y-6 mb-8 border border-white/5 backdrop-blur-3xl shadow-inner relative">
+                          {liveTranscript.length === 0 && (
+                              <div className="h-full flex flex-col items-center justify-center opacity-20 gap-4">
+                                <Search className="h-12 w-12" />
+                                <p className="text-sm font-black uppercase tracking-[0.3em]">Calibrating Signal...</p>
+                              </div>
+                          )}
+                          {liveTranscript.map((line, i) => (
+                              <div key={i} className={`flex ${line.speaker === 'AI' ? 'justify-start' : 'justify-end'} slide-up`}>
+                                  <div className={`max-w-[85%] p-5 rounded-[1.5rem] shadow-lg ${line.speaker === 'AI' ? 'bg-white/10 text-white rounded-tl-none border border-white/5' : 'bg-accent-cyan text-white rounded-tr-none shadow-[0_10px_30px_rgba(34,211,238,0.2)]'}`}>
+                                      <span className="text-[9px] font-black uppercase tracking-widest block mb-2 opacity-60 flex items-center gap-2">
+                                        {line.speaker === 'AI' ? <Sparkles className="h-3 w-3" /> : <Target className="h-3 w-3" />}
+                                        {line.speaker}
+                                      </span>
+                                      <p className="text-sm font-medium leading-relaxed">{line.text}</p>
+                                  </div>
+                              </div>
+                          ))}
+                      </div>
+
+                      <Button onClick={disconnectLiveSession} className="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 px-8 py-2.5 h-auto rounded-xl font-black text-[10px] tracking-widest uppercase transition-all duration-500">
+                          End Discovery Session
+                      </Button>
+                  </div>
+              )}
           </div>
       )}
 
-      {error && <p className="text-accent-red">{error}</p>}
+      {error && (
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500 text-sm font-bold slide-up">
+            <AlertCircle className="h-4 w-4" />
+            {error}
+        </div>
+      )}
 
       {analysis && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6 pt-4">
-          {renderAnalysisCard('Requirements', 'requirements', <LightBulbIcon className="h-5 w-5 mr-2" />)}
-          {renderAnalysisCard('Decisions', 'decisions', <CheckCircleIcon className="h-5 w-5 mr-2" />)}
-          {renderActionItemsCard()}
-          {renderKeyTermsCard()}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 animate-fade-in">
+           <SwotQuadrant 
+                title={t('dashboard:elicitation.requirements')} 
+                type="requirements" 
+                accentColor="border-l-accent-cyan"
+                items={analysis.requirements}
+                icon={<BrainCircuit />}
+            />
+            <SwotQuadrant 
+                title={t('dashboard:elicitation.decisions')} 
+                type="decisions" 
+                accentColor="border-l-indigo-500"
+                items={analysis.decisions}
+                icon={<CheckCircle2 />}
+            />
+            
+            {/* Action Items Card */}
+            <div className="glass-card p-6 border-l-4 border-l-amber-500 transition-all duration-300 hover:scale-[1.01] hover:shadow-2xl slide-up">
+                <div className="flex items-center gap-3 mb-5">
+                    <div className="p-2 rounded-xl bg-white/10 shadow-inner">
+                        <ListChecks className="h-5 w-5 text-amber-500" />
+                    </div>
+                    <h3 className="text-sm font-black tracking-[0.2em] uppercase">{t('dashboard:elicitation.action_items')}</h3>
+                </div>
+                <ul className="space-y-4">
+                    {(analysis.actionItems || []).map((item, index) => (
+                        <li key={index} className="flex flex-col gap-2 p-3 bg-white/5 rounded-2xl border border-white/5 group/ai">
+                            <p className="text-[13px] font-bold text-white/90 leading-tight">{item.task}</p>
+                            <div className="flex items-center justify-between mt-1">
+                                <div className="flex items-center gap-3 opacity-60">
+                                    <div className="flex items-center gap-1">
+                                        <Plus className="h-2.5 w-2.5" />
+                                        <span className="text-[9px] font-black uppercase tracking-tighter">{item.assignee}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <ArrowRight className="h-2.5 w-2.5" />
+                                        <span className="text-[9px] font-black uppercase tracking-tighter">{item.dueDate}</span>
+                                    </div>
+                                </div>
+                                <button onClick={() => onAddToBacklog(item.task, 'Task')} className="p-1.5 opacity-0 group-hover/ai:opacity-100 transition-opacity text-amber-500 hover:bg-amber-500/10 rounded-lg">
+                                    <Zap className="h-3 w-3" />
+                                </button>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+            
+            {/* Key Terms Card */}
+            <div className="glass-card p-6 border-l-4 border-l-rose-500 transition-all duration-300 hover:scale-[1.01] hover:shadow-2xl slide-up col-span-1 md:col-span-2 lg:col-span-3">
+                <div className="flex items-center gap-3 mb-5">
+                    <div className="p-2 rounded-xl bg-white/10 shadow-inner">
+                        <Sparkles className="h-5 w-5 text-rose-500" />
+                    </div>
+                    <h3 className="text-sm font-black tracking-[0.2em] uppercase">{t('dashboard:elicitation.key_terms')}</h3>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                    {(analysis.keyTerms || []).map((term, index) => (
+                        <div key={index} className="group/term relative px-4 py-2 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center gap-3 hover:bg-rose-500/20 transition-all">
+                            <span className="text-xs font-bold text-rose-400">{term}</span>
+                            <div className="flex items-center gap-1.5 opacity-0 group-hover/term:opacity-100 transition-all scale-90 group-hover/term:scale-100">
+                                <button onClick={() => handleDeleteKeyTerm(index)} className="text-gray-400 hover:text-red-400 transition-colors">
+                                    <Trash2 className="h-3 w-3" />
+                                </button>
+                                <button onClick={() => setToastMessage({ title: "Glossary Updated", description: `'${term}' added to domain knowledge.`, type: 'success' })} className="text-rose-400 hover:text-white transition-colors">
+                                    <Plus className="h-3 w-3" />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                    <form onSubmit={handleAddKeyTerm} className="relative">
+                        <input
+                            type="text"
+                            value={newKeyTerm}
+                            onChange={(e) => setNewKeyTerm(e.target.value)}
+                            placeholder="Add tactical term..."
+                            className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-medium focus:ring-1 focus:ring-rose-500 min-w-[200px] outline-none"
+                        />
+                    </form>
+                </div>
+            </div>
         </div>
       )}
     </div>
   );
 };
-
-
-// Icons
-const ArrowUpTrayIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>;
-const LightBulbIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-11.62a6.01 6.01 0 00-3 0a6.01 6.01 0 001.5 11.62z" /></svg>;
-const CheckCircleIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
-const ClipboardDocumentCheckIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 019 9v.375M10.125 2.25A3.375 3.375 0 0113.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 013.375 3.375M9 15l2.25 2.25L15 12" /></svg>;
-const UserCircleIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
-const CalendarIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18M12 13.5h.008v.008H12v-.008z" /></svg>;
-const BookOpenIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>;
-const WandSparklesIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.572L16.5 21.75l-.398-1.178a3.375 3.375 0 00-2.455-2.456L12.75 18l1.178-.398a3.375 3.375 0 002.455-2.456L16.5 14.25l.398 1.178a3.375 3.375 0 002.456 2.456L20.25 18l-1.178.398a3.375 3.375 0 00-2.456 2.456z" /></svg>;
-const PencilIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>;
-const CheckIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>;
-const XMarkIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>;
-const TrashIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.134-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.067-2.09.92-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>;
-const MicrophoneIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" /></svg>;

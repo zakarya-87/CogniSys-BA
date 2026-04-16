@@ -35,7 +35,7 @@ interface DashboardProps {
   onCreateInitiative: (title?: string, description?: string, sector?: Sector) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ initiatives, onSelectInitiative, onCreateInitiative }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ initiatives = [], onSelectInitiative, onCreateInitiative }) => {
   const { setHiveCommand, setCurrentView, user, loading, apiError } = useCatalyst();
   const { t, i18n } = useTranslation(['dashboard', 'common']);
   const [isIngestorOpen, setIsIngestorOpen] = useState(false);
@@ -49,9 +49,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ initiatives, onSelectIniti
   const percentFormatter = useMemo(() => new Intl.NumberFormat(i18n.language, { style: 'percent' }), [i18n.language]);
   
   const filteredInitiatives = useMemo(() => {
-    if (!searchQuery.trim()) return initiatives;
+    const list = initiatives || [];
+    if (!searchQuery.trim()) return list;
     const query = searchQuery.toLowerCase();
-    return initiatives.filter(init => 
+    return list.filter(init => 
       init.title.toLowerCase().includes(query) || 
       init.description.toLowerCase().includes(query) ||
       init.sector.toLowerCase().includes(query)
@@ -79,13 +80,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ initiatives, onSelectIniti
   const sortedSectors = Object.keys(groupedInitiatives).sort();
 
   const stats = useMemo(() => {
-    const avgConfidence = initiatives.length > 0
-      ? initiatives.reduce((sum, i) => sum + ((i as any).confidenceScore ?? 0.82), 0) / initiatives.length
+    const list = initiatives || [];
+    const avgConfidence = list.length > 0
+      ? list.reduce((sum, i) => sum + ((i as any).confidenceScore ?? 0.82), 0) / list.length
       : 0;
     return [
       { 
         label: t('dashboard:activeInitiatives'), 
-        value: numberFormatter.format(initiatives.length), 
+        value: numberFormatter.format(list.length), 
         icon: Folder, 
         color: 'text-accent-teal', 
         bg: 'bg-accent-teal/10',
@@ -93,7 +95,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ initiatives, onSelectIniti
       },
       { 
         label: t('dashboard:activeSectors'), 
-        value: numberFormatter.format(new Set(initiatives.map(i => i.sector)).size), 
+        value: numberFormatter.format(new Set(list.map(i => i.sector)).size), 
         icon: LayoutGrid, 
         color: 'text-accent-teal', 
         bg: 'bg-accent-teal/10',

@@ -21,8 +21,11 @@ import {
     CheckCircle2,
     Users,
     GitBranch, // Added for Dependency toggle
-    Info
+    Info,
+    Expand,
+    Minimize2
 } from 'lucide-react';
+import { useUI } from '../context/UIContext';
 
 const SmartGanttChart: React.FC<{ 
     data: TProjectVitalsAdvanced, 
@@ -408,6 +411,8 @@ interface ProjectHubProps {
 export const ProjectHub: React.FC<ProjectHubProps> = ({ initiatives, onSaveWbs, initialSelectedInitiativeId }) => {
     const { t } = useTranslation(['projectHub']);
     const { setToastMessage } = useCatalyst();
+    const { isFocusModeActive } = useUI();
+    const [selectedInitiativeId, setSelectedInitiativeId] = useState<string | null>(initialSelectedInitiativeId);
     const [selectedInitiative, setSelectedInitiative] = useState<TInitiative | null>(null);
     const [wbs, setWbs] = useState<TWorkBreakdown | null>(null);
     const [advancedVitals, setAdvancedVitals] = useState<TProjectVitalsAdvanced | null>(null);
@@ -559,48 +564,50 @@ export const ProjectHub: React.FC<ProjectHubProps> = ({ initiatives, onSaveWbs, 
     };
 
     return (
-        <div className="space-y-10">
-            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
-                <div className="space-y-1">
-                    <h1 className="text-4xl font-black text-white tracking-tight">{t('projectHub:title')}</h1>
-                    <p className="text-sm text-text-muted-dark font-medium uppercase tracking-[0.3em] opacity-60">Operations Intelligence Hub</p>
-                </div>
-                
-                <div className="flex flex-wrap items-center gap-3 bg-white/5 p-2 rounded-2xl border border-white/5 backdrop-blur-md">
-                    <select
-                        value={selectedInitiative?.id || ''}
-                        onChange={(e) => handleSelectInitiative(e.target.value)}
-                        className="p-3 border-0 rounded-xl bg-slate-900/50 text-white text-sm focus:ring-2 focus:ring-accent-teal min-w-[200px] outline-none font-bold appearance-none scrollbar-hide"
-                    >
-                        <option value="" disabled className="bg-slate-900">{t('projectHub:selectInitiative')}</option>
-                        {Object.keys(groupedInitiatives).sort().map(sector => (
-                            <optgroup key={sector} label={sector} className="bg-slate-900 text-[10px] uppercase font-bold text-accent-teal/50">
-                                {groupedInitiatives[sector].map(init => (
-                                    <option key={init.id} value={init.id} className="bg-slate-900 text-white font-medium capitalize">{init.title}</option>
-                                ))}
-                            </optgroup>
-                        ))}
-                    </select>
+        <div className={`transition-all duration-500 ${isFocusModeActive ? 'space-y-4' : 'space-y-10'}`}>
+            {!isFocusModeActive && (
+                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
+                    <div className="space-y-1">
+                        <h1 className="text-4xl font-black text-white tracking-tight">{t('projectHub:title')}</h1>
+                        <p className="text-sm text-text-muted-dark font-medium uppercase tracking-[0.3em] opacity-60">Operations Intelligence Hub</p>
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-3 bg-white/5 p-2 rounded-2xl border border-white/5 backdrop-blur-md">
+                        <select
+                            value={selectedInitiative?.id || ''}
+                            onChange={(e) => handleSelectInitiative(e.target.value)}
+                            className="p-3 border-0 rounded-xl bg-slate-900/50 text-white text-sm focus:ring-2 focus:ring-accent-teal min-w-[200px] outline-none font-bold appearance-none scrollbar-hide"
+                        >
+                            <option value="" disabled className="bg-slate-900">{t('projectHub:selectInitiative')}</option>
+                            {Object.keys(groupedInitiatives).sort().map(sector => (
+                                <optgroup key={sector} label={sector} className="bg-slate-900 text-[10px] uppercase font-bold text-accent-teal/50">
+                                    {groupedInitiatives[sector].map(init => (
+                                        <option key={init.id} value={init.id} className="bg-slate-900 text-white font-medium capitalize">{init.title}</option>
+                                    ))}
+                                </optgroup>
+                            ))}
+                        </select>
 
-                    <div className="h-8 w-[1px] bg-white/10 hidden sm:block" />
+                        <div className="h-8 w-[1px] bg-white/10 hidden sm:block" />
 
-                    {advancedVitals && selectedInitiative && (
-                        <Button onClick={handleAutoPrioritize} disabled={isLoading} variant="outline" className="border-accent-teal/30 text-accent-teal hover:bg-accent-teal/10 rounded-xl px-4 text-xs font-black uppercase tracking-widest">
-                            <Zap className="h-4 w-4 mr-2 filter drop-shadow(0 0 5px currentColor)"/>
-                            {t('projectHub:autoPrioritize')}
+                        {advancedVitals && selectedInitiative && (
+                            <Button onClick={handleAutoPrioritize} disabled={isLoading} variant="outline" className="border-accent-teal/30 text-accent-teal hover:bg-accent-teal/10 rounded-xl px-4 text-xs font-black uppercase tracking-widest">
+                                <Zap className="h-4 w-4 mr-2 filter drop-shadow(0 0 5px currentColor)"/>
+                                {t('projectHub:autoPrioritize')}
+                            </Button>
+                        )}
+                        <Button onClick={handleGenerateWbs} disabled={isLoading || !selectedInitiative} variant="primary" className="rounded-xl px-5 text-xs font-black uppercase tracking-widest">
+                            {isLoading ? <Spinner /> : <><LayoutGrid className="h-4 w-4 mr-2"/> {wbs ? t('projectHub:recalculatePlan') : t('projectHub:generatePlan')}</>}
                         </Button>
-                    )}
-                    <Button onClick={handleGenerateWbs} disabled={isLoading || !selectedInitiative} variant="primary" className="rounded-xl px-5 text-xs font-black uppercase tracking-widest">
-                        {isLoading ? <Spinner /> : <><LayoutGrid className="h-4 w-4 mr-2"/> {wbs ? t('projectHub:recalculatePlan') : t('projectHub:generatePlan')}</>}
-                    </Button>
-                    {wbs && selectedInitiative && (
-                        <Button onClick={handleSave} variant="primary" className="bg-accent-emerald hover:bg-accent-emerald/80 rounded-xl px-5 text-xs font-black uppercase tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.2)]">
-                           <Download className="h-4 w-4 mr-2"/>
-                            {t('projectHub:save')}
-                        </Button>
-                    )}
+                        {wbs && selectedInitiative && (
+                            <Button onClick={handleSave} variant="primary" className="bg-accent-emerald hover:bg-accent-emerald/80 rounded-xl px-5 text-xs font-black uppercase tracking-widest shadow-[0_0_20px_rgba(160,185,129,0.2)]">
+                            <Download className="h-4 w-4 mr-2"/>
+                                {t('projectHub:save')}
+                            </Button>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {error && (
                 <div className="glass-card p-4 bg-accent-red/5 flex items-center gap-3 animate-shake">
@@ -620,88 +627,92 @@ export const ProjectHub: React.FC<ProjectHubProps> = ({ initiatives, onSaveWbs, 
             )}
 
             {advancedVitals && (
-                <div className="space-y-10 animate-fade-in-up">
-                    {/* Metrics Header */}
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                        <div className="glass-card p-8 flex flex-col justify-between group hover:shadow-[0_0_30px_rgba(239,68,68,0.1)] transition-all duration-500">
-                            <div>
-                                <p className="text-[10px] font-black text-accent-red uppercase tracking-[.3em] opacity-80 mb-2">{t('projectHub:criticalPathDuration')}</p>
-                                <p className="text-5xl font-black text-white tracking-tighter">{advancedVitals.criticalPathDuration}<span className="text-sm font-bold text-text-muted-dark ml-2">DAYS</span></p>
+                <div className={`transition-all duration-500 ${isFocusModeActive ? 'space-y-0' : 'space-y-10'} animate-fade-in-up`}>
+                    {/* Metrics Header - Hidden in Focus Mode to maximize viz area */}
+                    {!isFocusModeActive && (
+                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                            <div className="glass-card p-8 flex flex-col justify-between group hover:shadow-[0_0_30px_rgba(239,68,68,0.1)] transition-all duration-500">
+                                <div>
+                                    <p className="text-[10px] font-black text-accent-red uppercase tracking-[.3em] opacity-80 mb-2">{t('projectHub:criticalPathDuration')}</p>
+                                    <p className="text-5xl font-black text-white tracking-tighter">{advancedVitals.criticalPathDuration}<span className="text-sm font-bold text-text-muted-dark ml-2">DAYS</span></p>
+                                </div>
+                                <div className="mt-6 flex items-center gap-2 text-[10px] font-black text-accent-red uppercase tracking-widest bg-accent-red/10 px-3 py-1.5 rounded-full w-fit">
+                                    <TrendingUp className="h-3 w-3" />
+                                    Efficiency Threshold
+                                </div>
                             </div>
-                            <div className="mt-6 flex items-center gap-2 text-[10px] font-black text-accent-red uppercase tracking-widest bg-accent-red/10 px-3 py-1.5 rounded-full w-fit">
-                                <TrendingUp className="h-3 w-3" />
-                                Efficiency Threshold
-                            </div>
-                        </div>
 
-                        <div className="lg:col-span-3 glass-card p-8 relative overflow-hidden group transition-all duration-500">
-                            {/* Ambient Glow */}
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-accent-teal/10 rounded-full blur-3xl -me-32 -mt-32 opacity-50 group-hover:scale-125 transition-transform duration-1000" />
-                            
-                            <div className="relative z-10">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="p-2 bg-accent-teal/20 rounded-lg">
-                                        <Sparkles className="h-5 w-5 text-accent-teal filter drop-shadow(0 0 5px currentColor)" />
+                            <div className="lg:col-span-3 glass-card p-8 relative overflow-hidden group transition-all duration-500">
+                                {/* Ambient Glow */}
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-accent-teal/10 rounded-full blur-3xl -me-32 -mt-32 opacity-50 group-hover:scale-125 transition-transform duration-1000" />
+                                
+                                <div className="relative z-10">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="p-2 bg-accent-teal/20 rounded-lg">
+                                            <Sparkles className="h-5 w-5 text-accent-teal filter drop-shadow(0 0 5px currentColor)" />
+                                        </div>
+                                        <h3 className="text-sm font-black text-white uppercase tracking-[0.3em]">
+                                            {t('projectHub:aiRiskAnalysis')}
+                                        </h3>
                                     </div>
-                                    <h3 className="text-sm font-black text-white uppercase tracking-[0.3em]">
-                                        {t('projectHub:aiRiskAnalysis')}
-                                    </h3>
+                                    <p className="text-base text-text-muted-dark leading-relaxed font-medium">
+                                        {advancedVitals.riskAnalysis}
+                                    </p>
                                 </div>
-                                <p className="text-base text-text-muted-dark leading-relaxed font-medium">
-                                    {advancedVitals.riskAnalysis}
-                                </p>
                             </div>
                         </div>
-                    </div>
+                    )}
 
-                    {/* Optimization Advice Section */}
-                    <div className="glass-surface p-8 relative border-accent-amber/20 group hover:border-accent-amber/40 transition-all duration-500">
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-accent-amber/20 rounded-2xl shadow-inner">
-                                    <Lightbulb className="h-6 w-6 text-accent-amber" />
+                    {/* Optimization Advice Section - Hidden in Focus Mode */}
+                    {!isFocusModeActive && (
+                        <div className="glass-surface p-8 relative border-accent-amber/20 group hover:border-accent-amber/40 transition-all duration-500">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-accent-amber/20 rounded-2xl shadow-inner">
+                                        <Lightbulb className="h-6 w-6 text-accent-amber" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h3 className="text-lg font-black text-white uppercase tracking-widest">
+                                            {t('projectHub:strategicOptimizationAdvice')}
+                                        </h3>
+                                        <p className="text-[10px] text-accent-amber font-black uppercase tracking-[0.2em] opacity-60">LLM Vector Analysis Protocol</p>
+                                    </div>
                                 </div>
-                                <div className="space-y-1">
-                                    <h3 className="text-lg font-black text-white uppercase tracking-widest">
-                                        {t('projectHub:strategicOptimizationAdvice')}
-                                    </h3>
-                                    <p className="text-[10px] text-accent-amber font-black uppercase tracking-[0.2em] opacity-60">LLM Vector Analysis Protocol</p>
-                                </div>
+                                
+                                {!optimizationAdvice && (
+                                    <Button 
+                                        onClick={handleGetOptimizationAdvice} 
+                                        disabled={isOptimizing} 
+                                        variant="outline"
+                                        className="border-accent-amber/40 text-accent-amber hover:bg-accent-amber/20 rounded-xl px-6"
+                                    >
+                                        {isOptimizing ? <Spinner /> : <><Sparkles className="h-4 w-4 mr-2"/> {t('projectHub:getAiAdvice')}</>}
+                                    </Button>
+                                )}
                             </div>
                             
-                            {!optimizationAdvice && (
-                                <Button 
-                                    onClick={handleGetOptimizationAdvice} 
-                                    disabled={isOptimizing} 
-                                    variant="outline"
-                                    className="border-accent-amber/40 text-accent-amber hover:bg-accent-amber/20 rounded-xl px-6"
-                                >
-                                    {isOptimizing ? <Spinner /> : <><Sparkles className="h-4 w-4 mr-2"/> {t('projectHub:getAiAdvice')}</>}
-                                </Button>
+                            {optimizationAdvice ? (
+                                <div className="prose prose-sm dark:prose-invert max-w-none glass-card p-6 shadow-xl metallic-sheen overflow-y-auto max-h-[400px] custom-scrollbar">
+                                    <ReactMarkdown>{optimizationAdvice}</ReactMarkdown>
+                                    <div className="mt-6 flex justify-end">
+                                        <Button 
+                                            onClick={() => setOptimizationAdvice(null)} 
+                                            variant="ghost" 
+                                            className="text-accent-amber hover:bg-accent-amber/10 rounded-lg font-black uppercase tracking-widest text-[10px]"
+                                        >
+                                            {t('projectHub:dismiss')}
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="p-12 text-center glass-card bg-white/[0.01]">
+                                    <p className="text-sm text-text-muted-dark font-medium italic opacity-60">
+                                        {t('projectHub:optimizationAdviceDesc')}
+                                    </p>
+                                </div>
                             )}
                         </div>
-                        
-                        {optimizationAdvice ? (
-                            <div className="prose prose-sm dark:prose-invert max-w-none glass-card p-6 shadow-xl metallic-sheen overflow-y-auto max-h-[400px] custom-scrollbar">
-                                <ReactMarkdown>{optimizationAdvice}</ReactMarkdown>
-                                <div className="mt-6 flex justify-end">
-                                    <Button 
-                                        onClick={() => setOptimizationAdvice(null)} 
-                                        variant="ghost" 
-                                        className="text-accent-amber hover:bg-accent-amber/10 rounded-lg font-black uppercase tracking-widest text-[10px]"
-                                    >
-                                        {t('projectHub:dismiss')}
-                                    </Button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="p-12 text-center glass-card bg-white/[0.01]">
-                                <p className="text-sm text-text-muted-dark font-medium italic opacity-60">
-                                    {t('projectHub:optimizationAdviceDesc')}
-                                </p>
-                            </div>
-                        )}
-                    </div>
+                    )}
 
                     {/* Main Content Tabs */}
                     <div className="space-y-6">
