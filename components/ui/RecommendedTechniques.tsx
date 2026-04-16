@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Lightbulb, ArrowRight, Sparkles } from 'lucide-react';
 import { TRecommendedTechnique } from '../../types';
 import { Spinner } from './Spinner';
 
@@ -9,38 +10,55 @@ interface RecommendedTechniquesProps {
     onSelectTechnique: (techniqueName: string) => void;
 }
 
-const LightBulbIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-11.62a6.01 6.01 0 00-3 0a6.01 6.01 0 001.5 11.62z" /></svg>;
-const ArrowRightIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" /></svg>;
-
 export const RecommendedTechniques: React.FC<RecommendedTechniquesProps> = ({ techniques, isLoading, onSelectTechnique }) => {
     const { t } = useTranslation(['dashboard']);
     return (
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md h-full">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                <LightBulbIcon className="h-6 w-6 mr-2 text-yellow-400" />
-                {t('dashboard:strategy.recs.title', 'Recommended Techniques')}
-            </h3>
-            {isLoading ? (
-                <div className="flex justify-center items-center h-48">
-                    <Spinner />
+        <div className="relative group overflow-hidden bg-white/[0.03] border border-white/5 rounded-[2.5rem] p-8 h-full transition-all duration-500 hover:bg-white/[0.05]">
+            <div className="absolute inset-0 bg-grid-pattern opacity-[0.03] pointer-events-none" />
+            
+            <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-8">
+                    <div className="p-2 bg-yellow-400/20 rounded-xl border border-yellow-400/30">
+                        <Lightbulb className="h-5 w-5 text-yellow-400" />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-black tracking-tighter uppercase italic text-white">AI Strategy Advisor</h3>
+                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest italic">Recommended Frameworks</p>
+                    </div>
                 </div>
-            ) : (
-                <div className="space-y-3">
-                    {(Array.isArray(techniques) ? techniques : []).map((tech, index) => (
-                        <div key={tech.name || index} className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-md">
-                            <h4 className="font-bold text-gray-800 dark:text-gray-200">{tech.name}</h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 my-1">{tech.justification}</p>
-                            <button 
-                                onClick={() => onSelectTechnique(tech.name)}
-                                className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center group"
-                            >
-                                {t('dashboard:strategy.recs.launch', 'Launch Tool')}
-                                <ArrowRightIcon className="h-4 w-4 ml-1 transform transition-transform group-hover:translate-x-1" />
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            )}
+
+                {isLoading ? (
+                    <div className="flex flex-col justify-center items-center h-64 gap-4">
+                        <Spinner className="h-8 w-8 text-accent-cyan" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600 animate-pulse">Scanning Initiative...</span>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {(Array.isArray(techniques) ? techniques : []).map((tech, index) => (
+                            <div key={tech.name || index} className="relative group/card p-5 bg-white/[0.02] border border-white/5 rounded-2xl hover:border-accent-cyan/30 hover:bg-white/[0.05] transition-all duration-300">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h4 className="text-[11px] font-black text-white uppercase tracking-wider">{tech.name}</h4>
+                                    <Sparkles className="h-3 w-3 text-accent-cyan opacity-0 group-hover/card:opacity-100 transition-opacity" />
+                                </div>
+                                <p className="text-[11px] font-medium text-gray-500 leading-relaxed mb-4 group-hover:text-gray-300 transition-colors">{tech.justification}</p>
+                                <button 
+                                    onClick={() => onSelectTechnique(tech.name)}
+                                    className="w-full py-2.5 bg-accent-cyan/10 border border-accent-cyan/20 rounded-xl text-[9px] font-black text-accent-cyan uppercase tracking-widest hover:bg-accent-cyan hover:text-black transition-all flex items-center justify-center gap-2 group/btn"
+                                >
+                                    {t('dashboard:strategy.recs.launch', 'Launch Tactical Tool')}
+                                    <ArrowRight className="h-3 w-3 transform transition-transform group-hover/btn:translate-x-1" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {!isLoading && (techniques || []).length === 0 && (
+                    <div className="p-8 text-center border border-dashed border-white/10 rounded-[2rem] opacity-40">
+                        <p className="text-[10px] font-black uppercase tracking-widest">No techniques mapped to this sector yet.</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

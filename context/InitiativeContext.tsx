@@ -82,9 +82,13 @@ export const InitiativeProvider: React.FC<{ children: ReactNode }> = ({ children
         // Revalidate from server
         try {
             const { data } = await InitiativeAPI.listByOrg(user.orgId!, { limit: 20 });
-            setInitiativesState(data.data);
-            setInitiativesNextCursor(data.nextCursor);
-            cacheInitiatives(data.data).catch(() => {});
+            if (data && Array.isArray(data.data)) {
+                setInitiativesState(data.data);
+                setInitiativesNextCursor(data.nextCursor);
+                cacheInitiatives(data.data).catch(() => {});
+            } else {
+                logger.warn('Received invalid data format for initiatives', data);
+            }
         } catch (e) {
             logger.error('Failed to fetch initiatives', e);
         } finally {
@@ -116,8 +120,10 @@ export const InitiativeProvider: React.FC<{ children: ReactNode }> = ({ children
             limit: 20, 
             cursor: initiativesNextCursor 
         });
-        setInitiativesState(prev => [...prev, ...data.data]);
-        setInitiativesNextCursor(data.nextCursor);
+        if (data && Array.isArray(data.data)) {
+            setInitiativesState(prev => Array.isArray(prev) ? [...prev, ...data.data] : data.data);
+            setInitiativesNextCursor(data.nextCursor);
+        }
     } catch (e: any) {
         logger.error('Failed to load more initiatives', e);
         setToastMessage('Failed to load more initiatives');
@@ -152,7 +158,10 @@ export const InitiativeProvider: React.FC<{ children: ReactNode }> = ({ children
   const addInitiative = useCallback((initiative: TInitiative) => {
     // State updates immediately via local state for UI feedback.
     // It'll be silently reconciled by Firestore when the write goes through.
-    setInitiativesState(prev => [initiative, ...prev]);
+    setInitiativesState(prev => {
+        const current = Array.isArray(prev) ? prev : [];
+        return [initiative, ...current];
+    });
     cacheInitiative(initiative.id, initiative).catch(() => {});
     setToastMessage(`Initiative "${initiative.title}" created.`);
     

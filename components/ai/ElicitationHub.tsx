@@ -18,7 +18,8 @@ import {
     BrainCircuit,
     ListChecks,
     Target,
-    Zap
+    Zap,
+    FileText
 } from 'lucide-react';
 import { TElicitationAnalysis, TActionItem, BacklogItemType, TInitiative, Sector } from '../../types';
 import { analyzeTranscript } from '../../services/geminiService';

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { TMonteCarloResult, TTornadoItem } from '../../types';
 
@@ -11,8 +10,8 @@ export const MonteCarloVisualizer: React.FC<{ data: TMonteCarloResult }> = ({ da
     
     if (buckets.length === 0) {
         return (
-             <div className="h-[300px] w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
-                <p className="text-gray-500 dark:text-gray-400 text-sm">No simulation data generated yet.</p>
+             <div className="h-[300px] w-full flex flex-col items-center justify-center bg-black/40 rounded-[2.5rem] border border-dashed border-white/5">
+                <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Awaiting Simulation Feed</p>
              </div>
         );
     }
@@ -21,59 +20,54 @@ export const MonteCarloVisualizer: React.FC<{ data: TMonteCarloResult }> = ({ da
     const maxH = Math.max(...buckets.map(b => b.heightPercent || 0), 1);
 
     return (
-        <div className="relative w-full group">
-            <svg viewBox={`0 0 ${width} ${height}`} className="overflow-visible w-full h-auto drop-shadow-sm">
+        <div className="relative w-full group overflow-hidden rounded-[2rem]">
+            <svg viewBox={`0 0 ${width} ${height}`} className="overflow-visible w-full h-auto drop-shadow-2xl">
                  <defs>
-                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#6366f1" />
-                        <stop offset="100%" stopColor="#4f46e5" />
+                    <linearGradient id="mcBarGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#2DD4BF" />
+                        <stop offset="100%" stopColor="#818CF8" />
                     </linearGradient>
+                    <pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="1"/>
+                    </pattern>
                  </defs>
 
-                 {/* Grid Lines */}
-                 {[0, 0.25, 0.5, 0.75, 1].map((p, i) => (
-                    <line 
-                        key={i}
-                        x1="0" 
-                        y1={height - 20 - (height - 40) * p} 
-                        x2={width} 
-                        y2={height - 20 - (height - 40) * p} 
-                        className="stroke-gray-100 dark:stroke-gray-800"
-                        strokeWidth="1"
-                    />
-                 ))}
+                 {/* High Density Grid */}
+                 <rect width={width} height={height} fill="url(#gridPattern)" />
+
+                 {/* Tactical Axis */}
+                 <line x1="0" y1={height - 20} x2={width} y2={height - 20} className="stroke-white/10" strokeWidth="1" />
 
                  {/* Bars */}
                  {buckets.map((bucket, i) => {
                      const rawHeight = typeof bucket.heightPercent === 'number' ? bucket.heightPercent : 0;
-                     const barH = (rawHeight / maxH) * (height - 40);
+                     const barH = (rawHeight / maxH) * (height - 60);
                      
                      return (
                          <g key={i} className="group/bar">
                              <rect 
-                                x={i * barWidth + 2} 
+                                x={i * barWidth + 4} 
                                 y={height - barH - 20} 
-                                width={Math.max(barWidth - 4, 1)} 
+                                width={Math.max(barWidth - 8, 2)} 
                                 height={Math.max(barH, 1)} 
-                                fill="url(#barGradient)"
-                                className="opacity-80 group-hover/bar:opacity-100 transition-all duration-300" 
+                                fill="url(#mcBarGradient)"
+                                className="opacity-40 group-hover/bar:opacity-100 transition-all duration-500" 
                                 rx="4"
                              />
-                             {/* Tooltip-like value on hover */}
+                             {/* Tooltip value */}
                              <text 
                                 x={i * barWidth + barWidth/2} 
-                                y={height - barH - 25} 
+                                y={height - barH - 30} 
                                 textAnchor="middle" 
-                                className="text-[10px] fill-indigo-600 dark:fill-indigo-400 font-bold opacity-0 group-hover/bar:opacity-100 transition-opacity"
+                                className="text-[10px] fill-accent-cyan font-black italic opacity-0 group-hover/bar:opacity-100 transition-all"
                              >
                                 {Math.round(rawHeight)}%
                              </text>
                              <text 
                                 x={i * barWidth + barWidth/2} 
-                                y={height} 
+                                y={height - 5} 
                                 textAnchor="middle" 
-                                className="text-[9px] fill-gray-400 dark:fill-gray-500 font-medium"
-                                fontSize="9"
+                                className="text-[8px] fill-white/20 font-black uppercase tracking-tighter"
                              >
                                  {bucket.range}
                              </text>
@@ -82,20 +76,24 @@ export const MonteCarloVisualizer: React.FC<{ data: TMonteCarloResult }> = ({ da
                  })}
             </svg>
             
-            {/* Stats Overlay */}
-            <div className="absolute top-4 right-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-4 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 text-xs transition-transform hover:scale-105">
-                <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-4">
-                        <span className="text-gray-500 font-medium">P10 (Optimistic):</span>
-                        <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded">{data.p10}</span>
+            {/* Tactical Confidence Cards */}
+            <div className="absolute top-6 right-8 flex gap-4">
+                <div className="bg-black/60 backdrop-blur-xl p-4 rounded-2xl border border-white/5 shadow-2xl transition-transform hover:scale-105 group/stats">
+                    <div className="flex flex-col">
+                        <span className="text-[9px] font-black text-white/40 uppercase tracking-widest mb-1 italic">Optimistic (P10)</span>
+                        <span className="text-xl font-black text-accent-emerald italic tabular-nums group-hover/stats:text-white transition-colors">{data.p10}h</span>
                     </div>
-                    <div className="flex items-center justify-between gap-4">
-                        <span className="text-gray-500 font-medium">Mean (Expected):</span>
-                        <span className="font-mono font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded">{data.mean}</span>
+                </div>
+                <div className="bg-black/60 backdrop-blur-xl p-4 rounded-2xl border border-white/5 shadow-2xl transition-transform hover:scale-105 group/stats">
+                    <div className="flex flex-col">
+                        <span className="text-[9px] font-black text-white/40 uppercase tracking-widest mb-1 italic">Expected (P50)</span>
+                        <span className="text-xl font-black text-accent-cyan italic tabular-nums group-hover/stats:text-white transition-colors">{data.p50}h</span>
                     </div>
-                    <div className="flex items-center justify-between gap-4">
-                        <span className="text-gray-500 font-medium">P90 (Pessimistic):</span>
-                        <span className="font-mono font-black text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30 px-2 py-0.5 rounded">{data.p90}</span>
+                </div>
+                <div className="bg-black/60 backdrop-blur-xl p-4 rounded-2xl border border-white/5 shadow-2xl transition-transform hover:scale-105 group/stats">
+                    <div className="flex flex-col">
+                        <span className="text-[9px] font-black text-white/40 uppercase tracking-widest mb-1 italic">Exposure (P90)</span>
+                        <span className="text-xl font-black text-accent-red italic tabular-nums group-hover/stats:text-white transition-colors">{data.p90}h</span>
                     </div>
                 </div>
             </div>
@@ -109,13 +107,13 @@ export const TornadoVisualizer: React.FC<{ items: TTornadoItem[] }> = ({ items }
     
     if (safeItems.length === 0) {
         return (
-             <div className="h-[200px] w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
-                <p className="text-gray-500 dark:text-gray-400 text-sm">No sensitivity factors identified.</p>
+             <div className="h-[200px] w-full flex flex-col items-center justify-center bg-black/40 rounded-[2.5rem] border border-dashed border-white/5">
+                <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">No Sensitivity Data Isolated</p>
              </div>
         );
     }
     
-    const height = Math.max(safeItems.length * 60 + 60, 200);
+    const height = Math.max(safeItems.length * 80 + 100, 300);
     const centerX = width / 2;
     
     const maxDev = Math.max(
@@ -125,33 +123,36 @@ export const TornadoVisualizer: React.FC<{ items: TTornadoItem[] }> = ({ items }
         ]), 
     1);
     
-    const scale = (width / 2 - 100) / maxDev;
+    const scale = (width / 2 - 180) / maxDev;
 
     return (
-        <div className="w-full">
-            <svg viewBox={`0 0 ${width} ${height}`} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl w-full h-auto shadow-inner">
+        <div className="w-full relative overflow-hidden rounded-[2.5rem] bg-black/20 p-8 group">
+            <svg viewBox={`0 0 ${width} ${height}`} className="overflow-visible w-full h-auto drop-shadow-2xl">
                 <defs>
-                    <linearGradient id="lowGradient" x1="1" y1="0" x2="0" y2="0">
-                        <stop offset="0%" stopColor="#818cf8" />
-                        <stop offset="100%" stopColor="#4f46e5" />
+                    <linearGradient id="lowTornadoGradient" x1="1" y1="0" x2="0" y2="0">
+                        <stop offset="0%" stopColor="#818CF8" />
+                        <stop offset="100%" stopColor="#4F46E5" />
                     </linearGradient>
-                    <linearGradient id="highGradient" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="#f87171" />
-                        <stop offset="100%" stopColor="#ef4444" />
+                    <linearGradient id="highTornadoGradient" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#FB7185" />
+                        <stop offset="100%" stopColor="#F43F5E" />
                     </linearGradient>
                 </defs>
 
-                <line x1={centerX} y1={40} x2={centerX} y2={height - 20} className="stroke-gray-200 dark:stroke-gray-700 stroke-2" strokeDasharray="4 4" />
+                {/* Tactical Backdrop */}
+                <rect width={width} height={height} className="fill-white/[0.01]" rx="20"/>
                 
-                {/* Impact Labels */}
-                <text x={centerX - 100} y={30} textAnchor="end" className="text-[9px] fill-indigo-500 font-bold uppercase tracking-widest">Low Impact</text>
-                <text x={centerX + 100} y={30} textAnchor="start" className="text-[9px] fill-red-500 font-bold uppercase tracking-widest">High Impact</text>
-
-                <rect x={centerX - 60} y={10} width={120} height={24} rx="12" className="fill-gray-100 dark:fill-gray-800" />
-                <text x={centerX} y={26} textAnchor="middle" className="text-[10px] fill-gray-500 dark:fill-gray-400 font-black uppercase tracking-widest">Base: {safeItems[0]?.base || 0}</text>
+                {/* Central Axis */}
+                <line x1={centerX} y1={60} x2={centerX} y2={height - 20} className="stroke-white/10 stroke-2" strokeDasharray="6 6" />
+                
+                {/* Baseline Label */}
+                <g transform={`translate(${centerX}, 30)`}>
+                    <rect x="-80" y="-15" width="160" height="30" rx="15" className="fill-white/5 border border-white/10" />
+                    <text textAnchor="middle" y="5" className="text-[10px] font-black text-white/40 uppercase tracking-widest italic">Base Engine: {safeItems[0]?.base || 0}h</text>
+                </g>
 
                 {safeItems.map((item, i) => {
-                    const y = 80 + i * 60;
+                    const y = 100 + i * 80;
                     const base = item.base || 0;
                     const low = item.impactLow || 0;
                     const high = item.impactHigh || 0;
@@ -160,34 +161,34 @@ export const TornadoVisualizer: React.FC<{ items: TTornadoItem[] }> = ({ items }
                     const highW = Math.abs(high - base) * scale;
 
                     return (
-                        <g key={i} className="group/tornado">
+                        <g key={i} className="group/tornado transition-all duration-500">
                             {/* Low Bar (Left) */}
                             <rect 
                                 x={centerX - lowW} 
-                                y={y - 15} 
+                                y={y - 18} 
                                 width={lowW} 
-                                height={30} 
-                                fill="url(#lowGradient)"
-                                className="opacity-80 group-hover/tornado:opacity-100 transition-opacity" 
-                                rx="4"
+                                height={36} 
+                                fill="url(#lowTornadoGradient)"
+                                className="opacity-20 group-hover/tornado:opacity-100 transition-all duration-500" 
+                                rx="6"
                             />
                             {/* High Bar (Right) */}
                             <rect 
                                 x={centerX} 
-                                y={y - 15} 
+                                y={y - 18} 
                                 width={highW} 
-                                height={30} 
-                                fill="url(#highGradient)"
-                                className="opacity-80 group-hover/tornado:opacity-100 transition-opacity" 
-                                rx="4"
+                                height={36} 
+                                fill="url(#highTornadoGradient)"
+                                className="opacity-20 group-hover/tornado:opacity-100 transition-all duration-500" 
+                                rx="6"
                             />
                             
-                            {/* Variable Label */}
-                            <text x={centerX} y={y - 22} textAnchor="middle" className="text-xs font-black fill-gray-900 dark:fill-gray-100 uppercase tracking-tight">{item.variable}</text>
+                            {/* Variable Label - High Contrast */}
+                            <text x={centerX} y={y - 25} textAnchor="middle" className="text-[11px] font-black text-white/50 uppercase italic tracking-tighter group-hover/tornado:text-white transition-colors">{item.variable}</text>
                             
-                            {/* Values */}
-                            <text x={centerX - lowW - 8} y={y + 5} textAnchor="end" className="text-[11px] font-mono font-bold fill-indigo-600 dark:fill-indigo-400">{low}</text>
-                            <text x={centerX + highW + 8} y={y + 5} textAnchor="start" className="text-[11px] font-mono font-bold fill-red-600 dark:fill-red-400">{high}</text>
+                            {/* Marginal impact numeric feedback */}
+                            <text x={centerX - lowW - 12} y={y + 5} textAnchor="end" className="text-[11px] font-black text-indigo-400 italic tabular-nums transition-all group-hover/tornado:translate-x-[-4px]">{low}</text>
+                            <text x={centerX + highW + 12} y={y + 5} textAnchor="start" className="text-[11px] font-black text-rose-400 italic tabular-nums transition-all group-hover/tornado:translate-x-[4px]">{high}</text>
                         </g>
                     );
                 })}

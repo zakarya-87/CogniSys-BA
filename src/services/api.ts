@@ -26,7 +26,7 @@ const waitForAuth = () => {
 
 // Attach Firebase ID token as Bearer on every request so RBAC middleware can verify the caller.
 api.interceptors.request.use(async (config) => {
-  // If no user yet, wait a bit for Firebase to initialize (max 2s)
+  // If no user yet, wait for Firebase to initialize (max 2s)
   if (!auth.currentUser) {
       await Promise.race([waitForAuth(), new Promise(r => setTimeout(r, 2000))]);
   }
@@ -34,10 +34,15 @@ api.interceptors.request.use(async (config) => {
   const user = auth.currentUser;
   if (user) {
     const token = await user.getIdToken();
-    if (!config.headers) {
-      config.headers = {} as any;
+    // In Axios 1.x, config.headers is an AxiosHeaders instance. 
+    // Use .set() for better compatibility if available, or direct assignment if not.
+    if (config.headers) {
+      if (typeof config.headers.set === 'function') {
+        config.headers.set('Authorization', `Bearer ${token}`);
+      } else {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
-    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
@@ -152,6 +157,10 @@ export async function createNotificationStream(onMessage: (notification: unknown
   const user = auth.currentUser;
   if (!user) return null;
   const token = await user.getIdToken();
+  if (!token) {
+    logger.warn('Cannot create notification stream: ID token is empty');
+    return null;
+  }
   // EventSource doesn't support custom headers — pass token as query param
   const url = `/api/v1/notifications/stream?token=${encodeURIComponent(token)}`;
   const es = new EventSource(url);

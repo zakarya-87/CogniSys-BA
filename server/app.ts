@@ -61,7 +61,7 @@ export function createApp() {
         ],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-        imgSrc: ["'self'", 'data:', 'blob:', 'https://*.googleapis.com', 'https://*.firebaseapp.com', 'https://*.web.app', 'https://i.pravatar.cc', 'https://*.gravatar.com'],
+        imgSrc: ["'self'", 'data:', 'blob:', 'https://*.googleapis.com', 'https://*.firebaseapp.com', 'https://*.web.app', 'https://i.pravatar.cc', 'https://*.gravatar.com', 'https://lh3.googleusercontent.com'],
         connectSrc: [
           "'self'",
           'https://*.googleapis.com',
@@ -161,6 +161,67 @@ export function createApp() {
   v1.get('/health', (_req, res) => res.json({ status: 'ok', version: 'v1' }));
   v1.get('/ping', (_req, res) => res.json({ pong: true }));
   v1.get('/feature-flags', (_req, res) => res.json(getAllFlags()));
+
+  // Debug: Router ingress log
+  v1.use((req, _res, next) => {
+    if (process.env.NODE_ENV !== 'production') {
+      logger.debug({ url: req.url, method: req.method }, 'API V1 Ingress');
+    }
+    next();
+  });
+
+  // ── Auth Section (Moved from app) ──────────────────────────────────────────
+  v1.post('/auth/firebase-session', authLimiter, async (req, res) => {
+    const { idToken } = req.body as { idToken?: string };
+    if (!idToken || typeof idToken !== 'string') {
+      return res.status(400).json({ error: 'idToken is required' });
+    }
+    try {
+      const adminAuth = getAdminAuth();
+      const decoded = await adminAuth.verifyIdToken(idToken);
+      res.cookie('auth_session', decoded.uid, {
+        httpOnly: true,
+        secure: !isDev,
+        sameSite: isDev ? 'lax' : 'none',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+      res.json({
+        status: 'authenticated',
+        uid: decoded.uid,
+        name: decoded.name ?? null,
+        email: decoded.email ?? null,
+        picture: decoded.picture ?? null,
+        provider: decoded.firebase?.sign_in_provider ?? 'unknown',
+      });
+    } catch (err) {
+      logger.error({ err }, 'Firebase token verification failed');
+      res.status(401).json({ error: 'Invalid or expired token' });
+    }
+  });
+
+  v1.get('/auth/me', (req, res) => {
+    const session = req.cookies.auth_session;
+    if (!session) return res.status(401).json({ error: 'Not authenticated' });
+    res.json({ status: 'authenticated' });
+  });
+
+  v1.post('/auth/logout', (req, res) => {
+    res.clearCookie('auth_session', { secure: !isDev, sameSite: isDev ? 'lax' : 'none', httpOnly: true });
+    res.json({ status: 'logged_out' });
+  });
+
+  v1.post('/auth/claims/refresh', authLimiter, async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
+    const token = authHeader.split('Bearer ')[1];
+    try {
+      const decoded = await getAdminAuth().verifyIdToken(token);
+      await AuthService.revokeRefreshTokens(decoded.uid);
+      res.json({ status: 'refreshed', message: 'Sign out and sign in again to receive updated claims.' });
+    } catch {
+      res.status(401).json({ error: 'Invalid token' });
+    }
+  });
 
   // Swagger UI — dev mode only
   if (isDev) {
@@ -397,6 +458,7 @@ export function createApp() {
     }
   });
 
+
   // ── Usage Metering ────────────────────────────────────────────────────────
   v1.get('/organizations/:orgId/usage', apiLimiter, authorize('viewer'), async (req, res) => {
     try {
@@ -429,29 +491,35 @@ export function createApp() {
 
   // ── SSE — Real-time notification stream ───────────────────────────────────
   v1.get('/notifications/stream', authorize('viewer'), (req, res) => {
-    const userId = (req as any).user?.uid;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+      const userId = (req as any).user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no');
-    res.flushHeaders();
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no');
+      res.flushHeaders();
 
-    // Send initial heartbeat
-    res.write('event: connected\ndata: {"status":"ok"}\n\n');
+      // Send initial heartbeat and connection event
+      res.write(`event: connected\ndata: ${JSON.stringify({ status: 'connected' })}\n\n`);
 
-    sseManager.add(userId, res);
+      sseManager.add(userId, res);
 
-    // Heartbeat every 30s to keep connection alive through proxies
-    const heartbeat = setInterval(() => {
-      try { res.write(':heartbeat\n\n'); } catch { clearInterval(heartbeat); }
-    }, 30_000);
+      // Heartbeat every 30s to keep connection alive through proxies
+      const heartbeat = setInterval(() => {
+        try { res.write(':heartbeat\n\n'); } catch { clearInterval(heartbeat); }
+      }, 30_000);
 
-    req.on('close', () => {
-      clearInterval(heartbeat);
-      sseManager.remove(userId, res);
-    });
+      req.on('close', () => {
+        clearInterval(heartbeat);
+        sseManager.remove(userId, res);
+        res.end();
+      });
+    } catch (error) {
+      logger.error({ err: error }, 'SSE Connection Error');
+      if (!res.headersSent) res.status(500).end();
+    }
   });
 
   // ── Analytics ─────────────────────────────────────────────────────────────
@@ -585,16 +653,17 @@ export function createApp() {
   });
 
   // ── Admin Jobs ────────────────────────────────────────────────────────────
-  v1.post('/admin/jobs/trigger-digest', apiLimiter, authorize('admin'), async (_req, res) => {
+  // Triggers for background jobs (usually called by Cloud Scheduler)
+  v1.post('/admin/jobs/trigger-digest', apiLimiter, authorize('admin', true), async (_req, res) => {
     try {
       const result = await JobService.triggerNotificationDigest();
       res.json({ status: 'ok', ...result });
     } catch (error) {
-      safeError(res, error, 'Trigger Digest');
+      safeError(res, error, 'Trigger Notification Digest');
     }
   });
 
-  v1.post('/admin/jobs/trigger-usage-report', apiLimiter, authorize('admin'), async (_req, res) => {
+  v1.post('/admin/jobs/trigger-usage-report', apiLimiter, authorize('admin', true), async (_req, res) => {
     try {
       const result = await JobService.triggerUsageReport();
       res.json({ status: 'ok', ...result });
@@ -603,83 +672,9 @@ export function createApp() {
     }
   });
 
-  // Mount versioned router
-  app.use('/api/v1', v1);
-
-  // ── Firebase Auth Session ────────────────────────────────────────────────────
-  // Verifies a Firebase ID token (GitHub or Google) and sets a server-side
-  // httpOnly session cookie. Client calls this after signInWithPopup succeeds.
-  app.post('/api/auth/firebase-session', authLimiter, async (req, res) => {
-    const { idToken } = req.body as { idToken?: string };
-    if (!idToken || typeof idToken !== 'string') {
-      return res.status(400).json({ error: 'idToken is required' });
-    }
-    try {
-      const adminAuth = getAdminAuth();
-      const decoded = await adminAuth.verifyIdToken(idToken);
-      // In dev (HTTP), secure:true + sameSite:'none' causes browsers to silently
-      // drop the cookie. Use lax/non-secure on localhost so /api/auth/me works.
-      res.cookie('auth_session', decoded.uid, {
-        httpOnly: true,
-        secure: !isDev,
-        sameSite: isDev ? 'lax' : 'none',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-      res.json({
-        status: 'authenticated',
-        uid: decoded.uid,
-        name: decoded.name ?? null,
-        email: decoded.email ?? null,
-        picture: decoded.picture ?? null,
-        provider: decoded.firebase?.sign_in_provider ?? 'unknown',
-      });
-    } catch (err) {
-      logger.error({ err }, 'Firebase token verification failed');
-      res.status(401).json({ error: 'Invalid or expired token' });
-    }
-  });
-
-  app.get('/api/auth/me', (req, res) => {
-    const session = req.cookies.auth_session;
-    if (!session) return res.status(401).json({ error: 'Not authenticated' });
-    res.json({ status: 'authenticated' });
-  });
-
-  app.post('/api/auth/logout', (req, res) => {
-    res.clearCookie('auth_session', { secure: !isDev, sameSite: isDev ? 'lax' : 'none', httpOnly: true });
-    res.json({ status: 'logged_out' });
-  });
-
-  app.post('/api/auth/claims/refresh', authLimiter, async (req, res) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
-    const token = authHeader.split('Bearer ')[1];
-    try {
-      const decoded = await getAdminAuth().verifyIdToken(token);
-      await AuthService.revokeRefreshTokens(decoded.uid);
-      res.json({ status: 'refreshed', message: 'Sign out and sign in again to receive updated claims.' });
-    } catch {
-      res.status(401).json({ error: 'Invalid token' });
-    }
-  });
-
-  // Backward-compat aliases — /api/* proxies to /api/v1/*
-  app.use('/api', (req, res, next) => {
-    // Only proxy unmatched /api/* routes that aren't auth/health/ai/github/mistral/azure
-    if (
-      req.path.startsWith('/organizations') ||
-      req.path.startsWith('/v1')
-    ) {
-      req.url = req.url; // already handled above or will 404 via catch-all
-    }
-    next();
-  });
-  app.use('/api', v1);
-
-
-  // Legacy GitHub OAuth routes — kept for backward compatibility during migration
+  // ── GitHub Section (Moved from app) ────────────────────────────────────────
   const PORT = process.env.PORT || 5000;
-  app.get('/api/auth/url', authLimiter, (req, res) => {
+  v1.get('/auth/url', authLimiter, (req, res) => {
     const origin = req.headers.origin || req.headers.referer || `http://localhost:${PORT}`;
     const baseUrl = new URL(origin as string).origin;
     const redirectUri = `${baseUrl}/auth/callback`;
@@ -691,6 +686,202 @@ export function createApp() {
     res.json({ url: `https://github.com/login/oauth/authorize?${params}` });
   });
 
+  // GitHub API Proxy — uses user's OAuth access token from auth_session cookie
+  const ghHeaders = (token: string) => ({
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+  });
+
+  v1.get('/github/repos', authLimiter, async (req, res) => {
+    const token = req.cookies.auth_session;
+    if (!token) return res.status(401).json({ error: 'Not authenticated' });
+    try {
+      const response = await fetch('https://api.github.com/user/repos?sort=pushed&per_page=30', {
+        headers: ghHeaders(token),
+      });
+      if (!response.ok) return res.status(response.status).json({ error: 'GitHub API error' });
+      res.json(await response.json());
+    } catch (error) {
+      safeError(res, error, 'GitHub Repos Proxy');
+    }
+  });
+
+  v1.get('/github/commits/:owner/:repo', authLimiter, async (req, res) => {
+    const token = req.cookies.auth_session;
+    if (!token) return res.status(401).json({ error: 'Not authenticated' });
+    const { owner, repo } = req.params;
+    const perPage = Math.min(Number(req.query.per_page) || 20, 100);
+    try {
+      const response = await fetch(
+        `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits?per_page=${perPage}`,
+        { headers: ghHeaders(token) }
+      );
+      if (!response.ok) return res.status(response.status).json({ error: 'GitHub API error' });
+      const raw = await response.json() as any[];
+      const commits = raw.map(c => ({
+        id: c.sha.slice(0, 7),
+        sha: c.sha,
+        message: c.commit.message.split('\n')[0],
+        author: c.author?.login ?? c.commit.author.email,
+        date: c.commit.author.date.slice(0, 10),
+        url: c.html_url,
+      }));
+      res.json(commits);
+    } catch (error) {
+      safeError(res, error, 'GitHub Commits Proxy');
+    }
+  });
+
+  v1.get('/github/repos/:owner/:repo', authLimiter, async (req, res) => {
+    const token = req.cookies.auth_session;
+    if (!token) return res.status(401).json({ error: 'Not authenticated' });
+    const { owner, repo } = req.params;
+    try {
+      const response = await fetch(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, { headers: ghHeaders(token) });
+      if (!response.ok) return res.status(response.status).json({ error: 'GitHub API error' });
+      res.json(await response.json());
+    } catch (error) {
+      safeError(res, error, 'GitHub Repo Proxy');
+    }
+  });
+
+  // ── AI Section (Moved from app) ────────────────────────────────────────────
+  v1.post('/gemini/generate', aiLimiter, requireAuth, async (req, res) => {
+    const startTime = Date.now();
+    try {
+      const { prompt, model, config } = req.body as { prompt: string; model?: 'flash' | 'pro'; config?: Record<string, unknown> };
+      if (!prompt || typeof prompt !== 'string') return res.status(400).json({ error: 'prompt is required' });
+      const modelType = model === 'pro' ? ModelType.REASONING : ModelType.SPEED;
+      const router = new ModelRouter();
+      let result = config?.inlineImage ? await router.generateContentWithImage(prompt, modelType, config.inlineImage as any) : await router.generateContent(prompt, modelType);
+      void UsageMeteringService.trackDetailedUsage({
+        orgId: (req as any).user?.orgId || 'unknown',
+        userId: (req as any).user?.uid || 'unknown',
+        model: model === 'pro' ? 'gemini-1.5-pro' : 'gemini-1.5-flash',
+        usage: result.usage,
+        latencyMs: Date.now() - startTime,
+        correlationId: req.headers['x-correlation-id'],
+      });
+      res.json({ text: result.text, usage: result.usage });
+    } catch (error) {
+      safeError(res, error, 'Gemini Proxy');
+    }
+  });
+
+  v1.post('/mistral/chat', aiLimiter, requireAuth, async (req, res) => {
+    const startTime = Date.now();
+    try {
+      const router = new ModelRouter();
+      const promptText = req.body.prompt || req.body.messages?.[req.body.messages?.length - 1]?.content;
+      const result = await router.generateContent(promptText, ModelType.MISTRAL);
+      void UsageMeteringService.trackDetailedUsage({
+        orgId: (req as any).user?.orgId || 'unknown',
+        userId: (req as any).user?.uid || 'unknown',
+        model: 'mistral-large-latest',
+        usage: result.usage,
+        latencyMs: Date.now() - startTime,
+        correlationId: req.headers['x-correlation-id'],
+      });
+      res.json({ text: result.text, usage: result.usage, choices: [{ message: { content: result.text } }] });
+    } catch (error) {
+      safeError(res, error, 'Mistral Proxy');
+    }
+  });
+
+  v1.post('/azure-openai/chat', aiLimiter, requireAuth, async (req, res) => {
+    const startTime = Date.now();
+    try {
+      const router = new ModelRouter();
+      const promptText = req.body.prompt || req.body.messages?.[req.body.messages?.length - 1]?.content;
+      const result = await router.generateContent(promptText, ModelType.AZURE);
+      void UsageMeteringService.trackDetailedUsage({
+        orgId: (req as any).user?.orgId || 'unknown',
+        userId: (req as any).user?.uid || 'unknown',
+        model: 'azure-gpt-4o',
+        usage: result.usage,
+        latencyMs: Date.now() - startTime,
+        correlationId: req.headers['x-correlation-id'],
+      });
+      res.json({ text: result.text, usage: result.usage, choices: [{ message: { content: result.text } }] });
+    } catch (error) {
+      safeError(res, error, 'Azure Proxy');
+    }
+  });
+
+  v1.post('/gemini/embed', aiLimiter, requireAuth, async (req, res) => {
+    try {
+      const { text } = req.body;
+      const apiKey = process.env.GEMINI_API_KEY;
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'models/text-embedding-004', content: { parts: [{ text }] } }),
+      });
+      if (!response.ok) return res.status(502).json({ error: 'Embedding error' });
+      const data = await response.json() as any;
+      res.json({ embedding: data?.embedding?.values ?? [] });
+    } catch (error) {
+      safeError(res, error, 'Gemini Embed Proxy');
+    }
+  });
+
+  v1.post('/gemini/generate/stream', aiLimiter, requireAuth, (req, res) => {
+    const { prompt } = req.body;
+    const operationId = `op-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    createOperation(operationId);
+    updateOperation(operationId, { status: 'running' });
+    (async () => {
+      try {
+        const router = new ModelRouter();
+        const result = await router.generateContent(prompt, ModelType.SPEED);
+        updateOperation(operationId, { status: 'complete', result: result.text, usage: result.usage });
+      } catch (err) {
+        updateOperation(operationId, { status: 'error', error: 'Generation failed' });
+      }
+    })();
+    const userId = (req as any).user?.uid;
+    res.status(202).json({ operationId, sseToken: createSseToken(userId, operationId) });
+  });
+
+  v1.get('/ai/stream/:operationId', (req, res, next) => {
+    const { operationId } = req.params;
+    const sseToken = req.query.sseToken as string;
+    if (sseToken) {
+      const userId = validateSseToken(sseToken, operationId);
+      if (!userId) return res.status(401).json({ error: 'Invalid token' });
+      (req as any).user = { uid: userId };
+      return next();
+    }
+    return requireAuth(req, res, next);
+  }, (req, res) => {
+    const op = getOperation(req.params.operationId);
+    if (!op) return res.status(404).json({ error: 'Operation not found' });
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders();
+    const send = (event: string, data: string) => {
+      res.write(`event: ${event}\ndata: ${data}\n\n`);
+      if (event === 'complete' || event === 'error') res.end();
+    };
+    if (op.status === 'complete') return send('complete', JSON.stringify({ text: op.result }));
+    if (op.status === 'error') return send('error', JSON.stringify({ error: op.error }));
+    const unsub = subscribe(req.params.operationId, send);
+    req.on('close', unsub);
+  });
+  // Auth routes moved to v1 router above
+
+  // ── API Routing ───────────────────────────────────────────────────────────
+  // Mount v1 router at /api/v1 and /api (backward-compat alias)
+  app.use('/api/v1', v1);
+  app.use('/api', v1);
+
+  // JSON 404 for unknown /api/* routes — must come before SPA catch-all
+  app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
+
+  // Legacy GitHub OAuth Callback (at root, not /api)
   app.get(['/auth/callback', '/auth/callback/'], authLimiter, async (req, res) => {
     const { code } = req.query;
     if (!code) return res.status(400).send('No code provided');
@@ -698,7 +889,11 @@ export function createApp() {
       const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ client_id: process.env.GITHUB_CLIENT_ID, client_secret: process.env.GITHUB_CLIENT_SECRET, code }),
+        body: JSON.stringify({ 
+          client_id: process.env.GITHUB_CLIENT_ID, 
+          client_secret: process.env.GITHUB_CLIENT_SECRET, 
+          code 
+        }),
       });
       const tokenData = await tokenResponse.json() as { error?: string; error_description?: string; access_token?: string };
       if (tokenData.error) throw new Error(tokenData.error_description || tokenData.error);
@@ -723,327 +918,21 @@ export function createApp() {
     }
   });
 
-  // GitHub API Proxy — uses user's OAuth access token from auth_session cookie
-  // Routes: /api/github/repos, /api/github/commits/:owner/:repo, /api/github/repos/:owner/:repo
-  const ghHeaders = (token: string) => ({
-    Authorization: `Bearer ${token}`,
-    Accept: 'application/vnd.github+json',
-    'X-GitHub-Api-Version': '2022-11-28',
-  });
-
-  app.get('/api/github/repos', authLimiter, async (req, res) => {
-    const token = req.cookies.auth_session;
-    if (!token) return res.status(401).json({ error: 'Not authenticated' });
-    try {
-      const response = await fetch('https://api.github.com/user/repos?sort=pushed&per_page=30', {
-        headers: ghHeaders(token),
-      });
-      if (!response.ok) {
-        logger.warn({ status: response.status }, 'GitHub repos API error');
-        return res.status(response.status).json({ error: 'GitHub API error' });
-      }
-      const data = await response.json();
-      res.json(data);
-    } catch (error) {
-      safeError(res, error, 'GitHub Repos Proxy');
+  // Global Error Handler
+  app.use((err: any, req: any, res: any, _next: any) => {
+    logger.error({ 
+      err: err.message, 
+      stack: err.stack,
+      url: req.url,
+      method: req.method 
+    }, 'Unhandled Server Error');
+    
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Internal Server Error', reference: req.headers['x-correlation-id'] });
     }
   });
 
-  app.get('/api/github/commits/:owner/:repo', authLimiter, async (req, res) => {
-    const token = req.cookies.auth_session;
-    if (!token) return res.status(401).json({ error: 'Not authenticated' });
-    const { owner, repo } = req.params;
-    const perPage = Math.min(Number(req.query.per_page) || 20, 100);
-    try {
-      const response = await fetch(
-        `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits?per_page=${perPage}`,
-        { headers: ghHeaders(token) }
-      );
-      if (!response.ok) {
-        logger.warn({ status: response.status, owner, repo }, 'GitHub commits API error');
-        return res.status(response.status).json({ error: 'GitHub API error' });
-      }
-      const raw = await response.json() as Array<{
-        sha: string;
-        html_url: string;
-        commit: { message: string; author: { email: string; date: string } };
-        author: { login: string } | null;
-      }>;
-      // Normalise to TGitCommit shape
-      const commits = raw.map(c => ({
-        id: c.sha.slice(0, 7),
-        sha: c.sha,
-        message: c.commit.message.split('\n')[0], // first line only
-        author: c.author?.login ?? c.commit.author.email,
-        date: c.commit.author.date.slice(0, 10),
-        url: c.html_url,
-      }));
-      res.json(commits);
-    } catch (error) {
-      safeError(res, error, 'GitHub Commits Proxy');
-    }
-  });
-
-  app.get('/api/github/repos/:owner/:repo', authLimiter, async (req, res) => {
-    const token = req.cookies.auth_session;
-    if (!token) return res.status(401).json({ error: 'Not authenticated' });
-    const { owner, repo } = req.params;
-    try {
-      const response = await fetch(
-        `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
-        { headers: ghHeaders(token) }
-      );
-      if (!response.ok) {
-        return res.status(response.status).json({ error: 'GitHub API error' });
-      }
-      res.json(await response.json());
-    } catch (error) {
-      safeError(res, error, 'GitHub Repo Proxy');
-    }
-  });
-
-  // Gemini AI Proxy
-  app.post('/api/gemini/generate', aiLimiter, requireAuth, async (req, res) => {
-    const startTime = Date.now();
-    try {
-      const { prompt, model, config } = req.body as { prompt: string; model?: 'flash' | 'pro'; config?: Record<string, unknown> };
-      if (!prompt || typeof prompt !== 'string') return res.status(400).json({ error: 'prompt is required and must be a string' });
-      
-      const modelType = model === 'pro' ? ModelType.REASONING : ModelType.SPEED;
-      const router = new ModelRouter();
-      let result: { text: string; usage: UsageMetrics };
-
-      if (config?.inlineImage) {
-        result = await router.generateContentWithImage(prompt, modelType, config.inlineImage as { mimeType: string; data: string });
-      } else if (config?.tools) {
-        result = await router.generateContentWithConfig(prompt, modelType, config);
-      } else {
-        result = await router.generateContent(prompt, modelType);
-      }
-
-      const latencyMs = Date.now() - startTime;
-      const actualModel = model === 'pro' ? 'gemini-1.5-pro' : 'gemini-1.5-flash';
-
-      // Log detailed usage asynchronously
-      void UsageMeteringService.trackDetailedUsage({
-        orgId: (req as any).user?.orgId || 'unknown',
-        userId: (req as any).user?.uid || 'unknown',
-        model: actualModel,
-        usage: result.usage,
-        latencyMs,
-        correlationId: req.headers['x-correlation-id'],
-      });
-
-      res.json({ text: result.text, usage: result.usage });
-    } catch (error) {
-      logger.error({ err: error }, 'Gemini Proxy Error');
-      res.status(500).json({ error: 'AI generation failed. Please try again.' });
-    }
-  });
-
-  // Mistral Proxy
-  app.post('/api/mistral/chat', aiLimiter, requireAuth, async (req, res) => {
-    const startTime = Date.now();
-    try {
-      const apiKey = process.env.MISTRAL_API_KEY;
-      if (!apiKey) return res.status(500).json({ error: 'MISTRAL_API_KEY is not configured' });
-      
-      const router = new ModelRouter();
-      const lastMessage = req.body.messages?.[(req.body.messages?.length ?? 1) - 1];
-      const promptText = req.body.prompt || lastMessage?.content;
-      const result = await router.generateContent(promptText, ModelType.MISTRAL);
-      
-      const latencyMs = Date.now() - startTime;
-
-      void UsageMeteringService.trackDetailedUsage({
-        orgId: (req as any).user?.orgId || 'unknown',
-        userId: (req as any).user?.uid || 'unknown',
-        model: 'mistral-large-latest',
-        usage: result.usage,
-        latencyMs,
-        correlationId: req.headers['x-correlation-id'],
-      });
-
-      res.json({ text: result.text, usage: result.usage, choices: [{ message: { content: result.text } }] });
-    } catch (error) {
-      safeError(res, error, 'Mistral Proxy');
-    }
-  });
-
-  // Azure OpenAI Proxy
-  app.post('/api/azure-openai/chat', aiLimiter, requireAuth, async (req, res) => {
-    const startTime = Date.now();
-    try {
-      const apiKey = process.env.AZURE_OPENAI_API_KEY;
-      if (!apiKey) return res.status(500).json({ error: 'Azure OpenAI configuration is missing.' });
-      
-      const router = new ModelRouter();
-      const lastMessage = req.body.messages?.[(req.body.messages?.length ?? 1) - 1];
-      const promptText = req.body.prompt || lastMessage?.content;
-      const result = await router.generateContent(promptText, ModelType.AZURE);
-
-      const latencyMs = Date.now() - startTime;
-
-      void UsageMeteringService.trackDetailedUsage({
-        orgId: (req as any).user?.orgId || 'unknown',
-        userId: (req as any).user?.uid || 'unknown',
-        model: 'azure-gpt-4o',
-        usage: result.usage,
-        latencyMs,
-        correlationId: req.headers['x-correlation-id'],
-      });
-
-      res.json({ text: result.text, usage: result.usage, choices: [{ message: { content: result.text } }] });
-    } catch (error) {
-      safeError(res, error, 'Azure OpenAI Proxy');
-    }
-  });
-
-  // --- Gemini Embedding Proxy ---
-  // Unblocks vector memory (Phase 2). Uses text-embedding-004 model.
-  app.post('/api/gemini/embed', aiLimiter, requireAuth, async (req, res) => {
-    try {
-      const { text } = req.body as { text?: string };
-      if (!text || typeof text !== 'string') {
-        return res.status(400).json({ error: 'text is required and must be a string' });
-      }
-
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        return res.status(500).json({ error: 'GEMINI_API_KEY is not configured' });
-      }
-
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: 'models/text-embedding-004', content: { parts: [{ text }] } }),
-        }
-      );
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        logger.error({ status: response.status, body: JSON.stringify(errData) }, 'Gemini Embed API error');
-        return res.status(502).json({ error: 'Embedding service error' });
-      }
-
-      const data = await response.json() as { embedding?: { values?: number[] } };
-      const embedding = data?.embedding?.values ?? [];
-      res.json({ embedding });
-    } catch (error) {
-      safeError(res, error, 'Gemini Embed Proxy');
-    }
-  });
-
-  // --- Async AI Generation with SSE progress ---
-  // POST /api/gemini/generate/stream  → 202 { operationId }
-  // Caller then opens GET /api/ai/stream/:operationId to receive SSE events.
-  app.post('/api/gemini/generate/stream', aiLimiter, requireAuth, (req, res) => {
-    const { prompt, model, config } = req.body as { prompt: string; model?: 'flash' | 'pro'; config?: Record<string, unknown> };
-    if (!prompt || typeof prompt !== 'string') {
-      return res.status(400).json({ error: 'prompt is required and must be a string' });
-    }
-
-    const operationId = `op-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    createOperation(operationId);
-    updateOperation(operationId, { status: 'running' });
-
-    // Fire-and-forget background generation
-    (async () => {
-      const startTime = Date.now();
-      try {
-        const modelType = model === 'pro' ? ModelType.REASONING : ModelType.SPEED;
-        const router = new ModelRouter();
-        let result: { text: string; usage: UsageMetrics };
-        
-        if (config?.inlineImage) {
-          result = await router.generateContentWithImage(prompt, modelType, config.inlineImage as { mimeType: string; data: string });
-        } else if (config?.tools) {
-          result = await router.generateContentWithConfig(prompt, modelType, config);
-        } else {
-          result = await router.generateContent(prompt, modelType);
-        }
-
-        const latencyMs = Date.now() - startTime;
-        const actualModel = model === 'pro' ? 'gemini-1.5-pro' : 'gemini-1.5-flash';
-
-        void UsageMeteringService.trackDetailedUsage({
-          orgId: (req as any).user?.orgId || 'unknown',
-          userId: (req as any).user?.uid || 'unknown',
-          model: actualModel,
-          usage: result.usage,
-          latencyMs,
-          correlationId: req.headers['x-correlation-id'],
-        });
-
-        updateOperation(operationId, { status: 'complete', result: result.text, usage: result.usage });
-      } catch (err) {
-        logger.error({ err }, 'Async Gemini generation failed');
-        updateOperation(operationId, { status: 'error', error: 'AI generation failed. Please try again.' });
-      }
-    })();
-
-    const userId = (req as any).user?.uid;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-    res.status(202).json({ operationId, sseToken: createSseToken(userId, operationId) });
-  });
-
-  // GET /api/ai/stream/:operationId  → SSE stream
-  // Emits: progress | complete | error events, then closes.
-  // Accepts either requireAuth (Bearer token) or ?sseToken= (short-lived, single-use)
-  app.get('/api/ai/stream/:operationId', (req, res, next) => {
-    const { operationId } = req.params;
-    const sseToken = req.query.sseToken as string | undefined;
-
-    if (sseToken) {
-      const userId = validateSseToken(sseToken, operationId);
-      if (!userId) return res.status(401).json({ error: 'Invalid or expired SSE token' });
-      (req as any).user = { uid: userId };
-      return next();
-    }
-    // Fall back to standard auth
-    return requireAuth(req, res, next);
-  }, (req, res) => {
-    const { operationId } = req.params;
-    const op = getOperation(operationId);
-    if (!op) {
-      return res.status(404).json({ error: 'Operation not found' });
-    }
-
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no');
-    res.flushHeaders();
-
-    const send = (event: string, data: string) => {
-      res.write(`event: ${event}\ndata: ${data}\n\n`);
-      if (event === 'complete' || event === 'error') {
-        res.end();
-      }
-    };
-
-    // If already done, reply immediately
-    if (op.status === 'complete') {
-      send('complete', JSON.stringify({ text: op.result ?? '' }));
-      return;
-    }
-    if (op.status === 'error') {
-      send('error', JSON.stringify({ error: op.error ?? 'Unknown error' }));
-      return;
-    }
-
-    // Subscribe to future updates
-    const unsub = subscribe(operationId, send);
-    req.on('close', unsub);
-  });
-
-  // JSON 404 for unknown /api/* routes — must come before SPA catch-all
-    // Redirect root to health endpoint (quick dev convenience) removed as it masks SPA index.html
-  app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
-
-  // Sentry error handler must come AFTER all routes (captures unhandled errors)
+  // Sentry error handler must come AFTER all routes
   if (process.env.SENTRY_DSN) {
     Sentry.setupExpressErrorHandler(app);
   }

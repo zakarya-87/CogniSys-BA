@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { getAdminAuth } from '../lib/firebaseAdmin';
+import { logger } from '../logger';
 import { Permission, roleHasPermission, LEGACY_ROLE_ORDER } from './permissions';
 
 /**
@@ -67,7 +68,10 @@ export const authorize = (requiredRole: string) => {
 
       req.user = decodedToken;
       next();
-    } catch {
+    } catch (error) {
+      if (process.env.LOG_LEVEL === 'debug') {
+        logger.debug({ err: error, token: token?.slice(0, 10) + '...' }, 'RBAC: Token verification failed');
+      }
       return res.status(401).json({ error: 'Unauthorized: Invalid token' });
     }
   };
@@ -107,7 +111,10 @@ export const can = (permission: Permission) => {
 
       req.user = decodedToken;
       next();
-    } catch {
+    } catch (error) {
+      if (process.env.LOG_LEVEL === 'debug') {
+        logger.debug({ err: error, token: token?.slice(0, 10) + '...' }, 'Permission check: Token verification failed');
+      }
       return res.status(401).json({ error: 'Unauthorized: Invalid token' });
     }
   };
