@@ -4,7 +4,6 @@ import { MathService } from '../mathService';
 import {
   TSwotAnalysis,
   TBusinessModelCanvas,
-  TReportDetailLevel,
   TSuggestedKpi,
   TRecommendedTechnique,
   Sector,
@@ -192,6 +191,18 @@ export const generateBusinessModelCanvas = async (context: string, sector: Secto
   );
   const result = await generateJson<TBusinessModelCanvas>(prompt, BusinessModelCanvasSchema, ['customerSegments', 'valuePropositions', 'channels', 'customerRelationships', 'revenueStreams', 'keyActivities', 'keyResources', 'keyPartnerships', 'costStructure']);
   return result.data;
+};
+
+export const generateInvestmentAnalysis = async (context: string, projectedCost: number, expectedRevenue: number, timeframe: string, reportDetailLevel: any = 'standard', sector: Sector = Sector.GENERAL, language?: string): Promise<any> => {
+  const prompt = PromptFactory.createContextAwarePrompt(
+    `Analyze investment potential with cost ${projectedCost}, revenue ${expectedRevenue}, and timeframe ${timeframe}. Return JSON.`,
+    context,
+    sector,
+    "JSON",
+    language
+  );
+  const result = await generateText(prompt, { timeoutMs: 45_000 });
+  return result;
 };
 
 export const recommendTechniques = async (context: string, sector: Sector = Sector.GENERAL, language?: string): Promise<TRecommendedTechnique[]> => {
