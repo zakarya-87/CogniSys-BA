@@ -19,8 +19,8 @@ interface TechniqueLibraryProps {
 
 const categoryStyles: { [key in TTechniqueCategory]: string } = {
     'Strategy Analysis': 'bg-accent-red/10 text-accent-red dark:bg-accent-red/20',
-    'Elicitation & Collaboration': 'bg-accent-purple/10 text-accent-purple dark:bg-accent-purple/20',
-    'Requirements Analysis': 'bg-accent-purple/10 text-accent-purple dark:bg-accent-purple/20',
+    'Elicitation & Collaboration': 'bg-accent-teal/10 text-accent-teal dark:bg-accent-teal/20',
+    'Requirements Analysis': 'bg-accent-teal/10 text-accent-teal dark:bg-accent-teal/20',
     'Solution Evaluation': 'bg-accent-emerald/10 text-accent-emerald dark:bg-accent-emerald/20',
 };
 
@@ -100,7 +100,7 @@ export const TechniqueLibrary: React.FC<TechniqueLibraryProps> = ({ activeTechni
     if (activeTechnique) {
         return (
             <div className="space-y-4">
-                 <button onClick={() => setActiveTechnique(null)} className="text-sm font-semibold text-accent-purple hover:underline flex items-center">
+                 <button onClick={() => setActiveTechnique(null)} className="text-sm font-semibold text-accent-teal hover:underline flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4 mr-1"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
                     Back to Technique Library
                 </button>
@@ -124,7 +124,7 @@ export const TechniqueLibrary: React.FC<TechniqueLibraryProps> = ({ activeTechni
                                 onClick={() => setSelectedCategory(category as TTechniqueCategory | 'All')}
                                 className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
                                     selectedCategory === category
-                                        ? 'bg-accent-purple text-white shadow'
+                                        ? 'bg-accent-teal text-white shadow'
                                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
                                 }`}
                             >
@@ -143,7 +143,7 @@ export const TechniqueLibrary: React.FC<TechniqueLibraryProps> = ({ activeTechni
                                 placeholder="Search techniques by keyword..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full p-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-purple"
+                                className="w-full p-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-teal"
                             />
                         </div>
                         <button

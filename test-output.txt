@@ -1,0 +1,2940 @@
+
+> cognisys-ba---the-catalyst-hub@0.0.0 test
+> vitest run --run
+
+
+[1m[46m RUN [49m[22m [36mv4.1.2 [39m[90mC:/Users/zakaryaboudjelel/CogniSys BA/CogniSys-BA[39m
+
+[15:20:13] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 2,
+      "method": "GET",
+      "url": "/api/v1/health",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:65500",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "297b5415-b9d4-41b3-9f02-ca3f3a95807f"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 65501
+    }
+    [35mcorrelationId[39m: "297b5415-b9d4-41b3-9f02-ca3f3a95807f"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 200,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "297b5415-b9d4-41b3-9f02-ca3f3a95807f",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "30",
+        "etag": "W/\"1e-uJSB51toQ4TMepVqfVOb0zt88Dg\""
+      }
+    }
+    [35mresponseTime[39m: 3
+[15:20:13] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 5,
+      "method": "GET",
+      "url": "/api/v1/feature-flags",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:65506",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "24015a89-57db-467f-bcf8-cd0c94fd8b04"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 65507
+    }
+    [35mcorrelationId[39m: "24015a89-57db-467f-bcf8-cd0c94fd8b04"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 200,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "24015a89-57db-467f-bcf8-cd0c94fd8b04",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "161",
+        "etag": "W/\"a1-b2fsDyH5NMV4nzd18P5d27jjXy4\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:13] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 6,
+      "method": "GET",
+      "url": "/api/v1/feature-flags",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:65508",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "8617f93c-42b7-4e18-abf6-ab94072bd983"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 65509
+    }
+    [35mcorrelationId[39m: "8617f93c-42b7-4e18-abf6-ab94072bd983"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 200,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "8617f93c-42b7-4e18-abf6-ab94072bd983",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "161",
+        "etag": "W/\"a1-b2fsDyH5NMV4nzd18P5d27jjXy4\""
+      }
+    }
+    [35mresponseTime[39m: 4
+[15:20:13] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 7,
+      "method": "GET",
+      "url": "/api/v1/feature-flags",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:65510",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "53be0e71-5ec8-4052-bb66-3da7bb7dbc2a"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 65511
+    }
+    [35mcorrelationId[39m: "53be0e71-5ec8-4052-bb66-3da7bb7dbc2a"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 200,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "53be0e71-5ec8-4052-bb66-3da7bb7dbc2a",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "161",
+        "etag": "W/\"a1-b2fsDyH5NMV4nzd18P5d27jjXy4\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:13] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 8,
+      "method": "GET",
+      "url": "/api/v1/feature-flags",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:65512",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "14ce41ef-e726-4799-b22c-2932321325c1"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 65513
+    }
+    [35mcorrelationId[39m: "14ce41ef-e726-4799-b22c-2932321325c1"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 200,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "14ce41ef-e726-4799-b22c-2932321325c1",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "161",
+        "etag": "W/\"a1-b2fsDyH5NMV4nzd18P5d27jjXy4\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:13] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 9,
+      "method": "GET",
+      "url": "/api/unknown-route-xyz",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:65514",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "de0f5b48-baad-4ff9-95c6-161ed4b16471"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 65515
+    }
+    [35mcorrelationId[39m: "de0f5b48-baad-4ff9-95c6-161ed4b16471"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 404,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "de0f5b48-baad-4ff9-95c6-161ed4b16471",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "21",
+        "etag": "W/\"15-bm7tJgu8FHlq5QU+Y6gDxOGPfRc\""
+      }
+    }
+    [35mresponseTime[39m: 8
+[15:20:13] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 10,
+      "method": "POST",
+      "url": "/api/does-not-exist",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:65516",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "content-length": "0",
+        "x-correlation-id": "84416d7f-3305-437b-bc84-8698bdd25b27"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 65517
+    }
+    [35mcorrelationId[39m: "84416d7f-3305-437b-bc84-8698bdd25b27"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 404,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "84416d7f-3305-437b-bc84-8698bdd25b27",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "21",
+        "etag": "W/\"15-bm7tJgu8FHlq5QU+Y6gDxOGPfRc\""
+      }
+    }
+    [35mresponseTime[39m: 12
+[15:20:13] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 11,
+      "method": "POST",
+      "url": "/api/nonexistent-route-xyz",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:65518",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "content-length": "0",
+        "x-correlation-id": "84844280-9f2d-4db6-ac63-71e3ffdb1847"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 65519
+    }
+    [35mcorrelationId[39m: "84844280-9f2d-4db6-ac63-71e3ffdb1847"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 404,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "84844280-9f2d-4db6-ac63-71e3ffdb1847",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "21",
+        "etag": "W/\"15-bm7tJgu8FHlq5QU+Y6gDxOGPfRc\""
+      }
+    }
+    [35mresponseTime[39m: 1
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 15,
+      "method": "GET",
+      "url": "/api/auth/url",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:65526",
+        "accept-encoding": "gzip, deflate",
+        "origin": "http://localhost:5000",
+        "connection": "close",
+        "x-correlation-id": "55b6f3e0-e2d9-4f4d-83c4-e1e7f1f5684d"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 65527
+    }
+    [35mcorrelationId[39m: "55b6f3e0-e2d9-4f4d-83c4-e1e7f1f5684d"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 200,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "access-control-allow-origin": "http://localhost:5000",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "55b6f3e0-e2d9-4f4d-83c4-e1e7f1f5684d",
+        "ratelimit": "\"1000-in-15min\"; r=999; t=900",
+        "ratelimit-policy": "\"1000-in-15min\"; q=1000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "153",
+        "etag": "W/\"99-HCcevBJLbuJUqjj6HDV35Hb0qFg\""
+      }
+    }
+    [35mresponseTime[39m: 37
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 16,
+      "method": "GET",
+      "url": "/api/auth/url",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:65528",
+        "accept-encoding": "gzip, deflate",
+        "origin": "http://localhost:5000",
+        "connection": "close",
+        "x-correlation-id": "3196a967-a083-43e6-bac1-e7fa627598a1"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 65529
+    }
+    [35mcorrelationId[39m: "3196a967-a083-43e6-bac1-e7fa627598a1"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 200,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "access-control-allow-origin": "http://localhost:5000",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "3196a967-a083-43e6-bac1-e7fa627598a1",
+        "ratelimit": "\"1000-in-15min\"; r=998; t=900",
+        "ratelimit-policy": "\"1000-in-15min\"; q=1000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "153",
+        "etag": "W/\"99-HCcevBJLbuJUqjj6HDV35Hb0qFg\""
+      }
+    }
+    [35mresponseTime[39m: 3
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 17,
+      "method": "GET",
+      "url": "/api/auth/me",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:65530",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "87c70bde-c0bc-4da9-a245-4b29928981bb"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 65531
+    }
+    [35mcorrelationId[39m: "87c70bde-c0bc-4da9-a245-4b29928981bb"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "87c70bde-c0bc-4da9-a245-4b29928981bb",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "29",
+        "etag": "W/\"1d-TthZhBRJQAzVgIhlWqxc3frMMMg\""
+      }
+    }
+    [35mresponseTime[39m: 1
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 18,
+      "method": "GET",
+      "url": "/api/auth/me",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:65532",
+        "accept-encoding": "gzip, deflate",
+        "cookie": "[REDACTED]",
+        "connection": "close",
+        "x-correlation-id": "bb6d35d6-334a-43ef-a67b-d0e2293ddd8d"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 65533
+    }
+    [35mcorrelationId[39m: "bb6d35d6-334a-43ef-a67b-d0e2293ddd8d"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 200,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "bb6d35d6-334a-43ef-a67b-d0e2293ddd8d",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "26",
+        "etag": "W/\"1a-5a6yFJeY+1DqaXcQLPevxitUjcE\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 19,
+      "method": "POST",
+      "url": "/api/auth/logout",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:65534",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "content-length": "0",
+        "x-correlation-id": "af468ed3-f8b4-4fc7-bfd2-db18253cd0c1"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49152
+    }
+    [35mcorrelationId[39m: "af468ed3-f8b4-4fc7-bfd2-db18253cd0c1"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 200,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "af468ed3-f8b4-4fc7-bfd2-db18253cd0c1",
+        "set-cookie": "auth_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "23",
+        "etag": "W/\"17-hUrORnaav54A93bpptmW8r/p4oI\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 20,
+      "method": "POST",
+      "url": "/api/auth/logout",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49153",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "content-length": "0",
+        "x-correlation-id": "324100fe-1105-4240-bf1b-b9b3004eb311"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49154
+    }
+    [35mcorrelationId[39m: "324100fe-1105-4240-bf1b-b9b3004eb311"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 200,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "324100fe-1105-4240-bf1b-b9b3004eb311",
+        "set-cookie": "auth_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "23",
+        "etag": "W/\"17-hUrORnaav54A93bpptmW8r/p4oI\""
+      }
+    }
+    [35mresponseTime[39m: 1
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 21,
+      "method": "POST",
+      "url": "/api/auth/claims/refresh",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49155",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "content-length": "0",
+        "x-correlation-id": "36d034c6-51a0-4446-b935-72de048758ab"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49156
+    }
+    [35mcorrelationId[39m: "36d034c6-51a0-4446-b935-72de048758ab"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "36d034c6-51a0-4446-b935-72de048758ab",
+        "ratelimit": "\"1000-in-15min\"; r=997; t=900",
+        "ratelimit-policy": "\"1000-in-15min\"; q=1000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 22,
+      "method": "POST",
+      "url": "/api/auth/claims/refresh",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49157",
+        "accept-encoding": "gzip, deflate",
+        "authorization": "[REDACTED]",
+        "connection": "close",
+        "content-length": "0",
+        "x-correlation-id": "8328bd96-cb99-453f-b11e-cce823c4c8a8"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49158
+    }
+    [35mcorrelationId[39m: "8328bd96-cb99-453f-b11e-cce823c4c8a8"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "8328bd96-cb99-453f-b11e-cce823c4c8a8",
+        "ratelimit": "\"1000-in-15min\"; r=996; t=900",
+        "ratelimit-policy": "\"1000-in-15min\"; q=1000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 23,
+      "method": "POST",
+      "url": "/api/auth/firebase-session",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49159",
+        "accept-encoding": "gzip, deflate",
+        "content-type": "application/json",
+        "content-length": "2",
+        "connection": "close",
+        "x-correlation-id": "2322914c-53a9-4b97-982a-8e1f01519c43"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49160
+    }
+    [35mcorrelationId[39m: "2322914c-53a9-4b97-982a-8e1f01519c43"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 400,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "2322914c-53a9-4b97-982a-8e1f01519c43",
+        "ratelimit": "\"1000-in-15min\"; r=995; t=900",
+        "ratelimit-policy": "\"1000-in-15min\"; q=1000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "31",
+        "etag": "W/\"1f-sgPV4SDF5P0CCwidbf9p5QPpva0\""
+      }
+    }
+    [35mresponseTime[39m: 94
+[15:20:14] [31mERROR[39m: [36mFirebase token verification failed[39m
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    err: {
+      "type": "Error",
+      "message": "Token verification failed",
+      "stack":
+          Error: Token verification failed
+              at C:/Users/zakaryaboudjelel/CogniSys BA/CogniSys-BA/server/app.test.ts:9:46
+              at Mock (file:///C:/Users/zakaryaboudjelel/CogniSys%20BA/CogniSys-BA/node_modules/@vitest/spy/dist/index.js:332:34)
+              at C:/Users/zakaryaboudjelel/CogniSys BA/CogniSys-BA/server/app.ts:631:25
+              at Layer.handleRequest (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\router\lib\layer.js:152:17)
+              at next (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\router\lib\route.js:157:13)
+              at file:///C:/Users/zakaryaboudjelel/CogniSys%20BA/CogniSys-BA/node_modules/express-rate-limit/dist/index.mjs:929:7
+              at processTicksAndRejections (node:internal/process/task_queues:104:5)
+              at file:///C:/Users/zakaryaboudjelel/CogniSys%20BA/CogniSys-BA/node_modules/express-rate-limit/dist/index.mjs:801:5
+    }
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 24,
+      "method": "POST",
+      "url": "/api/auth/firebase-session",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49161",
+        "accept-encoding": "gzip, deflate",
+        "content-type": "application/json",
+        "content-length": "27",
+        "connection": "close",
+        "x-correlation-id": "9b9b5c31-be3c-406d-b400-f41c0557439d"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49162
+    }
+    [35mcorrelationId[39m: "9b9b5c31-be3c-406d-b400-f41c0557439d"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "9b9b5c31-be3c-406d-b400-f41c0557439d",
+        "ratelimit": "\"1000-in-15min\"; r=994; t=900",
+        "ratelimit-policy": "\"1000-in-15min\"; q=1000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "36",
+        "etag": "W/\"24-GNDyEGK1yBKJB1sFHYU2n5ZGC54\""
+      }
+    }
+    [35mresponseTime[39m: 28
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 25,
+      "method": "POST",
+      "url": "/api/auth/firebase-session",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49163",
+        "accept-encoding": "gzip, deflate",
+        "content-type": "application/json",
+        "content-length": "37",
+        "connection": "close",
+        "x-correlation-id": "33f6343d-493a-4056-a34d-72959b9fce4e"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49164
+    }
+    [35mcorrelationId[39m: "33f6343d-493a-4056-a34d-72959b9fce4e"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 200,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "33f6343d-493a-4056-a34d-72959b9fce4e",
+        "ratelimit": "\"1000-in-15min\"; r=993; t=900",
+        "ratelimit-policy": "\"1000-in-15min\"; q=1000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "set-cookie": "auth_session=test-uid-123; Max-Age=604800; Path=/; Expires=Wed, 22 Apr 2026 15:20:14 GMT; HttpOnly; SameSite=Lax",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "160",
+        "etag": "W/\"a0-Tc2gDqbOLFUv6Ume1DtzjHuAyow\""
+      }
+    }
+    [35mresponseTime[39m: 3
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 26,
+      "method": "GET",
+      "url": "/api/organizations/org-123",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49165",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "3dffb4d7-e512-4202-941d-e04b8ab82671"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49166
+    }
+    [35mcorrelationId[39m: "3dffb4d7-e512-4202-941d-e04b8ab82671"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "3dffb4d7-e512-4202-941d-e04b8ab82671",
+        "ratelimit": "\"10000-in-15min\"; r=9999; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 3
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 27,
+      "method": "POST",
+      "url": "/api/gemini/generate",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49167",
+        "accept-encoding": "gzip, deflate",
+        "content-type": "application/json",
+        "content-length": "18",
+        "connection": "close",
+        "x-correlation-id": "4f0d3a9e-b6f4-4b1c-b19c-57d0c6108abb"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49168
+    }
+    [35mcorrelationId[39m: "4f0d3a9e-b6f4-4b1c-b19c-57d0c6108abb"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "4f0d3a9e-b6f4-4b1c-b19c-57d0c6108abb",
+        "ratelimit": "\"1000-in-15min\"; r=999; t=900",
+        "ratelimit-policy": "\"1000-in-15min\"; q=1000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 3
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 28,
+      "method": "GET",
+      "url": "/api/organizations/org-123/projects",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49169",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "db1f4d3b-d848-4b63-a876-cd72545910ca"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49170
+    }
+    [35mcorrelationId[39m: "db1f4d3b-d848-4b63-a876-cd72545910ca"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "db1f4d3b-d848-4b63-a876-cd72545910ca",
+        "ratelimit": "\"10000-in-15min\"; r=9998; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 29,
+      "method": "GET",
+      "url": "/api/organizations/org-123",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49171",
+        "accept-encoding": "gzip, deflate",
+        "authorization": "[REDACTED]",
+        "connection": "close",
+        "x-correlation-id": "872efb96-98a8-4cc9-bf97-8d7a9ea2df89"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49172
+    }
+    [35mcorrelationId[39m: "872efb96-98a8-4cc9-bf97-8d7a9ea2df89"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "872efb96-98a8-4cc9-bf97-8d7a9ea2df89",
+        "ratelimit": "\"10000-in-15min\"; r=9997; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "39",
+        "etag": "W/\"27-/X+fbRXZZeWI18AyOrPA/3PpLeY\""
+      }
+    }
+    [35mresponseTime[39m: 12
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 30,
+      "method": "POST",
+      "url": "/api/v1/organizations/org-1/invitations",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49173",
+        "accept-encoding": "gzip, deflate",
+        "content-type": "application/json",
+        "content-length": "35",
+        "connection": "close",
+        "x-correlation-id": "2cd2bde5-ef6d-41e3-8d4b-677ca4713ee0"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49174
+    }
+    [35mcorrelationId[39m: "2cd2bde5-ef6d-41e3-8d4b-677ca4713ee0"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "2cd2bde5-ef6d-41e3-8d4b-677ca4713ee0",
+        "ratelimit": "\"10000-in-15min\"; r=9996; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 31,
+      "method": "GET",
+      "url": "/api/v1/organizations/org-1/members",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49175",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "b30b7edc-8611-410e-b0fe-ea5e9ff34c0e"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49176
+    }
+    [35mcorrelationId[39m: "b30b7edc-8611-410e-b0fe-ea5e9ff34c0e"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "b30b7edc-8611-410e-b0fe-ea5e9ff34c0e",
+        "ratelimit": "\"10000-in-15min\"; r=9995; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 32,
+      "method": "GET",
+      "url": "/api/v1/notifications",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49177",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "d34e978c-586f-449b-8b37-6aee3a979362"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49178
+    }
+    [35mcorrelationId[39m: "d34e978c-586f-449b-8b37-6aee3a979362"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "d34e978c-586f-449b-8b37-6aee3a979362",
+        "ratelimit": "\"10000-in-15min\"; r=9994; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 33,
+      "method": "GET",
+      "url": "/api/v1/organizations/org-1/usage",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49179",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "8920b834-327e-4d30-b29a-eb1af9e30280"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49180
+    }
+    [35mcorrelationId[39m: "8920b834-327e-4d30-b29a-eb1af9e30280"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "8920b834-327e-4d30-b29a-eb1af9e30280",
+        "ratelimit": "\"10000-in-15min\"; r=9993; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 1
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 34,
+      "method": "POST",
+      "url": "/api/v1/invitations/some-token/accept",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49181",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "content-length": "0",
+        "x-correlation-id": "61507864-fa18-4124-99c5-c4bc4d480958"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49182
+    }
+    [35mcorrelationId[39m: "61507864-fa18-4124-99c5-c4bc4d480958"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "61507864-fa18-4124-99c5-c4bc4d480958",
+        "ratelimit": "\"10000-in-15min\"; r=9992; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 35,
+      "method": "GET",
+      "url": "/api/v1/notifications/stream",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49183",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "245f1e1f-6e9b-4928-b151-9a3a0b7d2973"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49184
+    }
+    [35mcorrelationId[39m: "245f1e1f-6e9b-4928-b151-9a3a0b7d2973"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "245f1e1f-6e9b-4928-b151-9a3a0b7d2973",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 36,
+      "method": "GET",
+      "url": "/api/v1/organizations/org-1/analytics/activity",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49185",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "ec803198-dc6b-46ef-869a-13bf25817284"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49186
+    }
+    [35mcorrelationId[39m: "ec803198-dc6b-46ef-869a-13bf25817284"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "ec803198-dc6b-46ef-869a-13bf25817284",
+        "ratelimit": "\"10000-in-15min\"; r=9991; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 5
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 37,
+      "method": "GET",
+      "url": "/api/v1/organizations/org-1/analytics/initiatives",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49187",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "4b83f325-b937-4600-b667-f439f866adaf"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49188
+    }
+    [35mcorrelationId[39m: "4b83f325-b937-4600-b667-f439f866adaf"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "4b83f325-b937-4600-b667-f439f866adaf",
+        "ratelimit": "\"10000-in-15min\"; r=9990; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 38,
+      "method": "GET",
+      "url": "/api/v1/organizations/org-1/analytics/ai-usage",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49189",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "1ec2dc33-16f5-4da4-865d-71549c5c1e03"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49190
+    }
+    [35mcorrelationId[39m: "1ec2dc33-16f5-4da4-865d-71549c5c1e03"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "1ec2dc33-16f5-4da4-865d-71549c5c1e03",
+        "ratelimit": "\"10000-in-15min\"; r=9989; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 39,
+      "method": "POST",
+      "url": "/api/v1/organizations/org-1/webhooks",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49191",
+        "accept-encoding": "gzip, deflate",
+        "content-type": "application/json",
+        "content-length": "56",
+        "connection": "close",
+        "x-correlation-id": "0b43eb4b-f8f6-47f2-8e7d-4cc3a885b3cf"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49192
+    }
+    [35mcorrelationId[39m: "0b43eb4b-f8f6-47f2-8e7d-4cc3a885b3cf"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "0b43eb4b-f8f6-47f2-8e7d-4cc3a885b3cf",
+        "ratelimit": "\"10000-in-15min\"; r=9988; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 4
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 40,
+      "method": "GET",
+      "url": "/api/v1/organizations/org-1/webhooks",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49193",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "19fd0010-e2a7-48a7-a9ee-ae91c1f3804b"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49194
+    }
+    [35mcorrelationId[39m: "19fd0010-e2a7-48a7-a9ee-ae91c1f3804b"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "19fd0010-e2a7-48a7-a9ee-ae91c1f3804b",
+        "ratelimit": "\"10000-in-15min\"; r=9987; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 3
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 41,
+      "method": "GET",
+      "url": "/api/v1/organizations/org-1/search?q=test",
+      "query": {
+        "q": "test"
+      },
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49195",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "69474251-5de4-4fb7-81a7-711737903325"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49196
+    }
+    [35mcorrelationId[39m: "69474251-5de4-4fb7-81a7-711737903325"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "69474251-5de4-4fb7-81a7-711737903325",
+        "ratelimit": "\"10000-in-15min\"; r=9986; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 42,
+      "method": "GET",
+      "url": "/api/v1/organizations/org-1/billing",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49197",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "961f064d-d54a-4282-94f0-445998dc052d"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49198
+    }
+    [35mcorrelationId[39m: "961f064d-d54a-4282-94f0-445998dc052d"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "961f064d-d54a-4282-94f0-445998dc052d",
+        "ratelimit": "\"10000-in-15min\"; r=9985; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 43,
+      "method": "POST",
+      "url": "/api/v1/organizations/org-1/billing/checkout",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49199",
+        "accept-encoding": "gzip, deflate",
+        "content-type": "application/json",
+        "content-length": "71",
+        "connection": "close",
+        "x-correlation-id": "5d102f5f-253e-45af-b3ea-ca1d1a7db532"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49200
+    }
+    [35mcorrelationId[39m: "5d102f5f-253e-45af-b3ea-ca1d1a7db532"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "5d102f5f-253e-45af-b3ea-ca1d1a7db532",
+        "ratelimit": "\"10000-in-15min\"; r=9984; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 3
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 44,
+      "method": "POST",
+      "url": "/api/v1/admin/jobs/trigger-digest",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49201",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "content-length": "0",
+        "x-correlation-id": "0002ce59-85d9-4c9b-8eb5-ce795a155239"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49202
+    }
+    [35mcorrelationId[39m: "0002ce59-85d9-4c9b-8eb5-ce795a155239"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "0002ce59-85d9-4c9b-8eb5-ce795a155239",
+        "ratelimit": "\"10000-in-15min\"; r=9983; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 4
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 45,
+      "method": "POST",
+      "url": "/api/webhooks/stripe",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49203",
+        "accept-encoding": "gzip, deflate",
+        "content-type": "application/x-www-form-urlencoded",
+        "content-length": "2",
+        "connection": "close",
+        "x-correlation-id": "64dc57a1-ff3f-4a1f-9c0c-cf4499824108"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49204
+    }
+    [35mcorrelationId[39m: "64dc57a1-ff3f-4a1f-9c0c-cf4499824108"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 400,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "64dc57a1-ff3f-4a1f-9c0c-cf4499824108",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "36",
+        "etag": "W/\"24-O5LOTBrd3B7JYW0v1lJuqAgnaQk\""
+      }
+    }
+    [35mresponseTime[39m: 3
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 46,
+      "method": "POST",
+      "url": "/api/webhooks/stripe",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49205",
+        "accept-encoding": "gzip, deflate",
+        "stripe-signature": "invalid-sig",
+        "content-type": "application/json",
+        "content-length": "2",
+        "connection": "close",
+        "x-correlation-id": "e9e2b8d9-5b19-4778-bdc5-1a3d48dff23d"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49206
+    }
+    [35mcorrelationId[39m: "e9e2b8d9-5b19-4778-bdc5-1a3d48dff23d"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 400,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "e9e2b8d9-5b19-4778-bdc5-1a3d48dff23d",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "55",
+        "etag": "W/\"37-QSKjsiypoTmzY/4d1mVevYDaQVk\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 47,
+      "method": "GET",
+      "url": "/api/v1/organizations/org-1/search",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49207",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "e5313537-2e0c-42a0-95a2-06256bf00514"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49208
+    }
+    [35mcorrelationId[39m: "e5313537-2e0c-42a0-95a2-06256bf00514"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "e5313537-2e0c-42a0-95a2-06256bf00514",
+        "ratelimit": "\"10000-in-15min\"; r=9982; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 1
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 48,
+      "method": "POST",
+      "url": "/api/mistral/chat",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49209",
+        "accept-encoding": "gzip, deflate",
+        "content-type": "application/json",
+        "content-length": "15",
+        "connection": "close",
+        "x-correlation-id": "49a6cbf8-d7d7-4fc3-b998-25ada998f767"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49210
+    }
+    [35mcorrelationId[39m: "49a6cbf8-d7d7-4fc3-b998-25ada998f767"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "49a6cbf8-d7d7-4fc3-b998-25ada998f767",
+        "ratelimit": "\"1000-in-15min\"; r=998; t=900",
+        "ratelimit-policy": "\"1000-in-15min\"; q=1000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 3
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 49,
+      "method": "POST",
+      "url": "/api/mistral/chat",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49211",
+        "accept-encoding": "gzip, deflate",
+        "content-type": "application/json",
+        "content-length": "15",
+        "connection": "close",
+        "x-correlation-id": "ff5d8196-27bd-46ed-9b07-e54abb16b96b"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49212
+    }
+    [35mcorrelationId[39m: "ff5d8196-27bd-46ed-9b07-e54abb16b96b"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "ff5d8196-27bd-46ed-9b07-e54abb16b96b",
+        "ratelimit": "\"1000-in-15min\"; r=997; t=900",
+        "ratelimit-policy": "\"1000-in-15min\"; q=1000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:14] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 50,
+      "method": "POST",
+      "url": "/api/azure-openai/chat",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49213",
+        "accept-encoding": "gzip, deflate",
+        "content-type": "application/json",
+        "content-length": "15",
+        "connection": "close",
+        "x-correlation-id": "5e79a3cd-9bb6-46c5-897d-9aec55a6dc5e"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49214
+    }
+    [35mcorrelationId[39m: "5e79a3cd-9bb6-46c5-897d-9aec55a6dc5e"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "5e79a3cd-9bb6-46c5-897d-9aec55a6dc5e",
+        "ratelimit": "\"1000-in-15min\"; r=996; t=900",
+        "ratelimit-policy": "\"1000-in-15min\"; q=1000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 5
+[15:20:15] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 51,
+      "method": "GET",
+      "url": "/auth/callback",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49215",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "7e3758b3-550f-448e-820a-0a7543bfcae0"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49216
+    }
+    [35mcorrelationId[39m: "7e3758b3-550f-448e-820a-0a7543bfcae0"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 400,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "7e3758b3-550f-448e-820a-0a7543bfcae0",
+        "ratelimit": "\"1000-in-15min\"; r=992; t=900",
+        "ratelimit-policy": "\"1000-in-15min\"; q=1000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "text/html; charset=utf-8",
+        "content-length": "16",
+        "etag": "W/\"10-td4quAkDzB/+cNNQGP/Nm560G6Y\""
+      }
+    }
+    [35mresponseTime[39m: 7
+[15:20:15] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 52,
+      "method": "POST",
+      "url": "/api/gemini/embed",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49217",
+        "accept-encoding": "gzip, deflate",
+        "content-type": "application/json",
+        "content-length": "16",
+        "connection": "close",
+        "x-correlation-id": "4d84117c-2434-49d4-b46a-c95eefd6ba8d"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49218
+    }
+    [35mcorrelationId[39m: "4d84117c-2434-49d4-b46a-c95eefd6ba8d"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "4d84117c-2434-49d4-b46a-c95eefd6ba8d",
+        "ratelimit": "\"1000-in-15min\"; r=995; t=900",
+        "ratelimit-policy": "\"1000-in-15min\"; q=1000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 4
+[15:20:15] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 53,
+      "method": "POST",
+      "url": "/api/gemini/embed",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49219",
+        "accept-encoding": "gzip, deflate",
+        "authorization": "[REDACTED]",
+        "content-type": "application/json",
+        "content-length": "2",
+        "connection": "close",
+        "x-correlation-id": "bded4011-90ad-435b-9ddc-503b661b67e5"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49220
+    }
+    [35mcorrelationId[39m: "bded4011-90ad-435b-9ddc-503b661b67e5"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "bded4011-90ad-435b-9ddc-503b661b67e5",
+        "ratelimit": "\"1000-in-15min\"; r=994; t=900",
+        "ratelimit-policy": "\"1000-in-15min\"; q=1000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "39",
+        "etag": "W/\"27-/X+fbRXZZeWI18AyOrPA/3PpLeY\""
+      }
+    }
+    [35mresponseTime[39m: 3
+[15:20:15] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 54,
+      "method": "POST",
+      "url": "/api/gemini/embed",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49221",
+        "accept-encoding": "gzip, deflate",
+        "content-type": "application/json",
+        "content-length": "15",
+        "connection": "close",
+        "x-correlation-id": "91118f9f-6fd9-4f16-8d27-6300ee1e654b"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49222
+    }
+    [35mcorrelationId[39m: "91118f9f-6fd9-4f16-8d27-6300ee1e654b"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "91118f9f-6fd9-4f16-8d27-6300ee1e654b",
+        "ratelimit": "\"1000-in-15min\"; r=993; t=900",
+        "ratelimit-policy": "\"1000-in-15min\"; q=1000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:15] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 55,
+      "method": "POST",
+      "url": "/api/gemini/embed",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49223",
+        "accept-encoding": "gzip, deflate",
+        "content-type": "application/json",
+        "content-length": "21",
+        "connection": "close",
+        "x-correlation-id": "2c489fa3-eddf-4c51-bb67-45bb8150e37b"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49224
+    }
+    [35mcorrelationId[39m: "2c489fa3-eddf-4c51-bb67-45bb8150e37b"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "2c489fa3-eddf-4c51-bb67-45bb8150e37b",
+        "ratelimit": "\"1000-in-15min\"; r=992; t=900",
+        "ratelimit-policy": "\"1000-in-15min\"; q=1000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:15] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 56,
+      "method": "POST",
+      "url": "/api/gemini/generate/stream",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49225",
+        "accept-encoding": "gzip, deflate",
+        "content-type": "application/json",
+        "content-length": "18",
+        "connection": "close",
+        "x-correlation-id": "e3450bd6-7398-4abe-a2aa-0c89594dfa4c"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49226
+    }
+    [35mcorrelationId[39m: "e3450bd6-7398-4abe-a2aa-0c89594dfa4c"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "e3450bd6-7398-4abe-a2aa-0c89594dfa4c",
+        "ratelimit": "\"1000-in-15min\"; r=991; t=900",
+        "ratelimit-policy": "\"1000-in-15min\"; q=1000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 9
+[15:20:15] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 57,
+      "method": "POST",
+      "url": "/api/gemini/generate/stream",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49227",
+        "accept-encoding": "gzip, deflate",
+        "cookie": "[REDACTED]",
+        "authorization": "[REDACTED]",
+        "content-type": "application/json",
+        "content-length": "2",
+        "connection": "close",
+        "x-correlation-id": "4286b1fc-1c08-4886-a472-352e93b80f21"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49228
+    }
+    [35mcorrelationId[39m: "4286b1fc-1c08-4886-a472-352e93b80f21"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "4286b1fc-1c08-4886-a472-352e93b80f21",
+        "ratelimit": "\"1000-in-15min\"; r=990; t=900",
+        "ratelimit-policy": "\"1000-in-15min\"; q=1000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "39",
+        "etag": "W/\"27-/X+fbRXZZeWI18AyOrPA/3PpLeY\""
+      }
+    }
+    [35mresponseTime[39m: 9
+[15:20:15] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 58,
+      "method": "GET",
+      "url": "/api/ai/stream/nonexistent",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49229",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "ae69adb6-eeb3-4937-9272-6081046f623f"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49230
+    }
+    [35mcorrelationId[39m: "ae69adb6-eeb3-4937-9272-6081046f623f"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "ae69adb6-eeb3-4937-9272-6081046f623f",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:15] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 59,
+      "method": "POST",
+      "url": "/api/organizations",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49231",
+        "accept-encoding": "gzip, deflate",
+        "content-type": "application/json",
+        "content-length": "2",
+        "connection": "close",
+        "x-correlation-id": "27d7d1d4-7e84-407c-be49-b65b64894d72"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49232
+    }
+    [35mcorrelationId[39m: "27d7d1d4-7e84-407c-be49-b65b64894d72"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "27d7d1d4-7e84-407c-be49-b65b64894d72",
+        "ratelimit": "\"10000-in-15min\"; r=9981; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 4
+[15:20:15] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 60,
+      "method": "POST",
+      "url": "/api/v1/feature-flags",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49233",
+        "accept-encoding": "gzip, deflate",
+        "content-type": "application/json",
+        "content-length": "2",
+        "connection": "close",
+        "x-correlation-id": "8fa67133-b150-4f0a-8d58-203757c570a9"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49234
+    }
+    [35mcorrelationId[39m: "8fa67133-b150-4f0a-8d58-203757c570a9"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 404,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "8fa67133-b150-4f0a-8d58-203757c570a9",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "21",
+        "etag": "W/\"15-bm7tJgu8FHlq5QU+Y6gDxOGPfRc\""
+      }
+    }
+    [35mresponseTime[39m: 2
+[15:20:15] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 61,
+      "method": "GET",
+      "url": "/api/v1/feature-flags",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49235",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "e26ba378-2394-4bd0-8df8-201c6fa1693d"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49236
+    }
+    [35mcorrelationId[39m: "e26ba378-2394-4bd0-8df8-201c6fa1693d"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 200,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "e26ba378-2394-4bd0-8df8-201c6fa1693d",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "161",
+        "etag": "W/\"a1-b2fsDyH5NMV4nzd18P5d27jjXy4\""
+      }
+    }
+    [35mresponseTime[39m: 1
+[15:20:15] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 62,
+      "method": "GET",
+      "url": "/api/v1/health",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49237",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "a8005e4c-8bd6-461c-b28a-cd8c1d207cc5"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49238
+    }
+    [35mcorrelationId[39m: "a8005e4c-8bd6-461c-b28a-cd8c1d207cc5"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 200,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "a8005e4c-8bd6-461c-b28a-cd8c1d207cc5",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "30",
+        "etag": "W/\"1e-uJSB51toQ4TMepVqfVOb0zt88Dg\""
+      }
+    }
+    [35mresponseTime[39m: 1
+[15:20:15] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 63,
+      "method": "GET",
+      "url": "/api/v1/organizations/org1/audit-logs",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49239",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "d602f798-ea21-4cd4-ab2a-ddf8cea95478"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49240
+    }
+    [35mcorrelationId[39m: "d602f798-ea21-4cd4-ab2a-ddf8cea95478"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "d602f798-ea21-4cd4-ab2a-ddf8cea95478",
+        "ratelimit": "\"10000-in-15min\"; r=9980; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 1
+ [32mÔ£ô[39m server/app.test.ts [2m([22m[2m64 tests[22m[2m)[22m[33m 1973[2mms[22m[39m
+[15:20:15] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 64,
+      "method": "GET",
+      "url": "/api/organizations/org1/audit-logs",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49241",
+        "accept-encoding": "gzip, deflate",
+        "connection": "close",
+        "x-correlation-id": "1089c3a4-50a5-48fb-a22b-6e1daf787ce9"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49242
+    }
+    [35mcorrelationId[39m: "1089c3a4-50a5-48fb-a22b-6e1daf787ce9"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 401,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "1089c3a4-50a5-48fb-a22b-6e1daf787ce9",
+        "ratelimit": "\"10000-in-15min\"; r=9979; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "24",
+        "etag": "W/\"18-XPDV80vbMk4yY1/PADG4jYM4rSI\""
+      }
+    }
+    [35mresponseTime[39m: 41
+[15:20:27] [33mWARN[39m: [36mSMTP not configured ÔÇö email sending disabled (set SMTP_HOST, SMTP_USER, SMTP_PASS)[39m
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+[15:20:27] [32mINFO[39m: [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": 1,
+      "method": "POST",
+      "url": "/api/v1/organizations/org-1/webhooks",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "127.0.0.1:49244",
+        "accept-encoding": "gzip, deflate",
+        "authorization": "[REDACTED]",
+        "content-type": "application/json",
+        "content-length": "56",
+        "connection": "close",
+        "x-correlation-id": "f366c2d5-f595-48e7-bbf4-3073a096d930"
+      },
+      "remoteAddress": "::ffff:127.0.0.1",
+      "remotePort": 49245
+    }
+    [35mcorrelationId[39m: "f366c2d5-f595-48e7-bbf4-3073a096d930"
+    [35mtraceId[39m: ""
+    [35mspanId[39m: ""
+    [35mres[39m: {
+      "statusCode": 201,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-eval' 'unsafe-inline';style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: blob: https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://i.pravatar.cc https://*.gravatar.com;connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net ws://localhost:* wss://localhost:*;frame-src https://*.firebaseapp.com https://accounts.google.com;object-src 'none';base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "unsafe-none",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "DENY",
+        "x-xss-protection": "0",
+        "vary": "Origin",
+        "access-control-allow-credentials": "true",
+        "x-correlation-id": "f366c2d5-f595-48e7-bbf4-3073a096d930",
+        "ratelimit": "\"10000-in-15min\"; r=9999; t=900",
+        "ratelimit-policy": "\"10000-in-15min\"; q=10000; w=900; pk=:MTJjYTE3YjQ5YWYy:",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "170",
+        "etag": "W/\"aa-AKvS3hR7SKmVKeyCF2W9vodQo/0\""
+      }
+    }
+    [35mresponseTime[39m: 132
+ [32mÔ£ô[39m server/webhooks.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 407[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m does not return the secret in the response [33m 400[2mms[22m[39m
+ [32mÔ£ô[39m components/Dashboard.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 3490[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m renders empty state when no initiatives provided [33m 809[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m renders initiatives grouped by sector [33m 1100[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m calls onCreateInitiative when New Initiative button is clicked [33m 1282[2mms[22m[39m
+ [32mÔ£ô[39m components/features/dashboard/Dashboard.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 3593[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m renders empty state when no initiatives provided [33m 815[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m renders initiatives grouped by sector [33m 1160[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m calls onCreateInitiative when New Initiative button is clicked [33m 1266[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m calls onSelectInitiative when a card is clicked [33m 340[2mms[22m[39m
+stderr | services/hiveService.test.ts > HiveService Integration Tests > Scenario: Orchestrator Delegates to Scout (The Worker Loop)
+Audit logging failed: AxiosError: Network Error
+    at XMLHttpRequest.handleError (file:///C:/Users/zakaryaboudjelel/CogniSys%20BA/CogniSys-BA/node_modules/axios/lib/adapters/xhr.js:122:21)
+    at XMLHttpRequest.invokeTheCallbackFunction (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\generated\idl\EventHandlerNonNull.js:14:28)
+    at XMLHttpRequest.<anonymous> (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\helpers\create-event-accessor.js:57:32)
+    at innerInvokeEventListeners (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at XMLHttpRequestImpl._dispatch (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at fireAnEvent (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\helpers\events.js:18:36)
+    at requestErrorSteps (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\xhr\XMLHttpRequest-impl.js:157:3)
+    at dispatchError (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\xhr\XMLHttpRequest-impl.js:131:3)
+    at C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\xhr\XMLHttpRequest-impl.js:752:13
+    at Axios.request (file:///C:/Users/zakaryaboudjelel/CogniSys%20BA/CogniSys-BA/node_modules/axios/lib/core/Axios.js:46:41)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at logAudit (C:/Users/zakaryaboudjelel/CogniSys BA/CogniSys-BA/services/hiveService.ts:32:17)
+    at Object.processStep (C:/Users/zakaryaboudjelel/CogniSys BA/CogniSys-BA/services/hiveService.ts:171:17)
+    at C:/Users/zakaryaboudjelel/CogniSys BA/CogniSys-BA/services/hiveService.test.ts:58:27
+    at file:///C:/Users/zakaryaboudjelel/CogniSys%20BA/CogniSys-BA/node_modules/@vitest/runner/dist/chunk-artifact.js:1893:20 {
+  isAxiosError: true,
+  code: 'ERR_NETWORK',
+  config: {
+    transitional: {
+      silentJSONParsing: true,
+      forcedJSONParsing: true,
+      clarifyTimeoutError: false,
+      legacyInterceptorReqResOrdering: true
+    },
+    adapter: [ 'xhr', 'http', 'fetch' ],
+    transformRequest: [ [Function: transformRequest] ],
+    transformResponse: [ [Function: transformResponse] ],
+    timeout: 0,
+    xsrfCookieName: 'XSRF-TOKEN',
+    xsrfHeaderName: 'X-XSRF-TOKEN',
+    maxContentLength: -1,
+    maxBodyLength: -1,
+    env: { FormData: [Function], Blob: [class Blob] },
+    validateStatus: [Function: validateStatus],
+    headers: Object [AxiosHeaders] {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': 'application/json'
+    },
+    baseURL: '/api',
+    method: 'post',
+    url: '/organizations/undefined/missions/audit',
+    data: '{"userId":"system_orchestrator","agent":"Scout","action":"delegate","metadata":{"instructions":"Find competitors","safetyVerdict":"Pass"}}',
+    allowAbsoluteUrls: true
+  },
+  request: XMLHttpRequest {},
+  event: ProgressEvent { isTrusted: [Getter] }
+}
+
+stderr | services/hiveService.test.ts > HiveService Integration Tests > Scenario: Orchestrator Delegates to Scout (The Worker Loop)
+Failed to sync Hive state to server: AxiosError: Network Error
+    at XMLHttpRequest.handleError (file:///C:/Users/zakaryaboudjelel/CogniSys%20BA/CogniSys-BA/node_modules/axios/lib/adapters/xhr.js:122:21)
+    at XMLHttpRequest.invokeTheCallbackFunction (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\generated\idl\EventHandlerNonNull.js:14:28)
+    at XMLHttpRequest.<anonymous> (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\helpers\create-event-accessor.js:57:32)
+    at innerInvokeEventListeners (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at XMLHttpRequestImpl._dispatch (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at fireAnEvent (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\helpers\events.js:18:36)
+    at requestErrorSteps (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\xhr\XMLHttpRequest-impl.js:157:3)
+    at dispatchError (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\xhr\XMLHttpRequest-impl.js:131:3)
+    at C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\xhr\XMLHttpRequest-impl.js:752:13
+    at Axios.request (file:///C:/Users/zakaryaboudjelel/CogniSys%20BA/CogniSys-BA/node_modules/axios/lib/core/Axios.js:46:41)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at syncState (C:/Users/zakaryaboudjelel/CogniSys BA/CogniSys-BA/services/hiveService.ts:17:17)
+    at Object.processStep (C:/Users/zakaryaboudjelel/CogniSys BA/CogniSys-BA/services/hiveService.ts:218:17)
+    at C:/Users/zakaryaboudjelel/CogniSys BA/CogniSys-BA/services/hiveService.test.ts:58:27
+    at file:///C:/Users/zakaryaboudjelel/CogniSys%20BA/CogniSys-BA/node_modules/@vitest/runner/dist/chunk-artifact.js:1893:20 {
+  isAxiosError: true,
+  code: 'ERR_NETWORK',
+  config: {
+    transitional: {
+      silentJSONParsing: true,
+      forcedJSONParsing: true,
+      clarifyTimeoutError: false,
+      legacyInterceptorReqResOrdering: true
+    },
+    adapter: [ 'xhr', 'http', 'fetch' ],
+    transformRequest: [ [Function: transformRequest] ],
+    transformResponse: [ [Function: transformResponse] ],
+    timeout: 0,
+    xsrfCookieName: 'XSRF-TOKEN',
+    xsrfHeaderName: 'X-XSRF-TOKEN',
+    maxContentLength: -1,
+    maxBodyLength: -1,
+    env: { FormData: [Function], Blob: [class Blob] },
+    validateStatus: [Function: validateStatus],
+    headers: Object [AxiosHeaders] {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': 'application/json'
+    },
+    baseURL: '/api',
+    method: 'post',
+    url: '/organizations/undefined/missions',
+    data: '{"mission":{"initiativeId":"global","state":{"goal":"Test Goal","status":"running","activeAgent":"Orchestrator","messages":[{"id":"1","role":"user","agent":"Orchestrator","content":"Do research","timestamp":1776266437644},{"id":"1776266437647","role":"assistant","agent":"Orchestrator","content":"Delegating to Scout: \\"Find competitors\\"","timestamp":1776266437647,"status":"done"},{"id":"1776266437851","role":"assistant","agent":"Scout","content":"Found 3 competitors.","timestamp":1776266437850,"status":"done","metadata":{"source":"Google"}}],"artifacts":{},"history":[{"id":"step-1776266437850","agent":"Orchestrator","action":"delegate","nextAgent":"Scout","status":"completed"}],"stepQueue":[]},"status":"running","updatedAt":1776266437851}}',
+    allowAbsoluteUrls: true
+  },
+  request: XMLHttpRequest {},
+  event: ProgressEvent { isTrusted: [Getter] }
+}
+
+stderr | services/hiveService.test.ts > HiveService Integration Tests > Scenario: Integromat triggers Human Approval (HITL)
+Audit logging failed: AxiosError: Network Error
+    at XMLHttpRequest.handleError (file:///C:/Users/zakaryaboudjelel/CogniSys%20BA/CogniSys-BA/node_modules/axios/lib/adapters/xhr.js:122:21)
+    at XMLHttpRequest.invokeTheCallbackFunction (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\generated\idl\EventHandlerNonNull.js:14:28)
+    at XMLHttpRequest.<anonymous> (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\helpers\create-event-accessor.js:57:32)
+    at innerInvokeEventListeners (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at XMLHttpRequestImpl._dispatch (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at fireAnEvent (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\helpers\events.js:18:36)
+    at requestErrorSteps (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\xhr\XMLHttpRequest-impl.js:157:3)
+    at dispatchError (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\xhr\XMLHttpRequest-impl.js:131:3)
+    at C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\xhr\XMLHttpRequest-impl.js:752:13
+    at Axios.request (file:///C:/Users/zakaryaboudjelel/CogniSys%20BA/CogniSys-BA/node_modules/axios/lib/core/Axios.js:46:41)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at logAudit (C:/Users/zakaryaboudjelel/CogniSys BA/CogniSys-BA/services/hiveService.ts:32:17)
+    at Object.processStep (C:/Users/zakaryaboudjelel/CogniSys BA/CogniSys-BA/services/hiveService.ts:171:17)
+    at C:/Users/zakaryaboudjelel/CogniSys BA/CogniSys-BA/services/hiveService.test.ts:94:27
+    at file:///C:/Users/zakaryaboudjelel/CogniSys%20BA/CogniSys-BA/node_modules/@vitest/runner/dist/chunk-artifact.js:1893:20 {
+  isAxiosError: true,
+  code: 'ERR_NETWORK',
+  config: {
+    transitional: {
+      silentJSONParsing: true,
+      forcedJSONParsing: true,
+      clarifyTimeoutError: false,
+      legacyInterceptorReqResOrdering: true
+    },
+    adapter: [ 'xhr', 'http', 'fetch' ],
+    transformRequest: [ [Function: transformRequest] ],
+    transformResponse: [ [Function: transformResponse] ],
+    timeout: 0,
+    xsrfCookieName: 'XSRF-TOKEN',
+    xsrfHeaderName: 'X-XSRF-TOKEN',
+    maxContentLength: -1,
+    maxBodyLength: -1,
+    env: { FormData: [Function], Blob: [class Blob] },
+    validateStatus: [Function: validateStatus],
+    headers: Object [AxiosHeaders] {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': 'application/json'
+    },
+    baseURL: '/api',
+    method: 'post',
+    url: '/organizations/undefined/missions/audit',
+    data: '{"userId":"system_orchestrator","agent":"Integromat","action":"delegate","metadata":{"instructions":"Create Jira ticket","safetyVerdict":"Pass"}}',
+    allowAbsoluteUrls: true
+  },
+  request: XMLHttpRequest {},
+  event: ProgressEvent { isTrusted: [Getter] }
+}
+
+stderr | services/hiveService.test.ts > HiveService Integration Tests > Scenario: Orchestrator terminates loop (Direct Reply)
+Failed to sync Hive state to server: AxiosError: Network Error
+    at XMLHttpRequest.handleError (file:///C:/Users/zakaryaboudjelel/CogniSys%20BA/CogniSys-BA/node_modules/axios/lib/adapters/xhr.js:122:21)
+    at XMLHttpRequest.invokeTheCallbackFunction (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\generated\idl\EventHandlerNonNull.js:14:28)
+    at XMLHttpRequest.<anonymous> (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\helpers\create-event-accessor.js:57:32)
+    at innerInvokeEventListeners (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at XMLHttpRequestImpl._dispatch (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at fireAnEvent (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\helpers\events.js:18:36)
+    at requestErrorSteps (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\xhr\XMLHttpRequest-impl.js:157:3)
+    at dispatchError (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\xhr\XMLHttpRequest-impl.js:131:3)
+    at C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\xhr\XMLHttpRequest-impl.js:752:13
+    at Axios.request (file:///C:/Users/zakaryaboudjelel/CogniSys%20BA/CogniSys-BA/node_modules/axios/lib/core/Axios.js:46:41)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at syncState (C:/Users/zakaryaboudjelel/CogniSys BA/CogniSys-BA/services/hiveService.ts:17:17)
+    at Object.processStep (C:/Users/zakaryaboudjelel/CogniSys BA/CogniSys-BA/services/hiveService.ts:228:18)
+    at C:/Users/zakaryaboudjelel/CogniSys BA/CogniSys-BA/services/hiveService.test.ts:144:27
+    at file:///C:/Users/zakaryaboudjelel/CogniSys%20BA/CogniSys-BA/node_modules/@vitest/runner/dist/chunk-artifact.js:1893:20 {
+  isAxiosError: true,
+  code: 'ERR_NETWORK',
+  config: {
+    transitional: {
+      silentJSONParsing: true,
+      forcedJSONParsing: true,
+      clarifyTimeoutError: false,
+      legacyInterceptorReqResOrdering: true
+    },
+    adapter: [ 'xhr', 'http', 'fetch' ],
+    transformRequest: [ [Function: transformRequest] ],
+    transformResponse: [ [Function: transformResponse] ],
+    timeout: 0,
+    xsrfCookieName: 'XSRF-TOKEN',
+    xsrfHeaderName: 'X-XSRF-TOKEN',
+    maxContentLength: -1,
+    maxBodyLength: -1,
+    env: { FormData: [Function], Blob: [class Blob] },
+    validateStatus: [Function: validateStatus],
+    headers: Object [AxiosHeaders] {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': 'application/json'
+    },
+    baseURL: '/api',
+    method: 'post',
+    url: '/organizations/undefined/missions',
+    data: '{"mission":{"initiativeId":"global","state":{"goal":"Test Goal","status":"completed","activeAgent":"Orchestrator","messages":[{"id":"1","role":"user","agent":"Orchestrator","content":"Do research","timestamp":1776266437931},{"id":"1776266437932","role":"assistant","agent":"Orchestrator","content":"Task complete.","timestamp":1776266437932,"status":"done"}],"artifacts":{},"history":[],"stepQueue":[]},"status":"completed","updatedAt":1776266437932}}',
+    allowAbsoluteUrls: true
+  },
+  request: XMLHttpRequest {},
+  event: ProgressEvent { isTrusted: [Getter] }
+}
+
+stderr | services/hiveService.test.ts > HiveService Integration Tests > Scenario: Handling Missing Agent Error
+Audit logging failed: AxiosError: Network Error
+    at XMLHttpRequest.handleError (file:///C:/Users/zakaryaboudjelel/CogniSys%20BA/CogniSys-BA/node_modules/axios/lib/adapters/xhr.js:122:21)
+    at XMLHttpRequest.invokeTheCallbackFunction (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\generated\idl\EventHandlerNonNull.js:14:28)
+    at XMLHttpRequest.<anonymous> (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\helpers\create-event-accessor.js:57:32)
+    at innerInvokeEventListeners (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:360:16)
+    at invokeEventListeners (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:296:3)
+    at XMLHttpRequestImpl._dispatch (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\events\EventTarget-impl.js:243:9)
+    at fireAnEvent (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\helpers\events.js:18:36)
+    at requestErrorSteps (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\xhr\XMLHttpRequest-impl.js:157:3)
+    at dispatchError (C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\xhr\XMLHttpRequest-impl.js:131:3)
+    at C:\Users\zakaryaboudjelel\CogniSys BA\CogniSys-BA\node_modules\jsdom\lib\jsdom\living\xhr\XMLHttpRequest-impl.js:752:13
+    at Axios.request (file:///C:/Users/zakaryaboudjelel/CogniSys%20BA/CogniSys-BA/node_modules/axios/lib/core/Axios.js:46:41)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at logAudit (C:/Users/zakaryaboudjelel/CogniSys BA/CogniSys-BA/services/hiveService.ts:32:17)
+    at Object.processStep (C:/Users/zakaryaboudjelel/CogniSys BA/CogniSys-BA/services/hiveService.ts:157:21)
+    at C:/Users/zakaryaboudjelel/CogniSys BA/CogniSys-BA/services/hiveService.test.ts:157:27
+    at file:///C:/Users/zakaryaboudjelel/CogniSys%20BA/CogniSys-BA/node_modules/@vitest/runner/dist/chunk-artifact.js:1893:20 {
+  isAxiosError: true,
+  code: 'ERR_NETWORK',
+  config: {
+    transitional: {
+      silentJSONParsing: true,
+      forcedJSONParsing: true,
+      clarifyTimeoutError: false,
+      legacyInterceptorReqResOrdering: true
+    },
+    adapter: [ 'xhr', 'http', 'fetch' ],
+    transformRequest: [ [Function: transformRequest] ],
+    transformResponse: [ [Function: transformResponse] ],
+    timeout: 0,
+    xsrfCookieName: 'XSRF-TOKEN',
+    xsrfHeaderName: 'X-XSRF-TOKEN',
+    maxContentLength: -1,
+    maxBodyLength: -1,
+    env: { FormData: [Function], Blob: [class Blob] },
+    validateStatus: [Function: validateStatus],
+    headers: Object [AxiosHeaders] {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': 'application/json'
+    },
+    baseURL: '/api',
+    method: 'post',
+    url: '/organizations/undefined/missions/audit',
+    data: '{"userId":"system_orchestrator","agent":"UnknownAgent","action":"delegate","metadata":{"safetyVerdict":"Fail"}}',
+    allowAbsoluteUrls: true
+  },
+  request: XMLHttpRequest {},
+  event: ProgressEvent { isTrusted: [Getter] }
+}
+
+ [32mÔ£ô[39m services/hiveService.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 348[2mms[22m[39m
+ [32mÔ£ô[39m components/ui/Button.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 370[2mms[22m[39m
+ [32mÔ£ô[39m components/ErrorBoundary.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 375[2mms[22m[39m
+stderr | utils/aiUtils.test.ts > aiUtils > validateStructure > throws error if key is missing
+AI Response missing keys: name. { id: 1 }
+
+stderr | utils/aiUtils.test.ts > aiUtils > safeParseJSON > returns fallback on failure
+JSON Parsing Failed. Raw text: invalid
+
+stderr | utils/aiUtils.test.ts > aiUtils > safeParseJSON > throws if no fallback provided on invalid json
+JSON Parsing Failed. Raw text: invalid
+
+ [32mÔ£ô[39m utils/aiUtils.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 86[2mms[22m[39m
+ [32mÔ£ô[39m components/ui/ErrorBoundary.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 414[2mms[22m[39m
+ [32mÔ£ô[39m utils/domainRules.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 31[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m10 passed[39m[22m[90m (10)[39m
+[2m      Tests [22m [1m[32m108 passed[39m[22m[90m (108)[39m
+[2m   Start at [22m 16:20:04
+[2m   Duration [22m 45.53s[2m (transform 8.01s, setup 7.75s, import 55.78s, tests 11.09s, environment 47.45s)[22m
+

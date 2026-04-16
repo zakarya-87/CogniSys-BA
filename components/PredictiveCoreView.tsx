@@ -411,7 +411,7 @@ export const PredictiveCoreView: React.FC = () => {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 pb-8">
-                <div className="glass-card-light dark:glass-card p-6 rounded-3xl shadow-sm hover:shadow-md transition-all group">
+                <div className="glass-card-light dark:glass-card p-6 shadow-sm hover:shadow-md transition-all group">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="p-2 bg-accent-green/10 rounded-xl group-hover:bg-accent-green group-hover:text-white transition-all">
                             <TrendingUp className="h-4 w-4" />
@@ -423,7 +423,7 @@ export const PredictiveCoreView: React.FC = () => {
                         <span className="text-xs font-black text-accent-green bg-accent-green/10 px-2 py-0.5 rounded-full">+2.4%</span>
                     </div>
                 </div>
-                <div className="glass-card-light dark:glass-card p-6 rounded-3xl shadow-sm hover:shadow-md transition-all group">
+                <div className="glass-card-light dark:glass-card p-6 shadow-sm hover:shadow-md transition-all group">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="p-2 bg-accent-teal/10 rounded-xl group-hover:bg-accent-teal group-hover:text-white transition-all">
                             <Layers className="h-4 w-4" />
@@ -435,7 +435,7 @@ export const PredictiveCoreView: React.FC = () => {
                         <span className="text-xs font-bold text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">Target</span>
                     </div>
                 </div>
-                <div className="glass-card-light dark:glass-card p-6 rounded-3xl shadow-sm hover:shadow-md transition-all group">
+                <div className="glass-card-light dark:glass-card p-6 shadow-sm hover:shadow-md transition-all group">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="p-2 bg-accent-yellow/10 rounded-xl group-hover:bg-accent-yellow group-hover:text-white transition-all">
                             <DollarSign className="h-4 w-4" />
@@ -447,7 +447,7 @@ export const PredictiveCoreView: React.FC = () => {
                         <span className="text-xs font-bold text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">/hr</span>
                     </div>
                 </div>
-                <div className="glass-card-light dark:glass-card p-6 rounded-3xl shadow-sm hover:shadow-md transition-all group">
+                <div className="glass-card-light dark:glass-card p-6 shadow-sm hover:shadow-md transition-all group">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="p-2 bg-accent-cyan/10 rounded-xl group-hover:bg-accent-cyan group-hover:text-white transition-all">
                             <Zap className="h-4 w-4" />

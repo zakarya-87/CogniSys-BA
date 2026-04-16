@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { Theme } from '../types';
 import { setAiModelId } from '../services/geminiService';
 
@@ -51,21 +51,21 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     setTimeout(() => setToastMessageState(''), 3000);
   }, []);
 
+  const value = useMemo(() => ({
+    currentView,
+    theme,
+    toastMessage: toastMessageState,
+    aiModel,
+    hiveCommand,
+    setCurrentView,
+    setTheme: setThemeState,
+    setToastMessage,
+    setAiModel: setAiModelState,
+    setHiveCommand
+  }), [currentView, theme, toastMessageState, aiModel, hiveCommand, setToastMessage]);
+
   return (
-    <UIContext.Provider
-      value={{
-        currentView,
-        theme,
-        toastMessage: toastMessageState,
-        aiModel,
-        hiveCommand,
-        setCurrentView,
-        setTheme: setThemeState,
-        setToastMessage,
-        setAiModel: setAiModelState,
-        setHiveCommand
-      }}
-    >
+    <UIContext.Provider value={value}>
       {children}
     </UIContext.Provider>
   );

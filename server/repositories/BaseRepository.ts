@@ -25,4 +25,74 @@ export abstract class BaseRepository<T extends DocumentData> {
   async delete(id: string): Promise<void> {
     await getAdminDb().collection(this.collectionName).doc(id).delete();
   }
+
+  /**
+   * Standardized pagination helper for Firestore collections.
+   */
+  async getPaginated(params: {
+    where?: [string, '==' | '<' | '>' | '<=' | '>=', any][];
+    orderByField?: string;
+    orderDirection?: 'asc' | 'desc';
+    limit: number;
+    cursor?: string;
+  }): Promise<{ data: T[]; nextCursor: string | null }> {
+    const { where = [], orderByField = 'lastUpdated', orderDirection = 'desc', limit, cursor } = params;
+
+    try {
+      let query = getAdminDb().collection(this.collectionName) as any;
+
+      for (const [field, op, val] of where) {
+        query = query.where(field, op, val);
+      }
+
+      query = query.orderBy(orderByField, orderDirection).limit(limit);
+
+      if (cursor) {
+        const lastDoc = await getAdminDb().collection(this.collectionName).doc(cursor).get();
+        if (lastDoc.exists) {
+          query = query.startAfter(lastDoc);
+        }
+      }
+
+      const snapshot = await query.get();
+      const data = snapshot.docs.map((doc: any) => doc.data() as T);
+      const nextCursor = snapshot.docs.length === limit ? snapshot.docs[snapshot.docs.length - 1].id : null;
+      
+      return { data, nextCursor };
+    } catch (err: any) {
+      // Standard Fallback: Composite index missing (Error Code 9)
+      if (err?.code === 9 || err?.message?.includes('index')) {
+        console.warn(`${this.collectionName} Repository: composite index missing, falling back to in-memory sort`);
+        
+        let query = getAdminDb().collection(this.collectionName) as any;
+        for (const [field, op, val] of where) {
+          query = query.where(field, op, val);
+        }
+        
+        const snapshot = await query.get();
+        const all = snapshot.docs.map((doc: any) => doc.data() as T);
+        
+        // In-memory sort
+        all.sort((a, b) => {
+          const valA = a[orderByField] ?? '';
+          const valB = b[orderByField] ?? '';
+          return orderDirection === 'desc' 
+            ? String(valB).localeCompare(String(valA))
+            : String(valA).localeCompare(String(valB));
+        });
+
+        let startIndex = 0;
+        if (cursor) {
+          const cursorIndex = all.findIndex((item: any) => item.id === cursor);
+          if (cursorIndex !== -1) startIndex = cursorIndex + 1;
+        }
+
+        const data = all.slice(startIndex, startIndex + limit);
+        const nextCursor = startIndex + limit < all.length ? data[data.length - 1]?.id ?? null : null;
+        
+        return { data, nextCursor };
+      }
+      throw err;
+    }
+  }
 }

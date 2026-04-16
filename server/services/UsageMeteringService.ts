@@ -1,4 +1,5 @@
 import { getAdminDb } from '../lib/firebaseAdmin';
+import { UsageMetrics, estimateCost } from '../types/Usage';
 
 export type AIPlan = 'free' | 'pro' | 'enterprise';
 
@@ -56,6 +57,39 @@ export class UsageMeteringService {
 
     await docRef.set(updated, { merge: true });
     return updated;
+  }
+
+  /**
+   * Log a detailed AI usage event for auditability and economics.
+   */
+  static async trackDetailedUsage(params: {
+    orgId: string;
+    userId: string;
+    model: string;
+    usage: UsageMetrics;
+    latencyMs: number;
+    correlationId?: string | string[];
+  }): Promise<void> {
+    const { orgId, userId, model, usage, latencyMs, correlationId } = params;
+    const cost = estimateCost(model, usage);
+
+    const logRef = getAdminDb().collection('ai_usage_logs').doc();
+    const now = new Date();
+
+    await logRef.set({
+      orgId,
+      userId,
+      model,
+      usage,
+      cost,
+      latencyMs,
+      correlationId: correlationId || null,
+      timestamp: now.toISOString(),
+      month: UsageMeteringService.monthKey(),
+    });
+
+    // Also update aggregate monthly stats
+    await UsageMeteringService.trackAICall(orgId, model, usage.totalTokens);
   }
 
   /** Get usage for an org for a given month (defaults to current). */

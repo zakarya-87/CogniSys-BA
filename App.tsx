@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 
 // Shell components — always visible, stay eager
 import { Sidebar } from './components/ui/Sidebar';
@@ -45,7 +45,7 @@ const ViewFallback = () => (
     </div>
 );
 
-export type View = 'dashboard' | 'initiatives' | 'projectHub' | 'intelligenceCenter' | 'reports' | 'settings' | 'help' | 'myWorkspace' | 'hive' | 'cortex' | 'predictiveCore' | 'pulse' | 'warRoom' | 'construct' | 'visionBoard';
+export type View = 'dashboard' | 'initiatives' | 'projectHub' | 'intelligenceCenter' | 'reports' | 'settings' | 'help' | 'myWorkspace' | 'hive' | 'cortex' | 'predictiveCore' | 'pulse' | 'warRoom' | 'construct' | 'visionBoard' | 'oracle';
 export type Theme = 'light' | 'dark' | 'system';
 
 const MainLayout: React.FC = () => {
@@ -73,8 +73,17 @@ const MainLayout: React.FC = () => {
 
     const [initialHubInitiativeId, setInitialHubInitiativeId] = useState<string | null>(null);
     const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
     const [requestedModule, setRequestedModule] = useState<string | null>(null);
+
+    // Auto-close sidebar when viewport shrinks to mobile
+    useEffect(() => {
+        const onResize = () => {
+            if (window.innerWidth < 768) setIsSidebarOpen(false);
+        };
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
 
     const [isCreatingInitiative, setIsCreatingInitiative] = useState(false);
 
@@ -237,11 +246,31 @@ const MainLayout: React.FC = () => {
     return (
         <ApiStatusProvider>
             <QuotaBanner />
-            <div className="flex h-screen bg-background-light dark:bg-background-dark text-gray-900 dark:text-gray-100 font-sans overflow-hidden selection:bg-primary selection:text-white">
+            <div className="flex h-screen bg-background-light dark:bg-background-dark text-gray-900 dark:text-gray-100 font-sans overflow-hidden selection:bg-accent-teal selection:text-white relative">
+                {/* Global Ambient Background */}
+                <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-accent-teal/5 via-transparent to-accent-cyan/5 pointer-events-none" />
+
                 {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
-                <Sidebar activeView={currentView as View} onNavigate={handleNavigate} isCollapsed={!isSidebarOpen} />
+                
+                {/* Mobile backdrop — dims content and closes drawer on tap */}
+                {isSidebarOpen && (
+                    <div
+                        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+                        onClick={() => setIsSidebarOpen(false)}
+                        aria-label="Close navigation"
+                    />
+                )}
+
+                <Sidebar
+                    activeView={currentView as View}
+                    onNavigate={handleNavigate}
+                    isCollapsed={!isSidebarOpen}
+                    onClose={() => setIsSidebarOpen(false)}
+                />
+                
                 {isCreatingInitiative && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
                         <InitiativeForm 
                             projectId="proj-0"
                             onSubmit={(init) => {
@@ -252,6 +281,7 @@ const MainLayout: React.FC = () => {
                         />
                     </div>
                 )}
+                
                 <div className="flex-1 flex flex-col h-full overflow-hidden relative">
                     <Header 
                         initiativeName={selectedInitiative?.title} 
@@ -262,19 +292,28 @@ const MainLayout: React.FC = () => {
                         title={currentView === 'predictiveCore' ? 'Predictive Core' : undefined}
                         subtitle={currentView === 'predictiveCore' ? 'Phase 11 Roadmap' : undefined}
                     />
-                    <main className="flex-1 flex flex-col overflow-y-auto relative custom-scrollbar">
+                    
+                    <main className="flex-1 flex flex-col overflow-y-auto relative custom-scrollbar p-4 xl:p-6">
                         <ErrorBoundary componentName="Main Content Area">
-                            <Suspense fallback={<ViewFallback />}>
+                            <AnimatePresence mode="wait">
                                 <motion.div 
-                                    key={selectedInitiative ? selectedInitiative.id : currentView}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.3 }}
+                                    key={selectedInitiative ? `init-${selectedInitiative.id}` : `view-${currentView}`}
+                                    initial={{ opacity: 0, y: 12, scale: 0.99 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: -12, scale: 0.99 }}
+                                    transition={{ 
+                                        type: 'spring',
+                                        stiffness: 260,
+                                        damping: 24,
+                                        opacity: { duration: 0.2 }
+                                    }}
                                     className="h-full w-full"
                                 >
-                                    {renderMainContent()}
+                                    <Suspense fallback={<ViewFallback />}>
+                                        {renderMainContent()}
+                                    </Suspense>
                                 </motion.div>
-                            </Suspense>
+                            </AnimatePresence>
                         </ErrorBoundary>
                     </main>
                     

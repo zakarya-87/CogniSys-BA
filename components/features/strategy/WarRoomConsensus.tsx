@@ -161,7 +161,7 @@ const OutcomeCard: React.FC<{ topic: string; recommendation: string; percent: nu
     initial={{ opacity: 0, scale: 0.9 }}
     animate={{ opacity: 1, scale: 1 }}
     transition={{ duration: 0.5, ease: 'easeOut' }}
-    className="glass-card-light dark:glass-card p-5 relative overflow-hidden border-2 border-accent-teal/40"
+    className="glass-card-light dark:glass-card p-5 relative overflow-hidden"
   >
     {/* Celebratory glow */}
     <div className="absolute inset-0 rounded-2xl animate-pulse pointer-events-none ring-2 ring-accent-teal/20" />

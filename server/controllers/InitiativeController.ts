@@ -35,8 +35,11 @@ export class InitiativeController {
   static async listByProject(req: Request, res: Response) {
     try {
       const { projectId } = req.params as { projectId: string };
-      const initiatives = await initiativeService.getInitiativesByProject(projectId);
-      res.json(initiatives);
+      const limit = parseInt(req.query.limit as string) || 20;
+      const cursor = req.query.cursor as string | undefined;
+
+      const { data, nextCursor } = await initiativeService.getInitiativesByProjectPaginated(projectId, limit, cursor);
+      res.json({ data, nextCursor });
     } catch (error) {
       safeError(res, error, 'InitiativeController.listByProject');
     }

@@ -2,6 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { THiveState, THiveMessage, THiveStep } from '../types';
 import { cacheHiveState, getCachedHiveState } from '../services/offlineCache';
+import { MissionAPI } from '../src/services/api';
+import { useCatalyst } from '../context/CatalystContext';
 
 const INITIAL_STATE: THiveState = {
     goal: '',
@@ -14,7 +16,10 @@ const INITIAL_STATE: THiveState = {
 };
 
 export const useHivePersistence = (initiativeId: string) => {
+    const { user } = useCatalyst();
+    const orgId = user?.orgId || '';
     const [state, setState] = useState<THiveState>(INITIAL_STATE);
+    const [missionId, setMissionId] = useState<string>('');
     const [isLoaded, setIsLoaded] = useState(false);
 
     // Load from LocalStorage first, then fall back to IndexedDB
@@ -41,8 +46,31 @@ export const useHivePersistence = (initiativeId: string) => {
             return;
         }
 
-        // Fall back to IndexedDB if localStorage had nothing
-        const loadFromCache = async () => {
+        // Fall back to Remote Firestore if available
+        const loadFromRemote = async () => {
+            if (!orgId || !initiativeId) return;
+            try {
+                const response = await MissionAPI.listByInitiative(orgId, initiativeId);
+                const missions = response.data;
+                if (missions && missions.length > 0) {
+                    const latest = missions[0];
+                    setState(latest.state);
+                    setMissionId(latest.id);
+                    loaded = true;
+                }
+            } catch (e) {
+                console.warn("Failed to fetch remote missions:", e);
+            }
+        };
+
+        const loadSequence = async () => {
+            await loadFromRemote();
+            if (loaded) {
+                setIsLoaded(true);
+                return;
+            }
+
+            // Fall back to IndexedDB if localStorage and Remote had nothing
             try {
                 const cached = await getCachedHiveState(initiativeId);
                 if (cached) {
@@ -57,8 +85,9 @@ export const useHivePersistence = (initiativeId: string) => {
                 setIsLoaded(true);
             }
         };
-        loadFromCache();
-    }, [initiativeId]);
+        
+        loadSequence();
+    }, [initiativeId, orgId]);
 
     // Save to LocalStorage whenever state changes
     useEffect(() => {
@@ -84,6 +113,8 @@ export const useHivePersistence = (initiativeId: string) => {
         state,
         setState,
         resetState,
-        isLoaded
+        isLoaded,
+        missionId,
+        setMissionId
     };
 };

@@ -1,92 +1,131 @@
 
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useCatalyst } from '../../context/CatalystContext';
-import { Search, ArrowLeft, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Search, ArrowLeft, PanelLeftClose, PanelLeftOpen, ChevronRight, Home, LayoutGrid } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageSwitcher } from '../../src/components/ui/LanguageSwitcher';
 import { NotificationBell } from './NotificationBell';
+import { motion } from 'motion/react';
 
 interface HeaderProps {
-  initiativeName?: string;
-  onBack?: () => void;
   onOpenCommandPalette?: () => void;
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
-  title?: string;
-  subtitle?: string;
 }
 
-export const Header: React.FC<HeaderProps> = React.memo(({ initiativeName, onBack, onOpenCommandPalette, onToggleSidebar, isSidebarOpen = true, title, subtitle }) => {
-  const { unreadActivities, setCurrentView, user } = useCatalyst();
+export const Header: React.FC<HeaderProps> = React.memo(({ onOpenCommandPalette, onToggleSidebar, isSidebarOpen = true }) => {
+  const { currentView, setCurrentView, selectedInitiative, selectInitiative, user } = useCatalyst();
+
+  const breadcrumbs = useMemo(() => {
+    const list = [{ label: 'Dashboard', view: 'dashboard', icon: Home }];
+    
+    if (selectedInitiative) {
+      list.push({ label: selectedInitiative.sector, view: 'dashboard', icon: LayoutGrid });
+      list.push({ label: selectedInitiative.title, view: null, icon: null });
+    } else if (currentView !== 'dashboard') {
+      const viewLabel = currentView.charAt(0).toUpperCase() + currentView.slice(1).replace(/([A-Z])/g, ' $1');
+      list.push({ label: viewLabel, view: currentView, icon: null });
+    }
+    
+    return list;
+  }, [currentView, selectedInitiative]);
+
+  const handleBreadcrumbClick = (view: any) => {
+    if (!view) return;
+    setCurrentView(view);
+    selectInitiative(null);
+  };
 
   return (
-    <header className="h-16 flex items-center justify-between px-6 border-b border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark z-10 flex-shrink-0 transition-all duration-300 shadow-sm backdrop-blur-md bg-opacity-80 dark:bg-opacity-80 sticky top-0">
-        <div className="flex items-center overflow-hidden">
+    <header className="h-24 flex items-center justify-between px-10 glass-surface z-10 flex-shrink-0 transition-all duration-500 sticky top-0 rounded-b-[3.5rem] mt-4 mx-6 border-b border-white/5 shadow-2xl backdrop-blur-3xl metallic-sheen">
+        <div className="flex items-center overflow-hidden gap-8">
             {onToggleSidebar && (
             <button 
               onClick={onToggleSidebar} 
               title={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-              className="mr-4 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-surface-darker transition-all flex-shrink-0 text-slate-500 dark:text-text-muted-dark active:scale-95"
+              className="p-4 rounded-2xl hover:bg-white/10 transition-all flex-shrink-0 text-white/40 hover:text-accent-teal active:scale-95 border border-white/5 glass-surface"
             >
                 {isSidebarOpen ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeftOpen className="h-5 w-5" />}
             </button>
             )}
-            {onBack && (
-            <button onClick={onBack} className="mr-4 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-surface-darker transition-all flex-shrink-0 text-slate-500 dark:text-text-muted-dark active:scale-95">
-                <ArrowLeft className="h-5 w-5" />
-            </button>
-            )}
-            <div className="flex flex-col">
-              <h1 className="text-lg font-bold text-text-light dark:text-text-dark truncate flex items-center gap-3 tracking-tight">
-              <button 
-                  onClick={() => setCurrentView('dashboard')}
-                  className="hover:text-accent-purple transition-colors text-left"
-                  title="Go to Dashboard"
-              >
-                  {initiativeName ? initiativeName : (title || 'CogniSys BA')}
-              </button>
-              {subtitle && !initiativeName && (
-                  <span className="text-[10px] font-bold text-accent-purple bg-accent-purple/10 dark:bg-accent-purple/20 px-2 py-0.5 rounded-md uppercase tracking-widest border border-accent-purple/20">
-                      {subtitle}
-                  </span>
-              )}
-              </h1>
-              {initiativeName && (
-                <span className="text-[10px] font-bold text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">Active Initiative</span>
-              )}
-            </div>
+            
+            {/* Catalyst Breadcrumbs */}
+            <nav className="flex items-center gap-4 overflow-hidden">
+                {breadcrumbs.map((crumb, idx) => (
+                    <React.Fragment key={idx}>
+                        {idx > 0 && <ChevronRight className="h-4 w-4 text-white/10 flex-shrink-0" />}
+                        <motion.button 
+                            whileHover={{ y: -1 }}
+                            onClick={() => handleBreadcrumbClick(crumb.view)}
+                            className={`flex items-center gap-3 px-4 py-2 rounded-2xl transition-all whitespace-nowrap ${
+                                idx === breadcrumbs.length - 1 
+                                    ? 'text-white font-black italic tracking-tighter cursor-default' 
+                                    : 'text-white/30 font-bold hover:text-accent-teal hover:bg-white/5'
+                            }`}
+                        >
+                            {crumb.icon && <crumb.icon className={`h-4 w-4 ${idx === breadcrumbs.length - 1 ? 'text-accent-teal' : ''}`} />}
+                            <span className="text-xs uppercase tracking-[0.2em]">{crumb.label}</span>
+                        </motion.button>
+                    </React.Fragment>
+                ))}
+            </nav>
         </div>
         
-        <div className="flex items-center gap-6">
-            {/* Command Palette Trigger */}
-            <div className="relative hidden lg:block group">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <Search className="h-4 w-4 text-slate-400 group-hover:text-accent-purple transition-colors" />
-                </span>
-                <div 
-                    className="pl-10 pr-4 py-2 bg-slate-50 dark:bg-surface-darker border border-border-light dark:border-slate-800 rounded-xl text-sm text-text-light dark:text-text-dark w-72 cursor-pointer transition-all hover:border-accent-purple/50 hover:shadow-sm flex items-center justify-between group-hover:bg-white dark:group-hover:bg-slate-900" 
-                    onClick={onOpenCommandPalette}
-                >
-                    <span className="text-slate-400 font-medium">Search knowledge...</span>
-                    <span className="border border-border-light dark:border-slate-700 rounded-lg px-2 py-0.5 text-[10px] text-slate-500 dark:text-slate-400 font-bold bg-white dark:bg-surface-dark shadow-sm">⌘K</span>
+        <div className="flex items-center gap-10">
+            {/* Intelligence Swarm Trigger */}
+            <motion.div 
+               whileHover={{ scale: 1.01 }}
+               onTap={onOpenCommandPalette}
+               className="relative hidden 2xl:block group"
+            >
+                <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none z-20">
+                    <Search className="h-4 w-4 text-white/20 group-hover:text-accent-teal transition-all duration-300" />
                 </div>
-            </div>
+                <div 
+                    className="pl-14 pr-6 py-4 bg-white/[0.02] border border-white/5 rounded-[1.8rem] text-sm text-white w-[420px] cursor-pointer transition-all duration-500 hover:bg-white/[0.06] hover:border-accent-teal/30 hover:shadow-[0_0_50px_rgba(0,212,170,0.1)] flex items-center justify-between backdrop-blur-2xl group relative overflow-hidden" 
+                >
+                    <span className="text-white/20 font-black uppercase tracking-[0.3em] text-[10px] group-hover:text-white/40 transition-colors relative z-10">Neural Search...</span>
+                    
+                    <div className="flex items-center gap-2 opacity-20 group-hover:opacity-100 transition-opacity relative z-10">
+                      <div className="px-2 py-1 rounded-lg bg-white/5 border border-white/10">
+                        <span className="text-[9px] font-black text-white/60">⌘ K</span>
+                      </div>
+                    </div>
+                </div>
+            </motion.div>
             
-            <div className="flex items-center gap-2">
-              <LanguageSwitcher />
-              <ThemeToggle />
-              {/* Real-time Notification Bell (SSE-powered) */}
-              <NotificationBell />
+            <div className="flex items-center gap-8">
+              <div className="flex items-center gap-2 pr-8 border-r border-white/5">
+                <LanguageSwitcher />
+                <ThemeToggle />
+              </div>
               
-              {/* User Avatar */}
-              {user ? (
-                  <img src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}`} alt="Avatar" className="h-9 w-9 rounded-full shadow-sm border-2 border-white dark:border-slate-700 hover:border-accent-purple transition-all cursor-pointer" referrerPolicy="no-referrer" />
-              ) : (
-                  <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-accent-purple to-accent-cyan flex items-center justify-center text-white text-xs font-bold shadow-md border-2 border-white dark:border-slate-700">
-                      ZK
-                  </div>
-              )}
+              <div className="flex items-center gap-6">
+                <NotificationBell />
+                
+                {/* User Identity Node */}
+                <motion.div 
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  className="relative cursor-pointer"
+                >
+                  {user ? (
+                      <div className="relative group">
+                        <img 
+                          src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}`} 
+                          alt="Avatar" 
+                          className="h-12 w-12 rounded-[1.2rem] shadow-2xl border-2 border-white/10 group-hover:border-accent-teal transition-all object-cover" 
+                          referrerPolicy="no-referrer" 
+                        />
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-accent-teal border-2 border-primary shadow-xl neural-pulse" />
+                      </div>
+                  ) : (
+                      <div className="h-12 w-12 rounded-[1.2rem] bg-gradient-to-tr from-accent-teal to-accent-cyan flex items-center justify-center text-primary text-xs font-black shadow-2xl border-2 border-white/10">
+                          CO
+                      </div>
+                  )}
+                </motion.div>
+              </div>
             </div>
         </div>
     </header>

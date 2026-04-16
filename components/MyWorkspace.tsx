@@ -61,9 +61,9 @@ export const MyWorkspace: React.FC<MyWorkspaceProps> = ({ initiatives }) => {
 
     const getTypeColor = (type: string) => {
         switch(type) {
-            case 'Approval': return 'bg-accent-purple/10 text-accent-purple dark:bg-accent-purple/20 dark:text-accent-purple';
+            case 'Approval': return 'bg-accent-teal/10 text-accent-teal dark:bg-accent-teal/20 dark:text-accent-teal';
             case 'Action Item': return 'bg-accent-amber/10 text-accent-amber dark:bg-accent-amber/20 dark:text-accent-amber';
-            default: return 'bg-accent-purple/10 text-accent-purple dark:bg-accent-purple/20 dark:text-accent-purple';
+            default: return 'bg-accent-teal/10 text-accent-teal dark:bg-accent-teal/20 dark:text-accent-teal';
         }
     };
 
@@ -75,7 +75,7 @@ export const MyWorkspace: React.FC<MyWorkspaceProps> = ({ initiatives }) => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                 <div className="space-y-1">
                     <h1 className="text-4xl font-bold text-text-main-light dark:text-text-main-dark flex items-center gap-4 tracking-tight">
-                        <Briefcase className="h-10 w-10 text-accent-purple" />
+                        <Briefcase className="h-10 w-10 text-accent-teal" />
                         My Workspace
                     </h1>
                     <p className="text-text-muted-light dark:text-text-muted-dark">Manage your daily focus and unified task stream.</p>
@@ -83,7 +83,7 @@ export const MyWorkspace: React.FC<MyWorkspaceProps> = ({ initiatives }) => {
                 <div className="flex items-center gap-6 bg-surface-light dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-border-light dark:border-border-dark">
                     <div className="text-right">
                         <p className="text-[10px] text-text-muted-light dark:text-text-muted-dark font-bold uppercase tracking-widest mb-1">Focus Timer</p>
-                        <p className="font-mono text-2xl font-bold text-accent-purple tracking-tighter">{formatTime(timeLeft)}</p>
+                        <p className="font-mono text-2xl font-bold text-accent-teal tracking-tighter">{formatTime(timeLeft)}</p>
                     </div>
                     <button 
                         onClick={() => setTimerActive(!timerActive)}
@@ -108,7 +108,7 @@ export const MyWorkspace: React.FC<MyWorkspaceProps> = ({ initiatives }) => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                     {/* Left: Briefing & Focus */}
                     <div className="lg:col-span-1 space-y-8">
-                        <div className="bg-gradient-to-br from-accent-purple to-accent-blue text-white p-8 rounded-2xl shadow-xl relative overflow-hidden group">
+                        <div className="bg-gradient-to-br from-accent-teal to-accent-blue text-white p-8 rounded-2xl shadow-xl relative overflow-hidden group">
                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                               <Sparkles className="w-32 h-32" />
                             </div>
@@ -126,7 +126,7 @@ export const MyWorkspace: React.FC<MyWorkspaceProps> = ({ initiatives }) => {
 
                         <div className="bg-surface-light dark:bg-surface-dark rounded-2xl shadow-sm p-8 border border-border-light dark:border-border-dark">
                             <h3 className="text-xs font-bold text-text-main-light dark:text-text-main-dark uppercase tracking-widest mb-6 flex items-center gap-2">
-                              <Layout className="w-4 h-4 text-accent-purple" />
+                              <Layout className="w-4 h-4 text-accent-teal" />
                               Workspace Stats
                             </h3>
                             <div className="grid grid-cols-2 gap-6">
@@ -147,13 +147,13 @@ export const MyWorkspace: React.FC<MyWorkspaceProps> = ({ initiatives }) => {
                         <div className="p-8 border-b border-border-light dark:border-border-dark flex justify-between items-center bg-surface-darker/5 dark:bg-surface-darker/30">
                             <div className="space-y-1">
                               <h3 className="font-bold text-xl text-text-main-light dark:text-text-main-dark flex items-center gap-2">
-                                <CheckSquare className="w-5 h-5 text-accent-purple" />
+                                <CheckSquare className="w-5 h-5 text-accent-teal" />
                                 Unified Inbox
                               </h3>
                               <p className="text-xs text-text-muted-light dark:text-text-muted-dark">Aggregated from all active initiatives</p>
                             </div>
-                            <div className="bg-accent-purple/10 dark:bg-accent-purple/20 px-3 py-1 rounded-full border border-accent-purple/20">
-                              <span className="text-[10px] font-bold text-accent-purple uppercase tracking-widest">{safeTasks.length} Items</span>
+                            <div className="bg-accent-teal/10 dark:bg-accent-teal/20 px-3 py-1 rounded-full border border-accent-teal/20">
+                              <span className="text-[10px] font-bold text-accent-teal uppercase tracking-widest">{safeTasks.length} Items</span>
                             </div>
                         </div>
                         <div className="overflow-y-auto p-6 space-y-4 flex-grow bg-surface-darker/5 dark:bg-surface-darker/10 custom-scrollbar">
@@ -163,7 +163,7 @@ export const MyWorkspace: React.FC<MyWorkspaceProps> = ({ initiatives }) => {
                                     className={`group flex items-center p-5 bg-surface-light dark:bg-surface-dark rounded-2xl shadow-sm border transition-all duration-300 ${
                                         task.status === 'Done' 
                                           ? 'opacity-60 border-transparent grayscale' 
-                                          : 'border-border-light dark:border-border-dark hover:border-accent-purple/50 dark:hover:border-accent-purple/50 hover:shadow-md'
+                                          : 'border-border-light dark:border-border-dark hover:border-accent-teal/50 dark:hover:border-accent-teal/50 hover:shadow-md'
                                     }`}
                                 >
                                     <button 
@@ -171,7 +171,7 @@ export const MyWorkspace: React.FC<MyWorkspaceProps> = ({ initiatives }) => {
                                         className={`flex-shrink-0 w-6 h-6 rounded-lg border-2 mr-5 flex items-center justify-center transition-all duration-300 ${
                                             task.status === 'Done' 
                                               ? 'bg-accent-green border-accent-green text-white scale-110' 
-                                              : 'border-border-light dark:border-border-dark hover:border-accent-purple group-hover:scale-110'
+                                              : 'border-border-light dark:border-border-dark hover:border-accent-teal group-hover:scale-110'
                                         }`}
                                     >
                                         {task.status === 'Done' && <CheckCircle className="h-4 w-4" />}
@@ -188,7 +188,7 @@ export const MyWorkspace: React.FC<MyWorkspaceProps> = ({ initiatives }) => {
                                         </div>
                                         <div className="flex items-center gap-4 mt-2 text-xs text-text-muted-light dark:text-text-muted-dark">
                                             <span className="flex items-center gap-1.5 font-medium">
-                                                <Briefcase className="h-3.5 w-3.5 text-accent-purple/60" /> {task.project}
+                                                <Briefcase className="h-3.5 w-3.5 text-accent-teal/60" /> {task.project}
                                             </span>
                                             {task.priority === 'High' && (
                                                 <span className="text-accent-red font-bold flex items-center gap-1.5 uppercase tracking-widest text-[10px]">

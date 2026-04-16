@@ -1,9 +1,9 @@
 import { getAdminDb } from '../lib/firebaseAdmin';
 import { FieldValue } from 'firebase-admin/firestore';
 
-export type AuditResourceType = 'organization' | 'project' | 'initiative';
-export type AuditAction = 'create' | 'update' | 'delete';
-export type AuditSeverity = 'INFO' | 'WARNING' | 'CRITICAL';
+export type AuditResourceType = 'organization' | 'project' | 'initiative' | 'ai_operation';
+export type AuditAction = 'create' | 'update' | 'delete' | 'audit' | 'safety_scan';
+export type AuditSeverity = 'INFO' | 'WARNING' | 'CRITICAL' | 'SAFETY_VIOLATION';
 
 export interface AuditChange {
   field: string;
@@ -17,6 +17,8 @@ export interface AuditContext {
   ipAddress?: string;
   userAgent?: string;
   correlationId?: string;
+  agentName?: string;
+  missionId?: string;
 }
 
 export interface AuditLogEntry {
@@ -137,6 +139,62 @@ export class AuditLogService {
       severity: 'INFO',
       timestamp: FieldValue.serverTimestamp(),
     });
+  }
+
+  /** Log an AI agentic event for transparency and ethics tracking. */
+  static async logAIAction(
+    orgId: string,
+    userId: string,
+    agent: string,
+    action: string,
+    metadata: {
+      thought?: string;
+      instructions?: string;
+      toolCall?: any;
+      safetyVerdict?: string;
+      score?: number;
+      missionId?: string;
+      initiativeId?: string;
+      usage?: { promptTokens: number; completionTokens: number; totalTokens: number };
+    }
+  ): Promise<void> {
+    const entry = {
+      orgId,
+      userId,
+      resourceType: 'ai_operation' as AuditResourceType,
+      resourceId: metadata.missionId || 'system',
+      action: 'audit' as AuditAction,
+      changes: [
+        { field: 'thought', oldValue: null, newValue: metadata.thought },
+        { field: 'safety', oldValue: null, newValue: metadata.safetyVerdict }
+      ],
+      context: {
+        agentName: agent,
+        missionId: metadata.missionId,
+      },
+      severity: metadata.safetyVerdict === 'Fail' ? 'SAFETY_VIOLATION' : 'INFO',
+      timestamp: FieldValue.serverTimestamp(),
+      ...cleanObject(metadata)
+    };
+
+    await getAdminDb().collection('audit_logs').add(entry);
+
+    // Hardened Telemetry: If usage is present, track it detailed in usage metering
+    if (metadata.usage) {
+        try {
+            const { UsageMeteringService } = await import('./UsageMeteringService');
+            // Extract modelId if possible, or default to general class
+            const modelId = (metadata as any).modelId || (agent === 'Orchestrator' ? 'pro' : 'flash');
+            await UsageMeteringService.trackDetailedUsage(orgId, userId, modelId, metadata.usage, {
+                agentName: agent,
+                action,
+                missionId: metadata.missionId,
+                initiativeId: metadata.initiativeId
+            });
+        } catch (e) {
+            console.warn("[AuditLogService] Failed to track detailed AI usage:", e);
+        }
+    }
   }
 }
 

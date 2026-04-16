@@ -3,6 +3,8 @@
  * These functions call the local /api routes which securely hold the API keys.
  */
 
+import { auth } from './firebase';
+
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
@@ -17,15 +19,17 @@ export interface ChatCompletionRequest {
 
 /**
  * Call the Mistral API via the backend proxy.
- * Supports all Mistral models: mistral-large-latest, mistral-medium-latest,
- * mistral-small-latest, codestral-latest.
  */
 export async function callMistral(request: ChatCompletionRequest) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (auth.currentUser) {
+    const token = await auth.currentUser.getIdToken();
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch('/api/mistral/chat', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify({
       model: request.model || 'mistral-large-latest',
       messages: request.messages,
@@ -51,14 +55,17 @@ export async function callMistral(request: ChatCompletionRequest) {
 
 /**
  * Call the Azure OpenAI API via the backend proxy.
- * Uses the deployment configured in AZURE_OPENAI_DEPLOYMENT_NAME env var.
  */
 export async function callAzureOpenAI(request: ChatCompletionRequest) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (auth.currentUser) {
+    const token = await auth.currentUser.getIdToken();
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch('/api/azure-openai/chat', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify({
       messages: request.messages,
       temperature: request.temperature ?? 0.7,
@@ -86,23 +93,32 @@ export async function callAzureOpenAI(request: ChatCompletionRequest) {
  * Supports Gemini model IDs (routed client-side), Mistral model IDs, and Azure OpenAI.
  * Use this when you want to call a specific model by ID from a component.
  */
-export async function callLLM(request: ChatCompletionRequest): Promise<string> {
-  const modelId = request.model || 'mistral-large-latest';
+export async function callLLM(request: ChatCompletionRequest): Promise<{ text: string; usage: { promptTokens: number; completionTokens: number; totalTokens: number }; modelId: string }> {
+    const modelId = request.model || 'mistral-large-latest';
 
-  // Mistral model IDs
-  const mistralModels = ['mistral', 'mistral-large-latest', 'mistral-medium-latest', 'mistral-small-latest', 'codestral-latest'];
-  if (mistralModels.includes(modelId) || modelId === 'mistral') {
-    const response = await callMistral({ ...request, model: modelId === 'mistral' ? 'mistral-large-latest' : modelId });
-    return response.choices[0]?.message?.content || '';
-  }
+    // Mistral model IDs
+    const mistralModels = ['mistral', 'mistral-large-latest', 'mistral-medium-latest', 'mistral-small-latest', 'codestral-latest'];
+    if (mistralModels.includes(modelId) || modelId === 'mistral') {
+        const actualModel = modelId === 'mistral' ? 'mistral-large-latest' : modelId;
+        const response = await callMistral({ ...request, model: actualModel });
+        return { 
+            text: response.text || '', 
+            usage: response.usage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+            modelId: actualModel
+        };
+    }
 
-  // Azure OpenAI model IDs
-  const azureModels = ['azure-openai', 'azure-gpt-4o', 'azure-gpt-4-turbo'];
-  if (azureModels.includes(modelId)) {
-    const response = await callAzureOpenAI(request);
-    return response.choices[0]?.message?.content || '';
-  }
+    // Azure OpenAI model IDs
+    const azureModels = ['azure-openai', 'azure-gpt-4o', 'azure-gpt-4-turbo'];
+    if (azureModels.includes(modelId)) {
+        const response = await callAzureOpenAI(request);
+        return { 
+            text: response.text || '', 
+            usage: response.usage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+            modelId: 'azure-openai'
+        };
+    }
 
-  throw new Error(`Model "${modelId}" is not a proxy-routable model. Use geminiService for Gemini models.`);
+    throw new Error(`Model "${modelId}" is not a proxy-routable model. Use geminiService for Gemini models.`);
 }
 

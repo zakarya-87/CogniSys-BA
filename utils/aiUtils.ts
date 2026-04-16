@@ -12,13 +12,21 @@ export async function withRetry<T>(
     fn: () => Promise<T>,
     retries = 5,
     delay = 2000,
-    backoff = 2
+    backoff = 2,
+    timeoutMs = 60000 // 1 minute default timeout
 ): Promise<T> {
+    const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('AI_TIMEOUT')), timeoutMs);
+    });
+
     try {
-        return await fn();
+        // Race the function against the timeout
+        return await Promise.race([fn(), timeoutPromise]) as T;
     } catch (error: any) {
+        const isTimeout = error.message === 'AI_TIMEOUT';
+        
         // Extract message and status from nested error object if present
-        let errorMessage = error.message || '';
+        let errorMessage = isTimeout ? 'Request Timed Out' : (error.message || '');
         let errorStatus = error.status;
         let errorCode = error.code;
 
@@ -47,8 +55,9 @@ export async function withRetry<T>(
             errorCode === 429 ||
             errorMessage.includes('429');
         
-        // Retry on Server Errors (5xx), RPC/XHR failures, OR Quota Exceeded
+        // Retry on Server Errors (5xx), RPC/XHR failures, Quota Exceeded, OR Timeouts
         const isRetryable = 
+            isTimeout ||
             errorMessage.includes('503') || 
             errorMessage.includes('Overloaded') || 
             errorMessage.includes('Rpc failed') || 
@@ -62,11 +71,18 @@ export async function withRetry<T>(
             const jitter = Math.random() * 1000;
             console.warn(`AI Service Error (${errorMessage}). Retrying in ${delay + jitter}ms... (${retries} attempts left)`);
             await new Promise(resolve => setTimeout(resolve, delay + jitter));
-            return withRetry(fn, retries - 1, delay * backoff, backoff);
+            
+            // On timeout, we might want to increase the timeout for the next attempt
+            const nextTimeout = isTimeout ? timeoutMs * 1.5 : timeoutMs;
+            return withRetry(fn, retries - 1, delay * backoff, backoff, nextTimeout);
         }
 
         if (isQuotaExceeded) {
              throw new Error("AI Service Quota Exceeded. The free tier limit has been reached. The quota will reset the next day. Please try again later.");
+        }
+
+        if (isTimeout) {
+            throw new Error("AI Service Timeout. The request took too long to complete. Please check your network and try again.");
         }
 
         throw error;

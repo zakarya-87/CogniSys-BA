@@ -160,6 +160,25 @@ service cloud.firestore {
     }
 
     // ===============================================================
+    // Missions & Hive Tasks
+    // ===============================================================
+
+    match /missions/{missionId} {
+      allow read: if isViewer(resource.data.orgId);
+      
+      // Manual creation is allowed for members
+      allow create: if isMember(request.resource.data.orgId)
+                    && hasRequiredFields(['orgId', 'initiativeId', 'state', 'status']);
+      
+      // Updates allowed for members, but orgId must remain unchanged
+      allow update: if isMember(resource.data.orgId)
+                    && orgIdUnchanged()
+                    && hasOnlyAllowedFields(['orgId', 'initiativeId', 'state', 'status', 'updatedAt']);
+
+      allow delete: if isAdmin(resource.data.orgId);
+    }
+
+    // ===============================================================
     // Internal backend collections
     // All access goes through the Admin SDK which bypasses these rules.
     // Explicitly deny direct client access as a safety net.

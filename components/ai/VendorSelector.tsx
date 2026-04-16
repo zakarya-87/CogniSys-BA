@@ -136,7 +136,7 @@ export const VendorSelector: React.FC<VendorSelectorProps> = ({ initiative }) =>
             <div className="flex justify-between items-start mb-6">
                 <div>
                     <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <ShoppingBagIcon className="h-7 w-7 text-accent-purple" />
+                        <ShoppingBagIcon className="h-7 w-7 text-accent-teal" />
                         Smart Vendor Selection
                     </h2>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -155,7 +155,7 @@ export const VendorSelector: React.FC<VendorSelectorProps> = ({ initiative }) =>
                         value={need}
                         onChange={(e) => setNeed(e.target.value)}
                         placeholder="e.g. KYC Provider, Cloud Hosting, CRM"
-                        className="flex-grow p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-purple"
+                        className="flex-grow p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-teal"
                     />
                     <Button onClick={handleGenerate} disabled={isLoading || !need}>
                         {isLoading ? <Spinner /> : 'Run Comparison'}
@@ -167,11 +167,11 @@ export const VendorSelector: React.FC<VendorSelectorProps> = ({ initiative }) =>
                 <div className="mt-8 flex flex-col lg:flex-row gap-8 animate-fade-in-down">
                     {/* Left: Analysis Table */}
                     <div className="flex-grow">
-                        <div className="bg-accent-purple/10 dark:bg-accent-purple/20 p-4 rounded-lg border border-accent-purple/20 mb-6">
-                            <h3 className="font-bold text-accent-purple flex items-center gap-2 mb-2">
+                        <div className="bg-accent-teal/10 dark:bg-accent-teal/20 p-4 rounded-lg border border-accent-teal/20 mb-6">
+                            <h3 className="font-bold text-accent-teal flex items-center gap-2 mb-2">
                                 <ScaleIcon className="h-5 w-5"/> Recommendation: {assessment.recommendation}
                             </h3>
-                            <p className="text-sm text-accent-purple/80">{assessment.reasoning}</p>
+                            <p className="text-sm text-accent-teal/80">{assessment.reasoning}</p>
                         </div>
 
                         <div className="overflow-x-auto custom-scrollbar">

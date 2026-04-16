@@ -346,7 +346,7 @@ export const ArtifactDetailModal: React.FC<ArtifactDetailModalProps> = ({ artifa
         >
           <motion.div
             key="panel"
-            className="glass-card-light dark:glass-card w-full max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar rounded-2xl relative"
+            className="glass-card-light dark:glass-card w-full max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar relative"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}

@@ -75,7 +75,7 @@ export const VisionVideoGenerator: React.FC<VisionVideoGeneratorProps> = ({ init
             <div className="flex justify-between items-start mb-6">
                 <div>
                     <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <VideoCameraIcon className="h-7 w-7 text-accent-purple" />
+                        <VideoCameraIcon className="h-7 w-7 text-accent-teal" />
                         Vision Video Generator (Veo)
                     </h2>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -97,8 +97,8 @@ export const VisionVideoGenerator: React.FC<VisionVideoGeneratorProps> = ({ init
                     <div className="text-center p-8">
                          {isLoading ? (
                             <div className="flex flex-col items-center">
-                                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-accent-purple mb-4"></div>
-                                <p className="text-accent-purple font-bold animate-pulse">Dreaming up your vision...</p>
+                                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-accent-teal mb-4"></div>
+                                <p className="text-accent-teal font-bold animate-pulse">Dreaming up your vision...</p>
                                 <p className="text-gray-500 text-xs mt-2">This may take a minute. Veo is rendering.</p>
                             </div>
                          ) : (
@@ -118,7 +118,7 @@ export const VisionVideoGenerator: React.FC<VisionVideoGeneratorProps> = ({ init
                         <textarea 
                             value={prompt}
                             onChange={(e) => setPrompt(e.target.value)}
-                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus:ring-2 focus:ring-accent-purple text-sm"
+                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus:ring-2 focus:ring-accent-teal text-sm"
                             rows={2}
                             placeholder="Describe the scene, characters, and action..."
                         />

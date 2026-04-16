@@ -30,8 +30,8 @@ export class ActivityService {
     }
   }
 
-  async getRecentActivities(orgId: string, limit?: number): Promise<TActivity[]> {
-    return this.repo.getByOrgId(orgId, limit);
+  async getRecentActivities(orgId: string, limit: number = 50, cursor?: string): Promise<{ data: TActivity[]; nextCursor: string | null }> {
+    return this.repo.getByOrgIdPaginated(orgId, limit, cursor);
   }
 
   async addComment(activityId: string, comment: any): Promise<void> {

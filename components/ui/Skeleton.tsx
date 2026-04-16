@@ -79,7 +79,7 @@ export const SkeletonTable: React.FC<{ rows?: number; cols?: number }> = ({
 export const SkeletonCard: React.FC<{ count?: number }> = ({ count = 6 }) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
     {Array.from({ length: count }).map((_, i) => (
-      <div key={i} className="glass-card dark:glass-card glass-card-light p-5 space-y-3">
+      <div key={i} className="glass-card-light dark:glass-card p-5 space-y-3">
         <div className="flex items-center gap-3">
           <Skeleton variant="circle" width={36} height={36} />
           <Skeleton variant="line" width="60%" height={14} />

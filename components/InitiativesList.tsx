@@ -3,6 +3,8 @@ import { TInitiative } from '../types';
 import { STATUS_STYLES } from '../constants';
 import { DataTable, Column } from './ui/DataTable';
 import { ComplianceBadge } from './ui/ComplianceBadge';
+import { LoadMoreButton } from './common/LoadMoreButton';
+import { Briefcase, Globe, ShieldCheck, Cpu } from 'lucide-react';
 
 interface InitiativesListProps {
   initiatives: TInitiative[];
@@ -16,11 +18,14 @@ const ConfidenceBar: React.FC<{ score: number }> = ({ score }) => {
   const pct = Math.round(score * 100);
   const color = pct >= 80 ? 'bg-accent-teal' : pct >= 60 ? 'bg-accent-amber' : 'bg-accent-red';
   return (
-    <div className="flex items-center gap-2">
-      <div className="w-20 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-        <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${pct}%` }} />
+    <div className="flex items-center gap-3">
+      <div className="w-24 h-1.5 rounded-full bg-white/5 overflow-hidden ring-1 ring-white/5">
+        <div 
+            className={`h-full rounded-full ${color} transition-all duration-1000 shadow-[0_0_10px_rgba(45,212,191,0.3)]`} 
+            style={{ width: `${pct}%` }} 
+        />
       </div>
-      <span className="text-xs font-semibold tabular-nums text-text-muted-light dark:text-text-muted-dark">{pct}%</span>
+      <span className="text-[10px] font-black tabular-nums text-text-muted-dark uppercase tracking-widest">{pct}%</span>
     </div>
   );
 };
@@ -35,13 +40,13 @@ export const InitiativesList: React.FC<InitiativesListProps> = ({
     const columns: Column<TInitiative>[] = useMemo(() => [
       {
         key: 'title',
-        header: 'Initiative',
+        header: 'Strategic Initiative',
         sortable: true,
         width: '35%',
         render: (row) => (
-          <div>
-            <div className="font-semibold text-text-main-light dark:text-text-main-dark">{row.title}</div>
-            <div className="text-xs text-text-muted-light dark:text-text-muted-dark truncate max-w-xs mt-0.5">{row.description}</div>
+          <div className="py-1">
+            <div className="font-bold text-white tracking-tight text-sm group-hover:text-accent-teal transition-colors">{row.title}</div>
+            <div className="text-[10px] text-text-muted-dark font-medium truncate max-w-xs mt-1 uppercase tracking-wider opacity-60">{row.description}</div>
           </div>
         ),
       },
@@ -50,70 +55,90 @@ export const InitiativesList: React.FC<InitiativesListProps> = ({
         header: 'Status',
         sortable: true,
         render: (row) => (
-          <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border ${STATUS_STYLES[row.status]}`}>
+          <span className={`text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-[0.15em] border backdrop-blur-md ${STATUS_STYLES[row.status]}`}>
             {row.status}
           </span>
         ),
       },
       {
         key: 'sector',
-        header: 'Compliance',
+        header: 'Compliance Environment',
         sortable: true,
-        render: (row) => <ComplianceBadge sector={row.sector} />,
+        render: (row) => (
+            <div className="flex items-center gap-2">
+                <ShieldCheck className="h-3.5 w-3.5 text-accent-teal opacity-50" />
+                <ComplianceBadge sector={row.sector} />
+            </div>
+        ),
       },
       {
         key: 'confidenceScore',
-        header: 'AI Confidence',
+        header: 'Cortex Score',
         sortable: true,
-        render: (row) => <ConfidenceBar score={(row as any).confidenceScore ?? 0.82} />,
+        render: (row) => (
+            <div className="flex items-center gap-2">
+                <Cpu className="h-3.5 w-3.5 text-accent-teal opacity-50" />
+                <ConfidenceBar score={(row as any).confidenceScore ?? 0.82} />
+            </div>
+        ),
       },
       {
         key: 'owner',
-        header: 'Owner',
+        header: 'Lead Analyst',
         render: (row) => (
-          <div className="flex items-center gap-2">
-            {row.owner.avatarUrl && (
-              <img className="h-7 w-7 rounded-lg border border-border-light dark:border-border-dark object-cover" src={row.owner.avatarUrl} alt="" referrerPolicy="no-referrer" />
+          <div className="flex items-center gap-3">
+            {row.owner.avatarUrl ? (
+              <img className="h-8 w-8 rounded-xl border border-white/10 object-cover shadow-lg" src={row.owner.avatarUrl} alt="" referrerPolicy="no-referrer" />
+            ) : (
+                <div className="h-8 w-8 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-[10px] font-black text-white/40">
+                    {row.owner.name.charAt(0)}
+                </div>
             )}
-            <span className="text-sm font-medium text-text-main-light dark:text-text-main-dark">{row.owner.name}</span>
+            <span className="text-xs font-bold text-white/80">{row.owner.name}</span>
           </div>
         ),
       },
     ], []);
 
     return (
-        <div className="glass-card-light dark:glass-card p-8 space-y-6 animate-in fade-in duration-500">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-4xl font-bold tracking-tight text-text-main-light dark:text-text-main-dark">All Initiatives</h1>
-                    <p className="text-text-muted-light dark:text-text-muted-dark mt-1">A comprehensive view of your strategic portfolio.</p>
+        <div className="space-y-10 animate-fade-in-up">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 px-2">
+                <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-accent-teal/20 rounded-lg">
+                            <Briefcase className="h-5 w-5 text-accent-teal" />
+                        </div>
+                        <h1 className="text-4xl font-black text-white tracking-tighter">Strategic Briefcase</h1>
+                    </div>
+                    <p className="text-sm text-text-muted-dark font-medium uppercase tracking-[0.3em] opacity-60">Real-time Global Perspective</p>
                 </div>
-                <div className="bg-accent-teal/10 dark:bg-accent-teal/20 px-6 py-2.5 rounded-xl border border-accent-teal/20 w-fit">
-                    <span className="text-xs font-bold text-accent-teal uppercase tracking-widest tabular-nums">{initiatives.length} Total Initiatives</span>
+                
+                <div className="flex items-center gap-4 bg-white/5 px-6 py-3 rounded-2xl border border-white/5 backdrop-blur-xl group hover:border-white/10 transition-all">
+                    <Globe className="h-4 w-4 text-accent-teal animate-pulse" />
+                    <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">{initiatives.length} Active Vectors</span>
                 </div>
             </div>
 
-            <DataTable<TInitiative>
-              columns={columns}
-              data={initiatives}
-              pageSize={10}
-              loading={loading && initiatives.length === 0}
-              onRowClick={onSelectInitiative}
-              keyExtractor={(row) => row.id}
-              emptyMessage="No initiatives found. Create your first initiative to get started."
-            />
+            <div className="glass-surface metallic-sheen border border-border-dark rounded-[2.5rem] overflow-hidden shadow-2xl p-1">
+                <DataTable<TInitiative>
+                  columns={columns}
+                  data={initiatives}
+                  pageSize={20}
+                  loading={loading && initiatives.length === 0}
+                  onRowClick={onSelectInitiative}
+                  keyExtractor={(row) => row.id}
+                  emptyMessage="No initiatives found. Create your first initiative to get started."
+                />
+            </div>
 
-            {nextCursor && (
-                <div className="flex justify-center pt-4">
-                    <button
-                        onClick={onLoadMore}
-                        disabled={loading}
-                        className="flex items-center gap-2 px-8 py-3 bg-accent-teal text-white rounded-xl font-bold text-sm shadow-lg shadow-accent-teal/20 hover:bg-accent-teal/90 transition-all disabled:opacity-50"
-                    >
-                        {loading ? 'Loading...' : 'Load More Initiatives from Server'}
-                    </button>
-                </div>
-            )}
+            <div className="flex justify-center">
+                <LoadMoreButton 
+                    onClick={onLoadMore || (() => {})} 
+                    loading={!!loading} 
+                    hasNextPage={!!nextCursor} 
+                    label="Expand Intelligence Grid"
+                />
+            </div>
         </div>
     );
 };

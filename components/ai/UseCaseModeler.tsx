@@ -53,7 +53,7 @@ const UseCaseVisualizer: React.FC<{ diagram: TUseCaseDiagram }> = ({ diagram }) 
     const renderActor = (actor: TUseCaseActor, x: number, y: number) => (
         <g transform={`translate(${x}, ${y})`}>
             {actor.type === 'Primary' ? (
-                <g stroke="var(--accent-purple)" strokeWidth="2" fill="none">
+                <g stroke="var(--accent-teal)" strokeWidth="2" fill="none">
                     <circle cx="0" cy="-20" r="10" />
                     <line x1="0" y1="-10" x2="0" y2="15" />
                     <line x1="-15" y1="0" x2="15" y2="0" />
@@ -72,10 +72,10 @@ const UseCaseVisualizer: React.FC<{ diagram: TUseCaseDiagram }> = ({ diagram }) 
         <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
             <defs>
                 <marker id="uc-arrow" markerWidth="10" markerHeight="7" refX="28" refY="3.5" orient="auto">
-                    <polygon points="0 0, 10 3.5, 0 7" fill="var(--accent-purple)" />
+                    <polygon points="0 0, 10 3.5, 0 7" fill="var(--accent-teal)" />
                 </marker>
                 <marker id="uc-arrow-dashed" markerWidth="10" markerHeight="7" refX="28" refY="3.5" orient="auto">
-                    <polygon points="0 0, 10 3.5, 0 7" fill="none" stroke="var(--accent-purple)" />
+                    <polygon points="0 0, 10 3.5, 0 7" fill="none" stroke="var(--accent-teal)" />
                 </marker>
             </defs>
 
@@ -102,7 +102,7 @@ const UseCaseVisualizer: React.FC<{ diagram: TUseCaseDiagram }> = ({ diagram }) 
                         <line 
                             x1={start.x} y1={start.y} 
                             x2={end.x} y2={end.y} 
-                            stroke="var(--accent-purple)" 
+                            stroke="var(--accent-teal)" 
                             strokeWidth="1.5" 
                             strokeDasharray={isIncludeExtend ? "5,5" : ""}
                             markerEnd={isIncludeExtend ? "url(#uc-arrow)" : ""}
@@ -128,7 +128,7 @@ const UseCaseVisualizer: React.FC<{ diagram: TUseCaseDiagram }> = ({ diagram }) 
                 if (!pos) return null;
                 return (
                     <g key={`uc-group-${id}-${i}`} transform={`translate(${pos.x}, ${pos.y})`}>
-                        <ellipse cx="0" cy="0" rx="70" ry="30" className="fill-white dark:fill-gray-700 stroke-accent-purple stroke-2" />
+                        <ellipse cx="0" cy="0" rx="70" ry="30" className="fill-white dark:fill-gray-700 stroke-accent-teal stroke-2" />
                         <text x="0" y="0" dominantBaseline="middle" textAnchor="middle" className="text-xs font-medium fill-gray-900 dark:fill-white text-[10px] pointer-events-none" style={{ maxWidth: '120px' }}>
                             {uc.name}
                         </text>
@@ -191,7 +191,7 @@ export const UseCaseModeler: React.FC<UseCaseModelerProps> = ({ initiative }) =>
             <div className="flex justify-between items-start mb-6">
                 <div>
                     <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <UserGroupIcon className="h-7 w-7 text-accent-purple" />
+                        <UserGroupIcon className="h-7 w-7 text-accent-teal" />
                         Intelligent Use Case Modeler
                     </h2>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -204,7 +204,7 @@ export const UseCaseModeler: React.FC<UseCaseModelerProps> = ({ initiative }) =>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">System Scope</label>
                 <div className="flex gap-4">
                     <textarea 
-                        className="flex-grow p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus:ring-2 focus:ring-accent-purple"
+                        className="flex-grow p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus:ring-2 focus:ring-accent-teal"
                         rows={2}
                         value={context}
                         onChange={(e) => setContext(e.target.value)}

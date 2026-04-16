@@ -259,7 +259,7 @@ export const InitiativeView: React.FC<InitiativeViewProps> = ({ initiative, onUp
       case 'Traceability': return <TraceabilityGraph initiative={initiative} />;
       case 'Prioritization': return <PrioritizationHub initiative={initiative} />;
       case 'Documentation': return <DocumentationEngine initiative={initiative} />;
-      case 'DPIA & Ethics': return <DPIA initiative={initiative} />;
+      case 'DPIA & Ethics': return <DPIA initiative={initiative} orgId={initiative.orgId} />;
       case 'Risk': return <RiskLedger initiative={initiative} />;
       case 'Issue Tracker': return <IssueTracker initiative={initiative} />;
       case 'Change Control': return <ChangeControlHub initiative={initiative} />;
@@ -327,7 +327,7 @@ export const InitiativeView: React.FC<InitiativeViewProps> = ({ initiative, onUp
                         }}
                         className={`flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-300 ${
                             isActive
-                                ? 'bg-surface-light dark:bg-surface-dark text-accent-purple shadow-sm ring-1 ring-border-light dark:ring-border-dark'
+                                ? 'bg-surface-light dark:bg-surface-dark text-accent-teal shadow-sm ring-1 ring-border-light dark:ring-border-dark'
                                 : 'text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-text-dark'
                         }`}
                     >
@@ -345,7 +345,7 @@ export const InitiativeView: React.FC<InitiativeViewProps> = ({ initiative, onUp
                 <button
                     onClick={() => setIsNavCollapsed(v => !v)}
                     title={isNavCollapsed ? 'Expand menu' : 'Collapse menu'}
-                    className={`absolute top-3 right-3 z-10 p-1.5 rounded-lg text-text-muted-light dark:text-text-muted-dark hover:bg-slate-100 dark:hover:bg-surface-darker hover:text-accent-purple transition-all ${isNavCollapsed ? 'static w-full flex justify-center mb-2' : ''}`}
+                    className={`absolute top-3 right-3 z-10 p-1.5 rounded-lg text-text-muted-light dark:text-text-muted-dark hover:bg-slate-100 dark:hover:bg-surface-darker hover:text-accent-teal transition-all ${isNavCollapsed ? 'static w-full flex justify-center mb-2' : ''}`}
                 >
                     {isNavCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
                 </button>
@@ -361,7 +361,7 @@ export const InitiativeView: React.FC<InitiativeViewProps> = ({ initiative, onUp
                                     onClick={() => { setActiveCategory(category); setActiveTab(module); }}
                                     className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all text-[10px] font-bold group relative ${
                                         activeTab === module
-                                            ? 'bg-accent-purple/10 text-accent-purple ring-1 ring-accent-purple/30'
+                                            ? 'bg-accent-teal/10 text-accent-teal ring-1 ring-accent-teal/30'
                                             : 'text-text-muted-light dark:text-text-muted-dark hover:bg-slate-100 dark:hover:bg-surface-darker'
                                     }`}
                                 >
@@ -379,7 +379,7 @@ export const InitiativeView: React.FC<InitiativeViewProps> = ({ initiative, onUp
                         {THINK_PLAN_ACT_MAPPING[activePhase].map(category => (
                             <div key={category} className="space-y-3">
                                 <h4 className="text-[10px] font-bold text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em] px-2 flex items-center gap-2">
-                                    <div className="w-1 h-1 rounded-full bg-accent-purple" />
+                                    <div className="w-1 h-1 rounded-full bg-accent-teal" />
                                     {t(`common:categories.${category.toLowerCase().replace(/ & /g, '_').replace(/ /g, '_')}`)}
                                 </h4>
                                 <nav className="space-y-1">
@@ -392,7 +392,7 @@ export const InitiativeView: React.FC<InitiativeViewProps> = ({ initiative, onUp
                                             }}
                                             className={`w-full flex items-center justify-between px-3 py-2.5 text-xs font-medium rounded-xl transition-all duration-200 group ${
                                                 activeTab === module
-                                                    ? 'bg-accent-purple/5 text-accent-purple dark:bg-accent-purple/10'
+                                                    ? 'bg-accent-teal/5 text-accent-teal dark:bg-accent-teal/10'
                                                     : 'text-text-muted-light dark:text-text-muted-dark hover:bg-surface-darker/5 dark:hover:bg-surface-darker/20 hover:text-text-light dark:hover:text-text-dark'
                                             }`}
                                         >

@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from '../../App';
 import { useCatalyst } from '../../context/CatalystContext';
+import { motion, AnimatePresence } from 'motion/react';
 
 import { 
     LayoutDashboard, 
@@ -22,7 +23,8 @@ import {
     LogOut,
     GitBranch,
     Briefcase,
-    BrainCircuit
+    BrainCircuit,
+    Zap
 } from 'lucide-react';
 
 interface NavItemProps {
@@ -35,147 +37,192 @@ interface NavItemProps {
 }
 
 const NavItem: React.FC<NavItemProps> = ({ icon, label, active, onClick, badge, collapsed }) => (
-  <button 
+  <motion.button 
+    whileHover={{ x: 4 }}
+    whileTap={{ scale: 0.98 }}
     onClick={onClick}
     title={collapsed ? label : undefined}
-    className={`flex items-center gap-3 px-3 py-2 text-sm font-semibold rounded-xl transition-all duration-200 w-full relative group ${
+    className={`flex items-center gap-3 px-3 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 w-full relative group overflow-hidden ${
       collapsed ? 'justify-center' : 'text-left'
     } ${
       active 
-        ? 'bg-accent-purple/10 text-accent-purple dark:text-accent-purple shadow-[inset_0_0_0_1px_rgba(139,92,246,0.2)]' 
-        : 'text-slate-600 dark:text-text-muted-dark hover:bg-slate-100 dark:hover:bg-surface-darker hover:text-slate-900 dark:hover:text-text-dark'
+        ? 'text-accent-teal' 
+        : 'text-text-muted-light dark:text-text-muted-dark hover:text-text-main-light dark:hover:text-text-main-dark'
     }`}
   >
-    <div className={`flex-shrink-0 ${active ? 'text-accent-purple' : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300'} transition-colors`}>
+    {active && (
+      <motion.div 
+        layoutId="active-pill"
+        className="absolute inset-0 bg-accent-teal/10 border border-accent-teal/20 rounded-xl z-0"
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      />
+    )}
+    
+    <div className={`relative z-10 flex-shrink-0 ${active ? 'text-accent-teal' : 'text-white/40 group-hover:text-white'} transition-colors`}>
       {icon}
     </div>
-    {!collapsed && <span className="flex-1 truncate">{label}</span>}
+    
+    {!collapsed && <span className="relative z-10 flex-1 truncate">{label}</span>}
+    
     {!collapsed && badge !== undefined && badge !== 0 ? (
-      <span className={`text-white text-[10px] font-bold px-2 py-0.5 rounded-full ${typeof badge === 'string' ? 'bg-accent-purple' : 'bg-accent-red'} shadow-sm`}>{badge}</span>
+      <span className={`relative z-10 text-primary text-[10px] font-black px-2 py-0.5 rounded-full ${typeof badge === 'string' ? 'bg-accent-teal shadow-[0_0_10px_rgba(0,212,170,0.3)]' : 'bg-accent-red'} shadow-sm`}>
+        {badge}
+      </span>
     ) : null}
+
     {/* Tooltip when collapsed */}
     {collapsed && (
-      <span className="absolute left-full ms-2 px-2 py-1 text-xs font-semibold text-white bg-gray-900 dark:bg-gray-700 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-lg transition-opacity duration-150">
+      <span className="absolute left-full ms-2 px-3 py-1.5 text-xs font-bold text-white glass-card backdrop-blur-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-xl transition-all duration-200 translate-x-1 group-hover:translate-x-0">
         {label}
-        {badge !== undefined && badge !== 0 && <span className="ms-1.5 text-accent-purple">({badge})</span>}
+        {badge !== undefined && badge !== 0 && <span className="ms-1.5 text-accent-teal">({badge})</span>}
       </span>
     )}
-  </button>
+  </motion.button>
 );
 
 interface SidebarProps {
     activeView: View;
     onNavigate: (view: View) => void;
     isCollapsed?: boolean;
+    onClose?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = React.memo(({ activeView, onNavigate, isCollapsed = false }) => {
+export const Sidebar: React.FC<SidebarProps> = React.memo(({ activeView, onNavigate, isCollapsed = false, onClose }) => {
   const { unreadActivities, user, login, loginWithGoogle, logout } = useCatalyst();
   const { t } = useTranslation(['sidebar', 'common']);
 
+  // Close drawer on ESC key (mobile)
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && onClose) onClose();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [onClose]);
+
+  const handleNavigate = (view: View) => {
+    onNavigate(view);
+    // Auto-close drawer on mobile after navigation
+    if (onClose) onClose();
+  };
+
   return (
-    <aside className={`flex-shrink-0 border-e border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark flex flex-col h-full z-20 transition-all duration-300 ease-in-out overflow-hidden ${isCollapsed ? 'w-16' : 'w-64'}`}>
-      {/* Logo */}
-      <div className={`h-16 flex items-center border-b border-border-light dark:border-border-dark flex-shrink-0 ${isCollapsed ? 'justify-center px-2' : 'px-6'}`}>
-        <div className="flex items-center gap-3">
-          <div className="p-1.5 bg-accent-purple/10 rounded-lg flex-shrink-0">
-            <BrainCircuit className="h-6 w-6 text-accent-purple" />
+    /*
+     * Layout strategy:
+     *  - md+: inline aside, collapses to icon-rail (w-24) or full (w-80)
+     *  - <md:  fixed drawer overlay, slides in from left, sits above content
+     */
+    <aside
+      className={[
+        // MOBILE: fixed full-height overlay drawer
+        'fixed inset-y-0 left-0 z-50 md:relative md:inset-auto',
+        // DESKTOP: inline flex-shrink-0
+        'md:flex-shrink-0',
+        // Shared visual treatment
+        'glass-card metallic-sheen flex flex-col h-full overflow-hidden m-4 shadow-2xl',
+        // Width
+        isCollapsed ? 'md:w-24' : 'md:w-80',
+        // Always full-width on mobile (constrained by the m-4 margin)
+        'w-[calc(100vw-2rem)] max-w-[20rem]',
+        // Slide transition — hidden off-screen when collapsed on mobile, visible on desktop
+        'transition-transform duration-300 ease-in-out',
+        isCollapsed ? '-translate-x-[calc(100%+2rem)] md:translate-x-0' : 'translate-x-0',
+      ].join(' ')}
+      aria-label="Main navigation"
+    >
+      {/* Brand Identity: Catalyst Hub */}
+      <div className={`h-24 flex items-center flex-shrink-0 ${isCollapsed ? 'justify-center px-4' : 'px-8'}`}>
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-accent-teal/10 rounded-2xl flex-shrink-0 border border-accent-teal/20 shadow-[0_0_20px_rgba(0,212,170,0.1)] neural-pulse">
+            <BrainCircuit className="h-7 w-7 text-accent-teal" />
           </div>
-          {!isCollapsed && <span className="font-extrabold text-lg tracking-tight text-text-light dark:text-text-dark whitespace-nowrap">COGNISYS</span>}
+          {!isCollapsed && (
+            <div className="flex flex-col">
+              <span className="font-black text-2xl tracking-tighter text-white whitespace-nowrap leading-none italic">COGNISYS</span>
+              <span className="text-[9px] font-black text-accent-teal uppercase tracking-[0.4em] mt-1">The Catalyst Hub</span>
+            </div>
+          )}
         </div>
       </div>
       
-      {/* User Profile Section */}
-      <div className={`flex-shrink-0 ${isCollapsed ? 'px-2 py-3' : 'p-4'}`}>
+      {/* Contextual User Node */}
+      <div className={`flex-shrink-0 ${isCollapsed ? 'px-4 py-4' : 'px-6 py-4'}`}>
         {user ? (
           isCollapsed ? (
-            <div className="flex flex-col items-center gap-2">
-              <img src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}`} alt="Avatar" className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-700 shadow-sm" referrerPolicy="no-referrer" />
-              <button onClick={logout} className="text-slate-400 hover:text-accent-red transition-colors p-1.5 rounded-lg hover:bg-accent-red/10" title="Logout">
-                <LogOut className="h-3.5 w-3.5 rtl:rotate-180" />
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative group">
+                <img src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}`} alt="Avatar" className="w-12 h-12 rounded-2xl border-2 border-accent-teal/20 shadow-lg object-cover" referrerPolicy="no-referrer" />
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-accent-teal border-2 border-primary rounded-full" />
+              </div>
+              <button onClick={logout} className="text-white/20 hover:text-accent-red transition-colors p-2 rounded-xl hover:bg-accent-red/10" title="Logout">
+                <LogOut className="h-4 w-4" />
               </button>
             </div>
           ) : (
-            <div className="flex items-center justify-between bg-slate-50 dark:bg-surface-darker p-2.5 rounded-xl border border-border-light dark:border-slate-800 shadow-sm">
-              <div className="flex items-center gap-3 overflow-hidden">
-                <img src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}`} alt="Avatar" className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-700 shadow-sm" referrerPolicy="no-referrer" />
+            <div className="flex items-center justify-between bg-white/[0.03] border border-white/5 p-4 rounded-[1.5rem] shadow-inner group metallic-sheen">
+              <div className="flex items-center gap-4 overflow-hidden">
+                <div className="relative">
+                  <img src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}`} alt="Avatar" className="w-11 h-11 rounded-[1rem] border-2 border-white/10 shadow-sm object-cover" referrerPolicy="no-referrer" />
+                  <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-accent-teal border-2 border-surface-darker rounded-full shadow-sm" />
+                </div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-bold text-text-light dark:text-text-dark truncate">{user.name}</span>
-                  <span className="text-[10px] text-text-muted-light dark:text-text-muted-dark font-medium uppercase tracking-wider">Pro Plan</span>
+                  <span className="text-sm font-black text-white italic tracking-tight truncate">{user.name}</span>
+                  <span className="text-[10px] text-accent-teal font-black uppercase tracking-widest mt-0.5">Enterprise Plan</span>
                 </div>
               </div>
-              <button onClick={logout} className="text-slate-400 hover:text-accent-red dark:hover:text-accent-red transition-colors p-1.5 rounded-lg hover:bg-accent-red/10 dark:hover:bg-accent-red/20" title="Logout">
-                <LogOut className="h-4 w-4 rtl:rotate-180" />
+              <button onClick={logout} className="text-white/20 hover:text-accent-red transition-colors p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" title="Logout">
+                <LogOut className="h-4 w-4" />
               </button>
             </div>
           )
         ) : (
-          isCollapsed ? (
-            <div className="flex flex-col items-center gap-2">
-              <button onClick={login} className="w-full flex items-center justify-center p-2 rounded-xl bg-primary dark:bg-accent-purple text-white transition-all hover:shadow-lg" title="Connect GitHub">
-                <GitBranch className="h-4 w-4" />
-              </button>
-              <button onClick={loginWithGoogle} className="w-full flex items-center justify-center p-2 rounded-xl bg-white dark:bg-surface-darker border border-border-light dark:border-slate-700 text-gray-700 dark:text-gray-200 transition-all hover:shadow-lg" title="Sign in with Google">
-                {/* Google "G" SVG */}
-                <svg className="h-4 w-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                </svg>
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <button 
+          <div className="flex flex-col gap-3">
+            <button 
                 onClick={login}
-                className="w-full flex items-center justify-center gap-2 bg-primary dark:bg-accent-purple text-white py-2.5 px-4 rounded-xl transition-all hover:shadow-lg active:scale-[0.98] text-sm font-bold shadow-md"
-              >
+                className="w-full flex items-center justify-center gap-3 bg-accent-teal text-primary py-3 px-4 rounded-2xl transition-all hover:shadow-[0_8px_25px_rgba(0,212,170,0.3)] active:scale-[0.98] text-xs font-black"
+            >
                 <GitBranch className="h-4 w-4" />
-                <span>Connect GitHub</span>
-              </button>
-              <button
-                onClick={loginWithGoogle}
-                className="w-full flex items-center justify-center gap-2 bg-white dark:bg-surface-darker border border-border-light dark:border-slate-700 text-gray-700 dark:text-gray-200 py-2.5 px-4 rounded-xl transition-all hover:shadow-md active:scale-[0.98] text-sm font-semibold"
-              >
-                <svg className="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                </svg>
-                <span>Sign in with Google</span>
-              </button>
-            </div>
-          )
+                {!isCollapsed && <span className="uppercase tracking-widest">Connect Intelligence</span>}
+            </button>
+          </div>
         )}
       </div>
 
-      <nav className={`flex-1 overflow-y-auto py-2 space-y-6 custom-scrollbar ${isCollapsed ? 'px-2' : 'px-3'}`}>
+      <nav className={`flex-1 overflow-y-auto py-6 space-y-10 custom-scrollbar ${isCollapsed ? 'px-4' : 'px-6'}`}>
         <div>
-          {!isCollapsed && <p className="px-3 mb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Core Intelligence</p>}
-          {isCollapsed && <div className="h-px bg-border-light dark:bg-border-dark mb-2" />}
-          <div className="space-y-1">
-            <NavItem collapsed={isCollapsed} icon={<Eye className="h-4 w-4" />} label={t('sidebar:visionBoard')} active={activeView === 'visionBoard'} onClick={() => onNavigate('visionBoard')} />
-            <NavItem collapsed={isCollapsed} icon={<Hammer className="h-4 w-4" />} label={t('sidebar:construct')} active={activeView === 'construct'} onClick={() => onNavigate('construct')} />
-            <NavItem collapsed={isCollapsed} icon={<Cpu className="h-4 w-4" />} label={t('sidebar:cortex')} active={activeView === 'cortex'} onClick={() => onNavigate('cortex')} />
-            <NavItem collapsed={isCollapsed} icon={<Network className="h-4 w-4" />} label={t('sidebar:hive')} active={activeView === 'hive'} onClick={() => onNavigate('hive')} />
+          {!isCollapsed && <p className="px-4 mb-4 text-[10px] font-black text-white/30 uppercase tracking-[0.5em]">Strategic Hub</p>}
+          <div className="space-y-2">
+            <NavItem collapsed={isCollapsed} icon={<Briefcase className="h-5 w-5" />} label={t('sidebar:myWorkspace')} active={activeView === 'myWorkspace'} onClick={() => handleNavigate('myWorkspace')} />
+            <NavItem collapsed={isCollapsed} icon={<LayoutDashboard className="h-5 w-5" />} label={t('sidebar:dashboard')} active={activeView === 'dashboard'} onClick={() => handleNavigate('dashboard')} />
+            <NavItem collapsed={isCollapsed} icon={<FolderKanban className="h-5 w-5" />} label={t('sidebar:initiatives')} active={activeView === 'initiatives'} onClick={() => handleNavigate('initiatives')} />
+            <NavItem collapsed={isCollapsed} icon={<Activity className="h-5 w-5" />} label={t('sidebar:pulse')} active={activeView === 'pulse'} onClick={() => handleNavigate('pulse')} />
           </div>
         </div>
 
         <div>
-          {!isCollapsed && <p className="px-3 mb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Operations</p>}
-          {isCollapsed && <div className="h-px bg-border-light dark:bg-border-dark mb-2" />}
-          <div className="space-y-1">
-            <NavItem collapsed={isCollapsed} icon={<ClipboardList className="h-4 w-4" />} label={t('sidebar:projectHub')} active={activeView === 'projectHub'} onClick={() => onNavigate('projectHub')} />
-            <NavItem collapsed={isCollapsed} icon={<PieChart className="h-4 w-4" />} label={t('sidebar:intelligenceCenter')} active={activeView === 'intelligenceCenter'} onClick={() => onNavigate('intelligenceCenter')} />
-            <NavItem collapsed={isCollapsed} icon={<BarChart3 className="h-4 w-4" />} label={t('sidebar:reports')} active={activeView === 'reports'} onClick={() => onNavigate('reports')} />
+          {!isCollapsed && <p className="px-4 mb-4 text-[10px] font-black text-white/30 uppercase tracking-[0.5em]">Tactical Operations</p>}
+          <div className="space-y-2">
+            <NavItem collapsed={isCollapsed} icon={<Swords className="h-5 w-5" />} label={t('sidebar:warRoom')} active={activeView === 'warRoom'} onClick={() => handleNavigate('warRoom')} />
+            <NavItem collapsed={isCollapsed} icon={<Zap className="h-5 w-5" />} label={t('sidebar:oracle')} active={activeView === 'oracle'} onClick={() => handleNavigate('oracle')} />
+            <NavItem collapsed={isCollapsed} icon={<Eye className="h-5 w-5" />} label={t('sidebar:visionBoard')} active={activeView === 'visionBoard'} onClick={() => handleNavigate('visionBoard')} />
+            <NavItem collapsed={isCollapsed} icon={<Hammer className="h-5 w-5" />} label={t('sidebar:construct')} active={activeView === 'construct'} onClick={() => handleNavigate('construct')} />
+          </div>
+        </div>
+
+        <div>
+          {!isCollapsed && <p className="px-4 mb-4 text-[10px] font-black text-white/30 uppercase tracking-[0.5em]">Intelligence Services</p>}
+          <div className="space-y-2">
+            <NavItem collapsed={isCollapsed} icon={<Cpu className="h-5 w-5" />} label={t('sidebar:cortex')} active={activeView === 'cortex'} onClick={() => handleNavigate('cortex')} />
+            <NavItem collapsed={isCollapsed} icon={<Network className="h-5 w-5" />} label={t('sidebar:hive')} active={activeView === 'hive'} onClick={() => handleNavigate('hive')} />
+            <NavItem collapsed={isCollapsed} icon={<ClipboardList className="h-5 w-5" />} label={t('sidebar:projectHub')} active={activeView === 'projectHub'} onClick={() => handleNavigate('projectHub')} />
+            <NavItem collapsed={isCollapsed} icon={<PieChart className="h-5 w-5" />} label={t('sidebar:intelligenceCenter')} active={activeView === 'intelligenceCenter'} onClick={() => handleNavigate('intelligenceCenter')} />
+            <NavItem collapsed={isCollapsed} icon={<BarChart3 className="h-5 w-5" />} label={t('sidebar:reports')} active={activeView === 'reports'} onClick={() => handleNavigate('reports')} />
           </div>
         </div>
         
-        <div className={`pt-4 border-t border-border-light dark:border-border-dark`}>
-          <NavItem collapsed={isCollapsed} icon={<Settings className="h-4 w-4" />} label={t('sidebar:settings')} active={activeView === 'settings'} onClick={() => onNavigate('settings')} />
-          <NavItem collapsed={isCollapsed} icon={<HelpCircle className="h-4 w-4" />} label={t('sidebar:help')} active={activeView === 'help'} onClick={() => onNavigate('help')} />
+        <div className={`pt-8 border-t border-white/5`}>
+          <NavItem collapsed={isCollapsed} icon={<Settings className="h-5 w-5" />} label={t('sidebar:settings')} active={activeView === 'settings'} onClick={() => handleNavigate('settings')} />
+          <NavItem collapsed={isCollapsed} icon={<HelpCircle className="h-5 w-5" />} label={t('sidebar:help')} active={activeView === 'help'} onClick={() => handleNavigate('help')} />
         </div>
       </nav>
     </aside>

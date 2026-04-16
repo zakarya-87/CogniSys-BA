@@ -10,8 +10,10 @@ export class ActivityController {
     try {
       const { orgId } = req.params as { orgId: string };
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
-      const activities = await activityService.getRecentActivities(orgId, limit);
-      res.json(activities);
+      const cursor = req.query.cursor as string | undefined;
+
+      const { data, nextCursor } = await activityService.getRecentActivities(orgId, limit, cursor);
+      res.json({ data, nextCursor });
     } catch (error: any) {
       safeError(res, error, 'ActivityController.listByOrg');
     }

@@ -23,6 +23,22 @@
         { "fieldPath": "projectId", "order": "ASCENDING" },
         { "fieldPath": "lastUpdated", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "task_queue",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "nextRetryAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "task_dlq",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "orgId", "order": "ASCENDING" },
+        { "fieldPath": "movedToDlqAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

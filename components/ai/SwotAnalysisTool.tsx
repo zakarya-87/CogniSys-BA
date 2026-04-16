@@ -75,7 +75,7 @@ export const SwotAnalysisTool: React.FC<SwotAnalysisToolProps> = ({ initiative, 
                 <textarea
                     id="swot-context"
                     rows={4}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-purple"
+                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-teal"
                     value={context}
                     onChange={(e) => setContext(e.target.value)}
                     placeholder={t('dashboard:tools.swot.placeholder')}
@@ -101,7 +101,7 @@ export const SwotAnalysisTool: React.FC<SwotAnalysisToolProps> = ({ initiative, 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-900 dark:text-white">
                         <SwotQuadrant title={t('dashboard:strategy.swot.strengths')} items={swot.strengths} className="bg-accent-emerald/10 dark:bg-accent-emerald/20" icon={<PlusCircleIcon className="h-6 w-6 text-accent-emerald" />} />
                         <SwotQuadrant title={t('dashboard:strategy.swot.weaknesses')} items={swot.weaknesses} className="bg-accent-red/10 dark:bg-accent-red/20" icon={<MinusCircleIcon className="h-6 w-6 text-accent-red" />} />
-                        <SwotQuadrant title={t('dashboard:strategy.swot.opportunities')} items={swot.opportunities} className="bg-accent-purple/10 dark:bg-accent-purple/20" icon={<ArrowUpCircleIcon className="h-6 w-6 text-accent-purple" />} />
+                        <SwotQuadrant title={t('dashboard:strategy.swot.opportunities')} items={swot.opportunities} className="bg-accent-teal/10 dark:bg-accent-teal/20" icon={<ArrowUpCircleIcon className="h-6 w-6 text-accent-teal" />} />
                         <SwotQuadrant title={t('dashboard:strategy.swot.threats')} items={swot.threats} className="bg-accent-amber/10 dark:bg-accent-amber/20" icon={<ExclamationTriangleIcon className="h-6 w-6 text-accent-amber" />} />
                     </div>
                 </div>

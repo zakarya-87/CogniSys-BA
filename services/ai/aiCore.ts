@@ -100,13 +100,15 @@ function logAiCall(opts: {
   model: string;
   latencyMs: number;
   success: boolean;
+  usage?: { promptTokens: number; completionTokens: number; totalTokens: number };
   cached?: boolean;
   retryCount?: number;
   error?: string;
 }) {
-  const { model, latencyMs, success, cached, retryCount, error } = opts;
+  const { model, latencyMs, success, usage, cached, retryCount, error } = opts;
   if (success) {
-    logger.log(`[AI] ${model} | ${latencyMs}ms${cached ? ' (cached)' : ''} | ok${retryCount ? ` retry=${retryCount}` : ''}`);
+    const tokens = usage ? ` | tokens: ${usage.totalTokens}` : '';
+    logger.log(`[AI] ${model} | ${latencyMs}ms${cached ? ' (cached)' : ''}${tokens} | ok${retryCount ? ` retry=${retryCount}` : ''}`);
   } else {
     logger.warn(`[AI] ${model} | ${latencyMs}ms | FAILED: ${error}`);
   }
@@ -186,7 +188,7 @@ function handleAiError(error: any): never {
 
 // --- Self-Healing JSON Logic ---
 
-async function repairJson<T>(malformedJson: string, errorMsg: string, schema?: any): Promise<T> {
+async function repairJson<T>(malformedJson: string, errorMsg: string, schema?: any): Promise<{ text: string, usage: any }> {
     logger.warn("Attempting to repair malformed JSON via AI...", errorMsg);
 
     const repairPrompt = `You are a JSON Repair Agent. The following JSON string is invalid or missing required keys. 
@@ -198,13 +200,13 @@ async function repairJson<T>(malformedJson: string, errorMsg: string, schema?: a
     Broken JSON:
     ${malformedJson}`;
 
-    const executeRepair = async (modelId: string) => {
+    const executeRepair = async (modelId: string): Promise<{ text: string, usage: any }> => {
         if (modelId === 'mistral') {
             const response = await callMistral({ messages: [{ role: 'user', content: repairPrompt }] });
-            return response.choices[0].message.content;
+            return { text: response.text || '', usage: response.usage };
         } else if (modelId === 'azure-openai') {
             const response = await callAzureOpenAI({ messages: [{ role: 'user', content: repairPrompt }] });
-            return response.choices[0].message.content;
+            return { text: response.text || '', usage: response.usage };
         } else {
             return await callGeminiProxy(repairPrompt, resolveModelTier(modelId));
         }
@@ -219,8 +221,8 @@ async function repairJson<T>(malformedJson: string, errorMsg: string, schema?: a
     for (const modelId of modelsToTry) {
         if (modelId === activeModelId && isPrimaryModelExhausted) continue;
         try {
-            const fixedText = await executeRepair(modelId);
-            if (fixedText) return safeParseJSON<T>(fixedText, undefined, true);
+            const repairResult = await executeRepair(modelId);
+            if (repairResult && repairResult.text) return repairResult as any;
         } catch (e: any) {
             lastError = e;
             const errorMessage = e.message || "";
@@ -250,7 +252,7 @@ export async function generateJson<T>(
     taskType?: string;
     forceTier?: ModelTier;
   } = {},
-): Promise<T> {
+): Promise<{ data: T; usage: { promptTokens: number; completionTokens: number; totalTokens: number }; modelId: string }> {
   const timeoutMs = opts.timeoutMs ?? AI_CONFIG.timeouts.generation;
   const maxTokens = AI_CONFIG.tokenBudgets[opts.tokenBudget ?? 'DEFAULT'];
 
@@ -269,8 +271,12 @@ export async function generateJson<T>(
   if (!opts.noCache) {
     const cached = responseCache.get(cacheKey);
     if (cached) {
-      logAiCall({ model: activeModelId, latencyMs: Date.now() - t0, success: true, cached: true });
-      return safeParseJSON<T>(cached);
+      logAiCall({ model: routedModel, latencyMs: Date.now() - t0, success: true, cached: true });
+      return { 
+        data: safeParseJSON<T>(cached), 
+        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+        modelId: routedModel
+      };
     }
   }
 
@@ -282,19 +288,19 @@ export async function generateJson<T>(
           ? `${prompt}\n\nPlease return the response in JSON format matching this schema:\n${JSON.stringify(schema)}`
           : prompt;
 
-        const callModel = async (modelId: string, signal: AbortSignal) => {
+        const callModel = async (modelId: string, signal: AbortSignal): Promise<{ text: string, usage: any }> => {
             if (modelId === 'mistral') {
                 const response = await callMistral({
                     messages: [{ role: 'user', content: fullPrompt }],
                     max_tokens: maxTokens,
                 });
-                return response.choices[0].message.content;
+                return { text: response.text || '', usage: response.usage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 } };
             } else if (modelId === 'azure-openai') {
                 const response = await callAzureOpenAI({
                     messages: [{ role: 'user', content: fullPrompt }],
                     max_tokens: maxTokens,
                 });
-                return response.choices[0].message.content;
+                return { text: response.text || '', usage: response.usage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 } };
             } else {
                 return await callGeminiProxy(fullPrompt, resolveModelTier(modelId), {
                     generationConfig: { maxOutputTokens: maxTokens },
@@ -309,6 +315,7 @@ export async function generateJson<T>(
         if (!modelsToTry.includes('azure-openai')) modelsToTry.push('azure-openai');
 
         let lastError: any = null;
+        let usage: { promptTokens: number; completionTokens: number; totalTokens: number } = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
         for (const modelId of modelsToTry) {
             if (modelId === activeModelId && isPrimaryModelExhausted) continue;
             if (circuitBreaker.isOpen(modelId)) {
@@ -318,10 +325,16 @@ export async function generateJson<T>(
 
             const callStart = Date.now();
             try {
-                text = await withTimeout((signal) => callModel(modelId, signal), timeoutMs);
+                const result = await withTimeout((signal) => callModel(modelId, signal), timeoutMs);
+                text = result.text;
+                usage = result.usage;
+                
                 circuitBreaker.recordSuccess(modelId);
-                logAiCall({ model: modelId, latencyMs: Date.now() - callStart, success: true });
-                if (text) break;
+                logAiCall({ model: modelId, latencyMs: Date.now() - callStart, success: true, usage });
+                if (text) {
+                    lastModelUsed = modelId;
+                    break;
+                }
             } catch (error: any) {
                 lastError = error;
                 circuitBreaker.recordFailure(modelId);
@@ -352,16 +365,22 @@ export async function generateJson<T>(
             }
             // Cache the raw JSON text on success
             if (!opts.noCache) responseCache.set(cacheKey, text);
-            return data;
+            return { data, usage, modelId: lastModelUsed };
 
         } catch (parseError: any) {
             try {
-                const repairedData = await repairJson<T>(text, parseError.message, schema);
+                const repairResult = await repairJson<T>(text, parseError.message, schema) as { text: string; usage: any };
+                const repairedData = safeParseJSON<T>(repairResult.text, undefined, true);
+                
+                // Add repair usage to original usage
+                usage.promptTokens += repairResult.usage?.promptTokens ?? 0;
+                usage.completionTokens += repairResult.usage?.completionTokens ?? 0;
+                usage.totalTokens += repairResult.usage?.totalTokens ?? 0;
 
                 if (requiredKeys.length > 0) {
                     validateStructure(repairedData, requiredKeys);
                 }
-                return repairedData;
+                return { data: repairedData, usage, modelId: lastModelUsed };
             } catch (repairError) {
                 logger.error("JSON Repair Failed:", repairError);
                 throw parseError;
@@ -375,20 +394,19 @@ export async function generateJson<T>(
 }
 
 // Special handler for Search Grounding (which doesn't support responseMimeType: JSON)
-export async function generateGroundedJson<T>(prompt: string, requiredKeys: string[] = []): Promise<T> {
+export async function generateGroundedJson<T>(prompt: string, requiredKeys: string[] = []): Promise<{ data: T; usage: any }> {
     return withRetry(async () => {
         try {
             let text = "";
             let sources: { title: string, uri: string }[] = [];
 
             const executeCall = async (modelId: string) => {
-                const text = await callGeminiProxy(
+                const result = await callGeminiProxy(
                     prompt,
                     resolveModelTier(modelId),
                     { tools: [{ googleSearch: {} }] }
                 );
-                const sources: { title: string, uri: string }[] = [];
-                return { text, sources };
+                return { text: result.text, sources: [], usage: result.usage, modelId };
             };
 
             if (activeModelId === 'mistral' || activeModelId === 'azure-openai') {
@@ -414,10 +432,14 @@ export async function generateGroundedJson<T>(prompt: string, requiredKeys: stri
                 if (proxyResult) {
                     text = proxyResult.text;
                     sources = proxyResult.sources;
+                    usage = proxyResult.usage;
+                    lastModelUsed = proxyResult.modelId;
                 } else {
                     const result = await executeCall(activeModelId);
                     text = result.text;
                     sources = result.sources;
+                    usage = result.usage;
+                    lastModelUsed = result.modelId;
                 }
             } else {
                 const modelsToTry = [activeModelId];
@@ -430,19 +452,24 @@ export async function generateGroundedJson<T>(prompt: string, requiredKeys: stri
                     if (modelId === activeModelId && isPrimaryModelExhausted) continue;
                     try {
                         if (modelId === 'mistral') {
-                            const fullPrompt = `${prompt}\n\nPlease return the response in JSON format.`;
-                            const response = await callMistral({ messages: [{ role: 'user', content: fullPrompt }] });
-                            text = response.choices[0].message.content;
+                            const response = await callMistral({ messages: [{ role: 'user', content: prompt }] });
+                            text = response.text || '';
                             sources = [];
+                            usage = response.usage;
+                            lastModelUsed = modelId;
                         } else if (modelId === 'azure-openai') {
                             const fullPrompt = `${prompt}\n\nPlease return the response in JSON format.`;
                             const response = await callAzureOpenAI({ messages: [{ role: 'user', content: fullPrompt }] });
-                            text = response.choices[0].message.content;
+                            text = response.text || '';
                             sources = [];
+                            usage = response.usage;
+                            lastModelUsed = modelId;
                         } else {
                             const result = await executeCall(modelId);
                             text = result.text;
                             sources = result.sources;
+                            usage = result.usage;
+                            lastModelUsed = result.modelId;
                         }
                         if (text) break;
                     } catch (error: any) {
@@ -487,7 +514,7 @@ export async function generateGroundedJson<T>(prompt: string, requiredKeys: stri
                 (data as any).sources = sources;
             }
 
-            return data;
+            return { data, usage };
         } catch (error) {
             handleAiError(error);
             throw error;
@@ -498,25 +525,25 @@ export async function generateGroundedJson<T>(prompt: string, requiredKeys: stri
 export async function generateText(
   prompt: string,
   opts: { timeoutMs?: number; tokenBudget?: TokenBudgetKey } = {},
-): Promise<string> {
+): Promise<{ text: string; usage: any; modelId: string }> {
   const timeoutMs = opts.timeoutMs ?? AI_CONFIG.timeouts.chat;
   const maxTokens = AI_CONFIG.tokenBudgets[opts.tokenBudget ?? 'CHAT'];
 
   return withRetry(async () => {
     try {
-        const callModel = async (modelId: string, signal: AbortSignal) => {
+        const callModel = async (modelId: string, signal: AbortSignal): Promise<{ text: string, usage: any }> => {
             if (modelId === 'mistral') {
                 const response = await callMistral({
                   messages: [{ role: 'user', content: prompt }],
                   max_tokens: maxTokens,
                 });
-                return response.choices[0].message.content || "";
+                return { text: response.text || '', usage: response.usage };
             } else if (modelId === 'azure-openai') {
                 const response = await callAzureOpenAI({
                   messages: [{ role: 'user', content: prompt }],
                   max_tokens: maxTokens,
                 });
-                return response.choices[0].message.content || "";
+                return { text: response.text || '', usage: response.usage };
             } else {
                 return await callGeminiProxy(prompt, resolveModelTier(modelId), {
                     generationConfig: { maxOutputTokens: maxTokens },
@@ -541,8 +568,8 @@ export async function generateText(
             try {
                 const result = await withTimeout((signal) => callModel(modelId, signal), timeoutMs);
                 circuitBreaker.recordSuccess(modelId);
-                logAiCall({ model: modelId, latencyMs: Date.now() - callStart, success: true });
-                if (result) return result;
+                logAiCall({ model: modelId, latencyMs: Date.now() - callStart, success: true, usage: result.usage });
+                if (result.text) return { text: result.text, usage: result.usage, modelId };
             } catch (error: any) {
                 lastError = error;
                 circuitBreaker.recordFailure(modelId);
@@ -563,7 +590,7 @@ export async function generateText(
         throw new Error("All models in fallback chain failed.");
     } catch (error) {
         handleAiError(error);
-        return "";
+        return { text: "", usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 }, modelId: activeModelId };
     }
   });
 }
@@ -621,7 +648,8 @@ export const generateAnalysisPlan = async (brief: string, sector: string): Promi
       brief,
       sector as Sector
   );
-  return generateJson<TAnalysisPlan>(prompt, AnalysisPlanSchema, ['approach', 'stakeholders', 'techniques']);
+  const result = await generateJson<TAnalysisPlan>(prompt, AnalysisPlanSchema, ['approach', 'stakeholders', 'techniques']);
+  return result.data;
 };
 
 export const ingestRawIntelligence = async (rawText: string): Promise<{title: string, description: string, sector: Sector}> => {
@@ -653,5 +681,6 @@ export const ingestRawIntelligence = async (rawText: string): Promise<{title: st
         required: ["title", "description", "sector"]
     };
 
-    return generateJson<{title: string, description: string, sector: Sector}>(prompt, schema, ['title', 'description', 'sector']);
+    const result = await generateJson<{title: string, description: string, sector: Sector}>(prompt, schema, ['title', 'description', 'sector']);
+    return result.data;
 };

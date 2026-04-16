@@ -29,10 +29,10 @@ const INITIAL_LINKS: TTraceabilityLink[] = [
 ];
 
 const LAYER_COLORS: { [key: string]: string } = {
-    'Goal': 'fill-accent-purple stroke-accent-purple',
+    'Goal': 'fill-accent-teal stroke-accent-teal',
     'Regulation': 'fill-accent-red stroke-accent-red',
-    'Requirement': 'fill-accent-purple stroke-accent-purple',
-    'Feature': 'fill-accent-purple stroke-accent-purple',
+    'Requirement': 'fill-accent-teal stroke-accent-teal',
+    'Feature': 'fill-accent-teal stroke-accent-teal',
     'Test': 'fill-accent-emerald stroke-accent-emerald',
     'Risk': 'fill-accent-amber stroke-accent-amber',
 };
@@ -196,11 +196,11 @@ export const TraceabilityGraph: React.FC<TraceabilityGraphProps> = ({ initiative
                 </div>
 
                 {selectedNode && (
-                    <div className="mb-4 bg-accent-purple/10 dark:bg-accent-purple/20 border-l-4 border-accent-purple p-3 rounded-r text-sm">
-                        <span className="font-bold text-accent-purple">{selectedNode.label}</span>
-                        <span className="mx-2 text-accent-purple/50">|</span>
-                        <span className="text-accent-purple/80">{selectedNode.description}</span>
-                        <span className="float-right text-xs uppercase font-semibold tracking-wider text-accent-purple">{selectedNode.layer}</span>
+                    <div className="mb-4 bg-accent-teal/10 dark:bg-accent-teal/20 border-l-4 border-accent-teal p-3 rounded-r text-sm">
+                        <span className="font-bold text-accent-teal">{selectedNode.label}</span>
+                        <span className="mx-2 text-accent-teal/50">|</span>
+                        <span className="text-accent-teal/80">{selectedNode.description}</span>
+                        <span className="float-right text-xs uppercase font-semibold tracking-wider text-accent-teal">{selectedNode.layer}</span>
                     </div>
                 )}
 
@@ -211,7 +211,7 @@ export const TraceabilityGraph: React.FC<TraceabilityGraphProps> = ({ initiative
                                 <polygon points="0 0, 10 3.5, 0 7" className="fill-gray-400 dark:fill-gray-500" />
                             </marker>
                              <marker id="arrowhead-highlight" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
-                                <polygon points="0 0, 10 3.5, 0 7" className="fill-accent-purple" />
+                                <polygon points="0 0, 10 3.5, 0 7" className="fill-accent-teal" />
                             </marker>
                         </defs>
 
@@ -232,7 +232,7 @@ export const TraceabilityGraph: React.FC<TraceabilityGraphProps> = ({ initiative
                                     d={path} 
                                     fill="none" 
                                     strokeWidth={isHighlighted ? "3" : "1.5"}
-                                    className={`${isHighlighted ? "stroke-accent-purple" : "stroke-gray-400 dark:stroke-gray-600"} ${isDimmed ? 'opacity-20' : 'opacity-100'} transition-opacity duration-300`}
+                                    className={`${isHighlighted ? "stroke-accent-teal" : "stroke-gray-400 dark:stroke-gray-600"} ${isDimmed ? 'opacity-20' : 'opacity-100'} transition-opacity duration-300`}
                                     markerEnd={isHighlighted ? "url(#arrowhead-highlight)" : "url(#arrowhead)"}
                                 />
                             );
@@ -255,7 +255,7 @@ export const TraceabilityGraph: React.FC<TraceabilityGraphProps> = ({ initiative
                                         width="120" 
                                         height="50" 
                                         rx="8" 
-                                        className={`${LAYER_COLORS[node.layer] || 'fill-gray-500 stroke-gray-700'} ${isSelected ? 'stroke-[3px] stroke-accent-purple' : isConnected ? 'stroke-[2px] stroke-accent-purple/80' : 'stroke-1'} fill-opacity-20`}
+                                        className={`${LAYER_COLORS[node.layer] || 'fill-gray-500 stroke-gray-700'} ${isSelected ? 'stroke-[3px] stroke-accent-teal' : isConnected ? 'stroke-[2px] stroke-accent-teal/80' : 'stroke-1'} fill-opacity-20`}
                                     />
                                     {/* Layer Badge */}
                                     <text x="115" y="12" textAnchor="end" fontSize="8" className="fill-gray-500 dark:fill-gray-400 uppercase font-bold tracking-wider">{node.layer.substring(0, 4)}</text>

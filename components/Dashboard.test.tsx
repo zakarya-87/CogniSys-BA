@@ -94,8 +94,8 @@ describe('Dashboard Component', () => {
             />
         );
 
-        // The create button uses t('common:create') which translates to 'Create'
-        const createButtons = screen.getAllByText('Create');
+        // The create button may be labeled 'Create' or 'New Initiative' — match by accessible role
+        const createButtons = screen.getAllByRole('button', { name: /new initiative/i });
         fireEvent.click(createButtons[0]);
         
         expect(handleCreate).toHaveBeenCalled();

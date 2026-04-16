@@ -1,37 +1,33 @@
 import { BaseRepository } from './BaseRepository';
 import { TActivity } from '../../types';
-import { getAdminDb } from '../lib/firebaseAdmin';
 
 export class ActivityRepository extends BaseRepository<TActivity> {
   constructor() {
     super('activities');
   }
 
+  async getByOrgIdPaginated(orgId: string, limit: number = 50, cursor?: string): Promise<{ data: TActivity[]; nextCursor: string | null }> {
+    return this.getPaginated({
+      where: [['orgId', '==', orgId]],
+      orderByField: 'timestamp',
+      limit,
+      cursor
+    });
+  }
+
+  // Deprecated: used for backward compatibility, should migrate to getByOrgIdPaginated
   async getByOrgId(orgId: string, limit: number = 50): Promise<TActivity[]> {
-    try {
-      const querySnapshot = await getAdminDb()
-        .collection(this.collectionName)
-        .where('orgId', '==', orgId)
-        .orderBy('timestamp', 'desc')
-        .limit(limit)
-        .get();
-      return querySnapshot.docs.map(doc => doc.data() as TActivity);
-    } catch (error: any) {
-      // Handle the case where a composite index is required but hasn't been created yet
-      if (error.code === 9 || error.message?.includes('FAILED_PRECONDITION')) {
-        console.error('[FIRESTORE] Missing composite index for activities. Follow this link to create it:', error.message);
-        throw new Error('Database error: Missing required index for activity queries.');
-      }
-      throw error;
-    }
+    const result = await this.getByOrgIdPaginated(orgId, limit);
+    return result.data;
   }
 
   async getByInitiativeId(initiativeId: string): Promise<TActivity[]> {
-    const querySnapshot = await getAdminDb()
-      .collection(this.collectionName)
-      .where('initiativeId', '==', initiativeId)
-      .orderBy('timestamp', 'desc')
-      .get();
-    return querySnapshot.docs.map(doc => doc.data() as TActivity);
+    // Current requirement is just for org-wide sync, but we could paginate this too if needed.
+    const result = await this.getPaginated({
+      where: [['initiativeId', '==', initiativeId]],
+      orderByField: 'timestamp',
+      limit: 100 // High limit for specific initiative history
+    });
+    return result.data;
   }
 }

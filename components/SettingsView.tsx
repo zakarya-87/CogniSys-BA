@@ -12,6 +12,7 @@ import { generateMonteCarloSimulation, runEthicalCheck, generateText, generateAn
 import { Microservices } from '../services/microservices';
 import { OracleService } from '../services/oracleService';
 import { AI_PROVIDERS, getProviderForModel } from '../constants';
+import { EconomicDashboard } from './EconomicDashboard';
 
 const SettingsCard: React.FC<{ title: string; description: string; children: React.ReactNode }> = ({ title, description, children }) => (
   <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
@@ -49,8 +50,8 @@ const AIProviderSelector: React.FC<{ aiModel: string; setAiModel: (id: string) =
                 onClick={() => setSelectedProviderId(provider.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 ${
                   isActive
-                    ? 'bg-accent-purple text-white border-transparent shadow-md shadow-accent-purple/30'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:border-accent-purple/50'
+                    ? 'bg-accent-teal text-white border-transparent shadow-md shadow-accent-teal/30'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:border-accent-teal/50'
                 }`}
               >
                 <span>{provider.icon}</span>
@@ -78,21 +79,21 @@ const AIProviderSelector: React.FC<{ aiModel: string; setAiModel: (id: string) =
                 onClick={() => setAiModel(model.id)}
                 className={`text-left p-3 rounded-xl border transition-all duration-200 group ${
                   isSelected
-                    ? 'border-accent-purple bg-accent-purple/10 dark:bg-accent-purple/20'
-                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-accent-purple/40 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                    ? 'border-accent-teal bg-accent-teal/10 dark:bg-accent-teal/20'
+                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-accent-teal/40 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-semibold truncate ${isSelected ? 'text-accent-purple' : 'text-gray-800 dark:text-gray-100'}`}>
+                    <p className={`text-sm font-semibold truncate ${isSelected ? 'text-accent-teal' : 'text-gray-800 dark:text-gray-100'}`}>
                       {model.name}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">{model.description}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
                     {isSelected && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-accent-purple">
-                        <span className="w-1.5 h-1.5 rounded-full bg-accent-purple inline-block" />
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-accent-teal">
+                        <span className="w-1.5 h-1.5 rounded-full bg-accent-teal inline-block" />
                         Active
                       </span>
                     )}
@@ -112,7 +113,7 @@ const AIProviderSelector: React.FC<{ aiModel: string; setAiModel: (id: string) =
         <span className="text-lg">🔑</span>
         <p className="text-xs text-gray-500 dark:text-gray-400">
           <span className="font-semibold text-gray-700 dark:text-gray-300">{selectedProvider.name}</span> requires{' '}
-          <code className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-[11px] font-mono text-accent-purple">
+          <code className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-[11px] font-mono text-accent-teal">
             {selectedProvider.requiresKey}
           </code>{' '}
           to be set in your <code className="font-mono text-[11px]">.env.local</code>.
@@ -127,7 +128,7 @@ export const SettingsView: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const { t, i18n } = useTranslation(['settings', 'common']);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeSettingsTab, setActiveSettingsTab] = useState<'general' | 'members' | 'billing'>('general');
+  const [activeSettingsTab, setActiveSettingsTab] = useState<'general' | 'members' | 'billing' | 'usage'>('general');
 
   const handleLanguageChange = (lng: string) => {
     i18n.changeLanguage(lng);
@@ -311,18 +312,18 @@ export const SettingsView: React.FC = () => {
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('settings:title')}</h1>
 
       {/* Tab bar */}
-      <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700">
-        {(['general', 'members', 'billing'] as const).map((tab) => (
+      <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700 overflow-x-auto no-scrollbar">
+        {(['general', 'members', 'billing', 'usage'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveSettingsTab(tab)}
-            className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
+            className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px whitespace-nowrap ${
               activeSettingsTab === tab
                 ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
                 : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
             }`}
           >
-            {tab}
+            {tab === 'usage' ? 'Economic Insights' : tab}
           </button>
         ))}
       </div>
@@ -337,6 +338,10 @@ export const SettingsView: React.FC = () => {
         <Suspense fallback={<div className="p-6 text-slate-400 text-sm">Loading…</div>}>
           <BillingView />
         </Suspense>
+      )}
+
+      {activeSettingsTab === 'usage' && (
+        <EconomicDashboard />
       )}
 
       {activeSettingsTab === 'general' && <>
@@ -364,7 +369,7 @@ export const SettingsView: React.FC = () => {
           <select 
             value={i18n.resolvedLanguage ?? i18n.language}
             onChange={(e) => handleLanguageChange(e.target.value)}
-            className="w-full max-w-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-accent-purple outline-none"
+            className="w-full max-w-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-accent-teal outline-none"
           >
             <option value="en">English (US)</option>
             <option value="fr">Français (FR)</option>

@@ -172,7 +172,7 @@ export const StrategyAnalyzer: React.FC<StrategyAnalyzerProps> = ({ initiative, 
                 <textarea
                     id="context"
                     rows={5}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-purple"
+                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-teal"
                     value={context}
                     onChange={(e) => setContext(e.target.value)}
                     placeholder={t('dashboard:strategy.contextPlaceholder')}
@@ -189,7 +189,7 @@ export const StrategyAnalyzer: React.FC<StrategyAnalyzerProps> = ({ initiative, 
                                 id="cost"
                                 value={projectedCost}
                                 onChange={(e) => setProjectedCost(e.target.value)}
-                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-purple"
+                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-teal"
                                 placeholder={t('dashboard:strategy.investment.budgetPlaceholder')}
                             />
                         </div>
@@ -200,7 +200,7 @@ export const StrategyAnalyzer: React.FC<StrategyAnalyzerProps> = ({ initiative, 
                                 id="revenue"
                                 value={expectedRevenue}
                                 onChange={(e) => setExpectedRevenue(e.target.value)}
-                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-purple"
+                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-teal"
                                 placeholder={t('dashboard:strategy.investment.budgetPlaceholder')}
                             />
                         </div>
@@ -211,7 +211,7 @@ export const StrategyAnalyzer: React.FC<StrategyAnalyzerProps> = ({ initiative, 
                                 id="timeframe"
                                 value={timeframe}
                                 onChange={(e) => setTimeframe(e.target.value)}
-                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-purple"
+                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-teal"
                                 placeholder={t('dashboard:strategy.investment.timelinePlaceholder')}
                             />
                         </div>
@@ -221,7 +221,7 @@ export const StrategyAnalyzer: React.FC<StrategyAnalyzerProps> = ({ initiative, 
                                 id="detailLevel"
                                 value={reportDetailLevel}
                                 onChange={(e) => setReportDetailLevel(e.target.value as TReportDetailLevel)}
-                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-purple"
+                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-teal"
                             >
                                 <option value="basic">{t('dashboard:strategy.investment.basic')}</option>
                                 <option value="detailed">{t('dashboard:strategy.investment.detailed')}</option>
@@ -239,7 +239,7 @@ export const StrategyAnalyzer: React.FC<StrategyAnalyzerProps> = ({ initiative, 
                             id="businessGoal"
                             value={businessGoal}
                             onChange={(e) => setBusinessGoal(e.target.value)}
-                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-purple"
+                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-teal"
                             rows={3}
                             placeholder={t('dashboard:strategy.kpi.goalPlaceholder')}
                         />
@@ -281,7 +281,7 @@ export const StrategyAnalyzer: React.FC<StrategyAnalyzerProps> = ({ initiative, 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-900 dark:text-white">
                         <SwotQuadrant title={t('dashboard:strategy.swot.strengths')} items={swot.strengths} className="bg-accent-emerald/10 dark:bg-accent-emerald/20" icon={<PlusCircleIcon className="h-6 w-6 text-accent-emerald" />} />
                         <SwotQuadrant title={t('dashboard:strategy.swot.weaknesses')} items={swot.weaknesses} className="bg-accent-red/10 dark:bg-accent-red/20" icon={<MinusCircleIcon className="h-6 w-6 text-accent-red" />} />
-                        <SwotQuadrant title={t('dashboard:strategy.swot.opportunities')} items={swot.opportunities} className="bg-accent-purple/10 dark:bg-accent-purple/20" icon={<ArrowUpCircleIcon className="h-6 w-6 text-accent-purple" />} />
+                        <SwotQuadrant title={t('dashboard:strategy.swot.opportunities')} items={swot.opportunities} className="bg-accent-teal/10 dark:bg-accent-teal/20" icon={<ArrowUpCircleIcon className="h-6 w-6 text-accent-teal" />} />
                         <SwotQuadrant title={t('dashboard:strategy.swot.threats')} items={swot.threats} className="bg-accent-amber/10 dark:bg-accent-amber/20" icon={<ExclamationTriangleIcon className="h-6 w-6 text-accent-amber" />} />
                     </div>
                 </div>

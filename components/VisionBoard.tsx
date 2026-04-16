@@ -86,13 +86,13 @@ export const VisionBoard: React.FC = () => {
             {/* Header */}
             <div className="bg-surface-light/80 dark:bg-surface-dark/80 backdrop-blur-xl border-b border-border-light dark:border-border-dark p-6 flex justify-between items-center z-10">
                 <div className="flex items-center gap-4">
-                    <div className="p-3 bg-accent-purple/10 rounded-2xl">
-                        <ImageIcon className="h-8 w-8 text-accent-purple" />
+                    <div className="p-3 bg-accent-teal/10 rounded-2xl">
+                        <ImageIcon className="h-8 w-8 text-accent-teal" />
                     </div>
                     <div>
                         <h1 className="text-2xl font-black text-text-main-light dark:text-text-main-dark tracking-tight flex items-center gap-2">
                             {t('visionBoard.title')}
-                            <Sparkles className="h-4 w-4 text-accent-purple animate-pulse" />
+                            <Sparkles className="h-4 w-4 text-accent-teal animate-pulse" />
                         </h1>
                         <p className="text-text-muted-light dark:text-text-muted-dark text-sm font-medium">{t('visionBoard.subtitle')}</p>
                     </div>
@@ -102,7 +102,7 @@ export const VisionBoard: React.FC = () => {
                     <select 
                         value={selectedInitiativeId}
                         onChange={(e) => setSelectedInitiativeId(e.target.value)}
-                        className="px-4 py-2.5 bg-surface-darker/5 dark:bg-surface-darker/20 border border-border-light dark:border-border-dark rounded-xl text-sm font-bold text-text-main-light dark:text-text-main-dark focus:ring-2 focus:ring-accent-purple/50 transition-all outline-none"
+                        className="px-4 py-2.5 bg-surface-darker/5 dark:bg-surface-darker/20 border border-border-light dark:border-border-dark rounded-xl text-sm font-bold text-text-main-light dark:text-text-main-dark focus:ring-2 focus:ring-accent-teal/50 transition-all outline-none"
                     >
                         <option value="">{t('visionBoard.selectProject')}</option>
                         {initiatives.map(i => <option key={i.id} value={i.id}>{i.title}</option>)}
@@ -128,7 +128,7 @@ export const VisionBoard: React.FC = () => {
                                     onClick={() => setAnalysisType(type.id as TVisionAnalysisType)}
                                     className={`px-4 py-2 text-xs font-black rounded-full transition-all border uppercase tracking-wider ${
                                         analysisType === type.id 
-                                            ? 'bg-accent-purple text-white border-accent-purple shadow-lg shadow-accent-purple/20' 
+                                            ? 'bg-accent-teal text-white border-accent-teal shadow-lg shadow-accent-teal/20' 
                                             : 'bg-surface-darker/5 text-text-muted-light dark:text-text-muted-dark border-border-light dark:border-border-dark hover:bg-surface-darker/10 dark:hover:bg-surface-darker/30'
                                     }`}
                                 >
@@ -141,8 +141,8 @@ export const VisionBoard: React.FC = () => {
                     <div 
                         className={`flex-grow border-2 border-dashed rounded-3xl flex flex-col items-center justify-center relative overflow-hidden transition-all group cursor-pointer ${
                             imagePreview 
-                                ? 'border-accent-purple/50 bg-surface-darker shadow-inner' 
-                                : 'border-border-light dark:border-border-dark hover:border-accent-purple/50 hover:bg-surface-darker/5 dark:hover:bg-surface-darker/20'
+                                ? 'border-accent-teal/50 bg-surface-darker shadow-inner' 
+                                : 'border-border-light dark:border-border-dark hover:border-accent-teal/50 hover:bg-surface-darker/5 dark:hover:bg-surface-darker/20'
                         }`}
                         onClick={() => fileInputRef.current?.click()}
                     >
@@ -150,8 +150,8 @@ export const VisionBoard: React.FC = () => {
                             <img src={imagePreview} alt="Preview" className="max-w-full max-h-full object-contain p-4 animate-in zoom-in-95 duration-500" />
                         ) : (
                             <div className="text-center p-12 transition-transform group-hover:scale-105 duration-300">
-                                <div className="h-20 w-20 bg-accent-purple/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                                    <Upload className="h-10 w-10 text-accent-purple" />
+                                <div className="h-20 w-20 bg-accent-teal/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                                    <Upload className="h-10 w-10 text-accent-teal" />
                                 </div>
                                 <p className="text-text-main-light dark:text-text-main-dark font-black text-lg tracking-tight">{t('visionBoard.uploadImage')}</p>
                                 <p className="text-sm text-text-muted-light dark:text-text-muted-dark mt-2 font-medium">{t('visionBoard.uploadSupport')}</p>
@@ -182,7 +182,7 @@ export const VisionBoard: React.FC = () => {
                     <Button 
                         onClick={handleAnalyze} 
                         disabled={isLoading || !imagePreview || !activeInitiative} 
-                        className="w-full py-4 text-lg font-black uppercase tracking-[0.2em] shadow-xl shadow-accent-purple/20 rounded-2xl"
+                        className="w-full py-4 text-lg font-black uppercase tracking-[0.2em] shadow-xl shadow-accent-teal/20 rounded-2xl"
                     >
                         {isLoading ? <Spinner /> : <><Eye className="h-6 w-6 mr-3" /> {t('visionBoard.analyze')}</>}
                     </Button>
@@ -199,10 +199,10 @@ export const VisionBoard: React.FC = () => {
                         </div>
                         {result && (
                             <div className="flex gap-4">
-                                <button onClick={handleCopyToClipboard} className="text-[10px] font-black uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark hover:text-accent-purple transition-colors flex items-center gap-2">
+                                <button onClick={handleCopyToClipboard} className="text-[10px] font-black uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark hover:text-accent-teal transition-colors flex items-center gap-2">
                                     <Copy className="h-3 w-3" /> {t('visionBoard.copyJson')}
                                 </button>
-                                <button onClick={handleSaveToArtifacts} className="text-[10px] font-black uppercase tracking-widest text-accent-purple hover:text-accent-purple/80 transition-colors flex items-center gap-2">
+                                <button onClick={handleSaveToArtifacts} className="text-[10px] font-black uppercase tracking-widest text-accent-teal hover:text-accent-teal/80 transition-colors flex items-center gap-2">
                                     <Save className="h-3 w-3" /> {t('visionBoard.saveToProject')}
                                 </button>
                             </div>
@@ -246,7 +246,7 @@ export const VisionBoard: React.FC = () => {
                                 )}
                                 
                                 <div className="pt-4">
-                                    <button className="w-full py-3 rounded-xl border border-accent-purple/20 text-accent-purple text-[10px] font-black uppercase tracking-[0.2em] hover:bg-accent-purple/5 transition-all flex items-center justify-center gap-2">
+                                    <button className="w-full py-3 rounded-xl border border-accent-teal/20 text-accent-teal text-[10px] font-black uppercase tracking-[0.2em] hover:bg-accent-teal/5 transition-all flex items-center justify-center gap-2">
                                         {t('visionBoard.refine')} <ChevronRight className="h-3 w-3" />
                                     </button>
                                 </div>

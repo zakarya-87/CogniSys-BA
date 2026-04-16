@@ -63,6 +63,7 @@ export class TaskQueue {
   /**
    * Record a task failure. If retryCount >= MAX_TASK_RETRIES the task is moved
    * to the dead-letter queue (`task_dlq`) and removed from `task_queue`.
+   * Implements exponential backoff: 2^retryCount * 5 seconds.
    */
   static async recordFailure(taskId: string, reason: string, taskData: any): Promise<void> {
     const db = getAdminDb();
@@ -79,11 +80,16 @@ export class TaskQueue {
       });
       await db.collection('task_queue').doc(taskId).delete();
     } else {
-      // Increment retry count and mark as failed (worker will re-pick on next snapshot)
+      // Calculate backoff: 5s, 10s, 20s...
+      const backoffSeconds = Math.pow(2, retryCount - 1) * 5;
+      const nextRetryAt = new Date(Date.now() + backoffSeconds * 1000);
+
+      // Increment retry count and schedule next attempt
       await db.collection('task_queue').doc(taskId).update({
         status: TaskStatus.FAILED,
         lastError: reason,
         retryCount,
+        nextRetryAt: admin.firestore.Timestamp.fromDate(nextRetryAt),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
     }

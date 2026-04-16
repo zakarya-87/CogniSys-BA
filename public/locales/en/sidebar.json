@@ -10,7 +10,9 @@
   "cortex": "Cortex",
   "predictiveCore": "Predictive Core",
   "pulse": "Pulse",
-  "warRoom": "War Room",
-  "construct": "Construct",
-  "visionBoard": "Vision Board"
+  "warRoom": "The War Room",
+  "construct": "The Construct",
+  "visionBoard": "Vision Board",
+  "initiatives": "Initiatives",
+  "oracle": "The Oracle"
 }

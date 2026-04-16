@@ -85,29 +85,29 @@ export function DataTable<T>({
 
   return (
     <div className={`w-full ${className}`}>
-      <div className="overflow-x-auto rounded-xl border border-border-light dark:border-border-dark">
+      <div className="overflow-hidden rounded-[2rem] border border-white/5 bg-white/[0.02] shadow-2xl backdrop-blur-xl metallic-sheen">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-slate-50/80 dark:bg-surface-dark border-b border-border-light dark:border-border-dark">
+            <tr className="bg-white/[0.03] border-b border-white/10">
               {columns.map(col => (
                 <th
                   key={col.key}
-                  className={`px-4 py-3 text-left font-semibold text-text-muted-light dark:text-text-muted-dark ${
-                    col.sortable ? 'cursor-pointer select-none hover:text-text-light dark:hover:text-text-dark transition-colors' : ''
+                  className={`px-8 py-6 text-left font-black text-[10px] uppercase tracking-[0.3em] text-white/40 ${
+                    col.sortable ? 'cursor-pointer select-none hover:text-accent-teal transition-all' : ''
                   }`}
                   style={col.width ? { width: col.width } : undefined}
                   onClick={col.sortable ? () => handleSort(col.key) : undefined}
                 >
-                  <span className="inline-flex items-center gap-1">
+                  <span className="inline-flex items-center gap-2">
                     {col.header}
                     {col.sortable && (
                       <span className="inline-flex flex-col">
                         {sortKey === col.key && sortDir === 'asc' ? (
-                          <ChevronUp className="w-3.5 h-3.5 text-accent-teal" />
+                          <ChevronUp className="w-4 h-4 text-accent-cyan" />
                         ) : sortKey === col.key && sortDir === 'desc' ? (
-                          <ChevronDown className="w-3.5 h-3.5 text-accent-teal" />
+                          <ChevronDown className="w-4 h-4 text-accent-cyan" />
                         ) : (
-                          <ChevronsUpDown className="w-3.5 h-3.5 opacity-40" />
+                          <ChevronsUpDown className="w-4 h-4 opacity-20" />
                         )}
                       </span>
                     )}
@@ -116,19 +116,19 @@ export function DataTable<T>({
               ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-white/5">
             {pagedData.map((row) => (
               <tr
                 key={keyExtractor(row)}
-                className={`border-b border-border-light/50 dark:border-border-dark/50 transition-colors ${
+                className={`group transition-all duration-500 ${
                   onRowClick
-                    ? 'cursor-pointer hover:bg-accent-teal/5 dark:hover:bg-accent-teal/5'
-                    : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]'
+                    ? 'cursor-pointer hover:bg-accent-teal/5'
+                    : 'hover:bg-white/[0.01]'
                 }`}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
               >
                 {columns.map(col => (
-                  <td key={col.key} className="px-4 py-3 tabular-nums">
+                  <td key={col.key} className="px-8 py-5 tabular-nums text-white/70 group-hover:text-white transition-colors">
                     {col.render ? col.render(row) : String((row as any)[col.key] ?? '')}
                   </td>
                 ))}
@@ -139,27 +139,29 @@ export function DataTable<T>({
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-3 px-1">
-          <span className="text-xs text-text-muted-light dark:text-text-muted-dark tabular-nums">
-            {page * pageSize + 1}–{Math.min((page + 1) * pageSize, sortedData.length)} of {sortedData.length}
+        <div className="flex items-center justify-between mt-6 px-4">
+          <span className="text-[10px] font-black uppercase tracking-widest text-white/30 tabular-nums">
+            {page * pageSize + 1} – {Math.min((page + 1) * pageSize, sortedData.length)} <span className="mx-1 opacity-50">/</span> {sortedData.length}
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setPage(p => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-3 rounded-xl border border-white/5 bg-white/5 hover:border-accent-teal/40 hover:bg-accent-teal/10 disabled:opacity-10 disabled:cursor-not-allowed transition-all"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4 text-white" />
             </button>
-            <span className="text-xs px-2 tabular-nums text-text-muted-light dark:text-text-muted-dark">
-              {page + 1} / {totalPages}
-            </span>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/5">
+                <span className="text-[10px] font-black text-white/50 uppercase tracking-widest tabular-nums">
+                Page {page + 1} <span className="mx-1 opacity-30">/</span> {totalPages}
+                </span>
+            </div>
             <button
               onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
-              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-3 rounded-xl border border-white/5 bg-white/5 hover:border-accent-teal/40 hover:bg-accent-teal/10 disabled:opacity-10 disabled:cursor-not-allowed transition-all"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4 text-white" />
             </button>
           </div>
         </div>

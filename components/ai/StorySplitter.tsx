@@ -63,7 +63,7 @@ export const StorySplitter: React.FC<StorySplitterProps> = ({ initiative, onAddT
             <div className="flex justify-between items-start mb-6">
                 <div>
                     <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <ScissorsIcon className="h-7 w-7 text-accent-purple" />
+                        <ScissorsIcon className="h-7 w-7 text-accent-teal" />
                         Intelligent Story Splitter
                     </h2>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -76,7 +76,7 @@ export const StorySplitter: React.FC<StorySplitterProps> = ({ initiative, onAddT
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Large Story / Epic</label>
                 <div className="flex flex-col sm:flex-row gap-3 items-end">
                     <textarea 
-                        className="flex-grow w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus:ring-2 focus:ring-accent-purple"
+                        className="flex-grow w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus:ring-2 focus:ring-accent-teal"
                         rows={3}
                         value={epic}
                         onChange={(e) => setEpic(e.target.value)}
@@ -99,7 +99,7 @@ export const StorySplitter: React.FC<StorySplitterProps> = ({ initiative, onAddT
                                 onClick={() => setSelectedStrategyIndex(index)}
                                 className={`w-full text-left p-3 rounded-lg border transition-all ${
                                     selectedStrategyIndex === index
-                                        ? 'bg-accent-purple/10 border-accent-purple text-accent-purple dark:bg-accent-purple/20'
+                                        ? 'bg-accent-teal/10 border-accent-teal text-accent-teal dark:bg-accent-teal/20'
                                         : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
                                 }`}
                             >
@@ -129,7 +129,7 @@ export const StorySplitter: React.FC<StorySplitterProps> = ({ initiative, onAddT
                                     {(suggestions[selectedStrategyIndex].stories || []).map((story, i) => (
                                         <div key={i} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                                             <div className="flex items-start gap-3">
-                                                <div className="bg-accent-purple/10 text-accent-purple font-bold rounded-full w-6 h-6 flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
+                                                <div className="bg-accent-teal/10 text-accent-teal font-bold rounded-full w-6 h-6 flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
                                                     {i + 1}
                                                 </div>
                                                 <div>

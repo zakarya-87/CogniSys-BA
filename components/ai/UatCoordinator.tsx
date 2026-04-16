@@ -71,7 +71,7 @@ export const UatCoordinator: React.FC<UatCoordinatorProps> = ({ initiative, back
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
                     <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <BeakerIcon className="h-7 w-7 text-accent-purple" />
+                        <BeakerIcon className="h-7 w-7 text-accent-teal" />
                         UAT Coordinator
                     </h2>
                     <p className="text-gray-600 dark:text-gray-400">
