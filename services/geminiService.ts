@@ -5,3 +5,5 @@ export * from './ai/requirementsService';
 export * from './ai/diagramService';
 export * from './ai/analysisService';
 export * from './ai/contentService';
+export * from './ai/aiConfig';
+export * from './ai/types';

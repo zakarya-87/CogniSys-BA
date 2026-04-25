@@ -9,6 +9,8 @@
  * services remain unchanged. Only the transport layer changes.
  */
 
+import { auth } from './firebase';
+
 const PROXY_URL = '/api/gemini/generate';
 
 export interface GeminiProxyConfig {
@@ -28,11 +30,19 @@ export async function callGeminiProxy(
   model: 'flash' | 'pro' = 'flash',
   config?: GeminiProxyConfig,
   signal?: AbortSignal
-): Promise<string> {
+): Promise<{ text: string; usage: { promptTokens: number; completionTokens: number; totalTokens: number } }> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  
+  // Attach Bearer token if user is signed in
+  if (auth.currentUser) {
+    const token = await auth.currentUser.getIdToken();
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch(PROXY_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include', // Send auth_session cookie
+    headers,
+    credentials: 'include', // Still send cookies for supplementary auth if needed
     body: JSON.stringify({ prompt, model, config }),
     signal,
   });
@@ -48,8 +58,14 @@ export async function callGeminiProxy(
     throw new Error(errorMessage);
   }
 
-  const data = await response.json() as { text: string };
-  return data.text ?? '';
+  const data = await response.json() as { 
+    text: string; 
+    usage: { promptTokens: number; completionTokens: number; totalTokens: number } 
+  };
+  return { 
+    text: data.text ?? '', 
+    usage: data.usage ?? { promptTokens: 0, completionTokens: 0, totalTokens: 0 } 
+  };
 }
 
 /**

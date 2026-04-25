@@ -55,7 +55,7 @@ export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({ initiative }) => {
             <div className="flex justify-between items-start mb-6">
                 <div>
                     <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <ClipboardDocumentCheckIcon className="h-7 w-7 text-accent-purple" />
+                        <ClipboardDocumentCheckIcon className="h-7 w-7 text-accent-teal" />
                         Intelligent Survey Builder
                     </h2>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -72,7 +72,7 @@ export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({ initiative }) => {
                             type="text" 
                             value={goal}
                             onChange={(e) => setGoal(e.target.value)}
-                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus:ring-2 focus:ring-accent-purple"
+                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus:ring-2 focus:ring-accent-teal"
                             placeholder="e.g. Validate interest in biometric login"
                         />
                     </div>
@@ -82,7 +82,7 @@ export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({ initiative }) => {
                             type="text" 
                             value={audience}
                             onChange={(e) => setAudience(e.target.value)}
-                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus:ring-2 focus:ring-accent-purple"
+                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus:ring-2 focus:ring-accent-teal"
                             placeholder="e.g. Current mobile app users, aged 18-35"
                         />
                     </div>
@@ -96,7 +96,7 @@ export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({ initiative }) => {
 
             {survey && (
                 <div className="flex-grow animate-fade-in-down bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm max-w-3xl mx-auto w-full flex flex-col overflow-hidden">
-                    <div className="bg-accent-purple p-6 text-white">
+                    <div className="bg-accent-teal p-6 text-white">
                         <h3 className="text-2xl font-bold">{survey.title}</h3>
                         <p className="text-white/80 mt-2 text-sm">{survey.intro}</p>
                     </div>
@@ -112,7 +112,7 @@ export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({ initiative }) => {
                                     <div className="space-y-2">
                                         {(q.options || []).map((opt, j) => (
                                             <label key={j} className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                                                <input type="radio" name={`q-${i}`} className="text-accent-purple focus:ring-accent-purple" />
+                                                <input type="radio" name={`q-${i}`} className="text-accent-teal focus:ring-accent-teal" />
                                                 {opt}
                                             </label>
                                         ))}
@@ -123,7 +123,7 @@ export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({ initiative }) => {
                                     <div className="flex justify-between items-center bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
                                         {[1, 2, 3, 4, 5].map(val => (
                                             <label key={val} className="flex flex-col items-center cursor-pointer">
-                                                <input type="radio" name={`q-${i}`} className="mb-1 text-accent-purple focus:ring-accent-purple" />
+                                                <input type="radio" name={`q-${i}`} className="mb-1 text-accent-teal focus:ring-accent-teal" />
                                                 <span className="text-xs text-gray-500 dark:text-gray-400">{val}</span>
                                             </label>
                                         ))}

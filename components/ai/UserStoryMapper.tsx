@@ -46,7 +46,7 @@ export const UserStoryMapper: React.FC<UserStoryMapperProps> = ({ initiative }) 
             <div className="flex justify-between items-start mb-6">
                 <div>
                     <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Square3Stack3DIcon className="h-7 w-7 text-accent-purple" />
+                        <Square3Stack3DIcon className="h-7 w-7 text-accent-teal" />
                         Intelligent Story Mapper
                     </h2>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -72,22 +72,22 @@ export const UserStoryMapper: React.FC<UserStoryMapperProps> = ({ initiative }) 
             {map && (
                 <div className="flex flex-col gap-4 flex-grow overflow-auto custom-scrollbar">
                     {map.aiAnalysis && (
-                        <div className="bg-accent-purple/10 dark:bg-accent-purple/20 p-4 rounded-lg border border-accent-purple/20">
-                            <h3 className="text-sm font-semibold text-accent-purple mb-2">AI Analysis</h3>
-                            <p className="text-sm text-accent-purple/80">{map.aiAnalysis}</p>
+                        <div className="bg-accent-teal/10 dark:bg-accent-teal/20 p-4 rounded-lg border border-accent-teal/20">
+                            <h3 className="text-sm font-semibold text-accent-teal mb-2">AI Analysis</h3>
+                            <p className="text-sm text-accent-teal/80">{map.aiAnalysis}</p>
                         </div>
                     )}
                     <div className="flex-grow overflow-x-auto overflow-y-auto custom-scrollbar border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/50 p-4">
                         <div className="min-w-max flex flex-col gap-6">
                             
                             {/* Backbone: Activities */}
-                        <div className="flex gap-4 border-b-4 border-accent-purple/20 dark:border-accent-purple/30 pb-4 sticky top-0 z-10">
+                        <div className="flex gap-4 border-b-4 border-accent-teal/20 dark:border-accent-teal/30 pb-4 sticky top-0 z-10">
                             {(map.activities || []).map(act => (
                                 <div key={act.id} className="w-48 flex-shrink-0">
-                                    <div className="bg-accent-purple text-white p-3 rounded-md shadow-sm text-center font-bold text-sm">
+                                    <div className="bg-accent-teal text-white p-3 rounded-md shadow-sm text-center font-bold text-sm">
                                         {act.title}
                                     </div>
-                                    <div className="h-6 w-0.5 bg-accent-purple/20 dark:bg-accent-purple/30 mx-auto"></div>
+                                    <div className="h-6 w-0.5 bg-accent-teal/20 dark:bg-accent-teal/30 mx-auto"></div>
                                 </div>
                             ))}
                         </div>

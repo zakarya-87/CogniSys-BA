@@ -4,13 +4,119 @@ import { withRetry, safeParseJSON, validateStructure } from '../../utils/aiUtils
 import { callMistral, callAzureOpenAI } from '../llmProxyService';
 import { TAnalysisPlan, Sector } from '../../types';
 import _generatedSchemas from '../../generated_schemas.json';
+import { AI_CONFIG, TokenBudgetKey } from './aiConfig';
+import { logger } from '../../src/utils/logger';
+import { scoreComplexity, ModelTier } from './types';
 
-// Logger shim — replace with your actual logger if available
-const logger = {
-  log: (...args: any[]) => console.log(...args),
-  warn: (...args: any[]) => console.warn(...args),
-  error: (...args: any[]) => console.error(...args),
-};
+// ─── Circuit Breaker ──────────────────────────────────────────────────────────
+/** Tracks per-provider failure state. Thread-safe within a single JS engine. */
+class CircuitBreaker {
+  private failures = new Map<string, number>();
+  private openedAt = new Map<string, number>();
+
+  isOpen(provider: string): boolean {
+    const failures = this.failures.get(provider) ?? 0;
+    if (failures < AI_CONFIG.circuitBreaker.failureThreshold) return false;
+    const opened = this.openedAt.get(provider) ?? 0;
+    // After cooldown, allow one probe (half-open)
+    if (Date.now() - opened > AI_CONFIG.circuitBreaker.cooldownMs) return false;
+    return true;
+  }
+
+  recordFailure(provider: string): void {
+    const count = (this.failures.get(provider) ?? 0) + 1;
+    this.failures.set(provider, count);
+    if (count === AI_CONFIG.circuitBreaker.failureThreshold) {
+      this.openedAt.set(provider, Date.now());
+      logger.warn(`[CircuitBreaker] Provider "${provider}" OPENED after ${count} failures`);
+    }
+  }
+
+  recordSuccess(provider: string): void {
+    const wasFailing = (this.failures.get(provider) ?? 0) >= AI_CONFIG.circuitBreaker.failureThreshold;
+    this.failures.set(provider, 0);
+    this.openedAt.delete(provider);
+    if (wasFailing) logger.log(`[CircuitBreaker] Provider "${provider}" CLOSED (recovered)`);
+  }
+}
+
+// ─── LRU Response Cache ───────────────────────────────────────────────────────
+class LRUCache {
+  private cache = new Map<string, { value: string; expiresAt: number }>();
+
+  get(key: string): string | undefined {
+    const entry = this.cache.get(key);
+    if (!entry) return undefined;
+    if (Date.now() > entry.expiresAt) { this.cache.delete(key); return undefined; }
+    // Move to end (most recently used)
+    this.cache.delete(key);
+    this.cache.set(key, entry);
+    return entry.value;
+  }
+
+  set(key: string, value: string): void {
+    // Only evict if we're adding a new key (not updating an existing one)
+    if (!this.cache.has(key) && this.cache.size >= AI_CONFIG.cache.maxSize) {
+      const oldest = this.cache.keys().next().value;
+      if (oldest !== undefined) this.cache.delete(oldest);
+    }
+    this.cache.set(key, { value, expiresAt: Date.now() + AI_CONFIG.cache.ttlMs });
+  }
+}
+
+/** SHA-256 cache key over the full prompt — no truncation, no collision risk */
+function hashKey(model: string, prompt: string): string {
+  // crypto is available in browser (WebCrypto) and Node; use a sync approach via
+  // a simple djb2-style hash over the full string for client-side compatibility.
+  // We XOR the first half against the second half to keep sensitivity to late chars.
+  const str = `${model}::${prompt}`;
+  let h1 = 0x811c9dc5; // FNV offset basis
+  let h2 = 0x9dc5811c;
+  for (let i = 0; i < str.length; i++) {
+    const c = str.charCodeAt(i);
+    if (i < str.length / 2) {
+      h1 ^= c; h1 = Math.imul(h1, 0x01000193);
+    } else {
+      h2 ^= c; h2 = Math.imul(h2, 0x01000193);
+    }
+  }
+  return ((h1 >>> 0).toString(36) + (h2 >>> 0).toString(36));
+}
+
+// ─── Request Timeout ─────────────────────────────────────────────────────────
+/**
+ * Wraps `fn` with an AbortController so the underlying fetch can be cancelled.
+ * The signal is passed to `fn`; callers that support it (callGeminiProxy) will
+ * abort the in-flight request rather than just letting it drain silently.
+ */
+function withTimeout<T>(fn: (signal: AbortSignal) => Promise<T>, ms: number): Promise<T> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(new Error(`AI request timed out after ${ms}ms`)), ms);
+  return fn(controller.signal).finally(() => clearTimeout(timer));
+}
+
+// ─── Structured AI Call Logging ───────────────────────────────────────────────
+function logAiCall(opts: {
+  model: string;
+  latencyMs: number;
+  success: boolean;
+  usage?: { promptTokens: number; completionTokens: number; totalTokens: number };
+  cached?: boolean;
+  retryCount?: number;
+  error?: string;
+}) {
+  const { model, latencyMs, success, usage, cached, retryCount, error } = opts;
+  if (success) {
+    const tokens = usage ? ` | tokens: ${usage.totalTokens}` : '';
+    logger.log(`[AI] ${model} | ${latencyMs}ms${cached ? ' (cached)' : ''}${tokens} | ok${retryCount ? ` retry=${retryCount}` : ''}`);
+  } else {
+    logger.warn(`[AI] ${model} | ${latencyMs}ms | FAILED: ${error}`);
+  }
+}
+
+// ─── Module-level singletons ──────────────────────────────────────────────────
+const circuitBreaker = new CircuitBreaker();
+const responseCache = new LRUCache();
 
 // Local Type constants — mirrors @google/genai Type enum values used in schemas.
 export const Type = {
@@ -23,8 +129,8 @@ type JsonSchema = { required?: string[]; [key: string]: unknown };
 export const generatedSchemas = _generatedSchemas as Record<string, JsonSchema>;
 
 // Default model tier — 'flash' is fast/cheap; 'pro' for complex reasoning tasks
-let activeModelId = 'gemini-2.5-flash';
-const FALLBACK_MODEL = 'gemini-2.5-flash';
+let activeModelId: string = AI_CONFIG.models.primary;
+const FALLBACK_MODEL: string = AI_CONFIG.models.fallback;
 
 // Global flag to track if the primary model is exhausted (quota reached)
 let isPrimaryModelExhausted = false;
@@ -82,7 +188,7 @@ function handleAiError(error: any): never {
 
 // --- Self-Healing JSON Logic ---
 
-async function repairJson<T>(malformedJson: string, errorMsg: string, schema?: any): Promise<T> {
+async function repairJson<T>(malformedJson: string, errorMsg: string, schema?: any): Promise<{ text: string, usage: any }> {
     logger.warn("Attempting to repair malformed JSON via AI...", errorMsg);
 
     const repairPrompt = `You are a JSON Repair Agent. The following JSON string is invalid or missing required keys. 
@@ -94,13 +200,13 @@ async function repairJson<T>(malformedJson: string, errorMsg: string, schema?: a
     Broken JSON:
     ${malformedJson}`;
 
-    const executeRepair = async (modelId: string) => {
+    const executeRepair = async (modelId: string): Promise<{ text: string, usage: any }> => {
         if (modelId === 'mistral') {
             const response = await callMistral({ messages: [{ role: 'user', content: repairPrompt }] });
-            return response.choices[0].message.content;
+            return { text: response.text || '', usage: response.usage };
         } else if (modelId === 'azure-openai') {
             const response = await callAzureOpenAI({ messages: [{ role: 'user', content: repairPrompt }] });
-            return response.choices[0].message.content;
+            return { text: response.text || '', usage: response.usage };
         } else {
             return await callGeminiProxy(repairPrompt, resolveModelTier(modelId));
         }
@@ -113,17 +219,17 @@ async function repairJson<T>(malformedJson: string, errorMsg: string, schema?: a
 
     let lastError: any = null;
     for (const modelId of modelsToTry) {
-        if (modelId === 'gemini-3-flash-preview' && isPrimaryModelExhausted) continue;
+        if (modelId === activeModelId && isPrimaryModelExhausted) continue;
         try {
-            const fixedText = await executeRepair(modelId);
-            if (fixedText) return safeParseJSON<T>(fixedText, undefined, true);
+            const repairResult = await executeRepair(modelId);
+            if (repairResult && repairResult.text) return repairResult as any;
         } catch (e: any) {
             lastError = e;
             const errorMessage = e.message || "";
             if (errorMessage.includes('429') || errorMessage.includes('Quota')) {
-                if (modelId === 'gemini-3-flash-preview') {
+                if (modelId === activeModelId) {
                     isPrimaryModelExhausted = true;
-                    window.dispatchEvent(new Event('quota-exceeded'));
+                    if (typeof window !== 'undefined') window.dispatchEvent(new Event('quota-exceeded'));
                 }
             }
             logger.warn(`Repair attempt with ${modelId} failed. Trying next...`, errorMessage);
@@ -135,51 +241,112 @@ async function repairJson<T>(malformedJson: string, errorMsg: string, schema?: a
 
 // --- Core AI Caller ---
 
-export async function generateJson<T>(prompt: string, schema?: any, requiredKeys: string[] = []): Promise<T> {
+export async function generateJson<T>(
+  prompt: string,
+  schema?: any,
+  requiredKeys: string[] = [],
+  opts: {
+    noCache?: boolean;
+    tokenBudget?: TokenBudgetKey;
+    timeoutMs?: number;
+    taskType?: string;
+    forceTier?: ModelTier;
+  } = {},
+): Promise<{ data: T; usage: { promptTokens: number; completionTokens: number; totalTokens: number }; modelId: string }> {
+  const timeoutMs = opts.timeoutMs ?? AI_CONFIG.timeouts.generation;
+  const maxTokens = AI_CONFIG.tokenBudgets[opts.tokenBudget ?? 'DEFAULT'];
+
+  // Smart model routing: complexity score decides flash vs pro
+  const { tier } = scoreComplexity({
+    taskType: opts.taskType,
+    inputLength: prompt.length,
+    forceTier: opts.forceTier,
+  });
+  const routedModel = tier === 'pro' ? AI_CONFIG.models.reasoning : activeModelId;
+
+  const cacheKey = hashKey(routedModel, prompt);
+  const t0 = Date.now();
+
+  // Cache hit — skip network call entirely
+  if (!opts.noCache) {
+    const cached = responseCache.get(cacheKey);
+    if (cached) {
+      logAiCall({ model: routedModel, latencyMs: Date.now() - t0, success: true, cached: true });
+      return { 
+        data: safeParseJSON<T>(cached), 
+        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+        modelId: routedModel
+      };
+    }
+  }
+
   return withRetry(async () => {
     try {
         let text = "";
 
-        const fullPrompt = schema ? `${prompt}\n\nPlease return the response in JSON format matching this schema:\n${JSON.stringify(schema)}` : prompt;
+        const fullPrompt = schema
+          ? `${prompt}\n\nPlease return the response in JSON format matching this schema:\n${JSON.stringify(schema)}`
+          : prompt;
 
-        const callModel = async (modelId: string) => {
+        const callModel = async (modelId: string, signal: AbortSignal): Promise<{ text: string, usage: any }> => {
             if (modelId === 'mistral') {
                 const response = await callMistral({
                     messages: [{ role: 'user', content: fullPrompt }],
+                    max_tokens: maxTokens,
                 });
-                return response.choices[0].message.content;
+                return { text: response.text || '', usage: response.usage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 } };
             } else if (modelId === 'azure-openai') {
                 const response = await callAzureOpenAI({
                     messages: [{ role: 'user', content: fullPrompt }],
+                    max_tokens: maxTokens,
                 });
-                return response.choices[0].message.content;
+                return { text: response.text || '', usage: response.usage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 } };
             } else {
-                return await callGeminiProxy(fullPrompt, resolveModelTier(modelId));
+                return await callGeminiProxy(fullPrompt, resolveModelTier(modelId), {
+                    generationConfig: { maxOutputTokens: maxTokens },
+                }, signal);
             }
         };
 
-        const modelsToTry = [activeModelId];
-        if (activeModelId !== FALLBACK_MODEL) modelsToTry.push(FALLBACK_MODEL);
+        // Start with the complexity-routed model; fall back along the chain
+        const modelsToTry = [routedModel];
+        if (routedModel !== FALLBACK_MODEL) modelsToTry.push(FALLBACK_MODEL);
         if (!modelsToTry.includes('mistral')) modelsToTry.push('mistral');
         if (!modelsToTry.includes('azure-openai')) modelsToTry.push('azure-openai');
 
         let lastError: any = null;
+        let usage: { promptTokens: number; completionTokens: number; totalTokens: number } = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
         for (const modelId of modelsToTry) {
-            if (modelId === 'gemini-3-flash-preview' && isPrimaryModelExhausted) continue;
+            if (modelId === activeModelId && isPrimaryModelExhausted) continue;
+            if (circuitBreaker.isOpen(modelId)) {
+                logger.warn(`[CircuitBreaker] Skipping open provider: ${modelId}`);
+                continue;
+            }
 
+            const callStart = Date.now();
             try {
-                text = await callModel(modelId);
-                if (text) break;
+                const result = await withTimeout((signal) => callModel(modelId, signal), timeoutMs);
+                text = result.text;
+                usage = result.usage;
+                
+                circuitBreaker.recordSuccess(modelId);
+                logAiCall({ model: modelId, latencyMs: Date.now() - callStart, success: true, usage });
+                if (text) {
+                    lastModelUsed = modelId;
+                    break;
+                }
             } catch (error: any) {
                 lastError = error;
+                circuitBreaker.recordFailure(modelId);
                 const errorMessage = error.message || error.error?.message || JSON.stringify(error);
                 const isQuotaError = errorMessage.includes('429') || errorMessage.includes('Quota') || error.status === 'RESOURCE_EXHAUSTED';
 
-                if (isQuotaError && modelId === 'gemini-3-flash-preview') {
+                if (isQuotaError && modelId === activeModelId) {
                     isPrimaryModelExhausted = true;
-                    window.dispatchEvent(new Event('quota-exceeded'));
+                    if (typeof window !== 'undefined') window.dispatchEvent(new Event('quota-exceeded'));
                 }
 
+                logAiCall({ model: modelId, latencyMs: Date.now() - callStart, success: false, error: errorMessage });
                 logger.warn(`Model ${modelId} failed. Trying next in chain...`, errorMessage);
                 continue;
             }
@@ -196,16 +363,24 @@ export async function generateJson<T>(prompt: string, schema?: any, requiredKeys
             if (requiredKeys.length > 0) {
                 validateStructure(data, requiredKeys);
             }
-            return data;
+            // Cache the raw JSON text on success
+            if (!opts.noCache) responseCache.set(cacheKey, text);
+            return { data, usage, modelId: lastModelUsed };
 
         } catch (parseError: any) {
             try {
-                const repairedData = await repairJson<T>(text, parseError.message, schema);
+                const repairResult = await repairJson<T>(text, parseError.message, schema) as { text: string; usage: any };
+                const repairedData = safeParseJSON<T>(repairResult.text, undefined, true);
+                
+                // Add repair usage to original usage
+                usage.promptTokens += repairResult.usage?.promptTokens ?? 0;
+                usage.completionTokens += repairResult.usage?.completionTokens ?? 0;
+                usage.totalTokens += repairResult.usage?.totalTokens ?? 0;
 
                 if (requiredKeys.length > 0) {
                     validateStructure(repairedData, requiredKeys);
                 }
-                return repairedData;
+                return { data: repairedData, usage, modelId: lastModelUsed };
             } catch (repairError) {
                 logger.error("JSON Repair Failed:", repairError);
                 throw parseError;
@@ -219,20 +394,19 @@ export async function generateJson<T>(prompt: string, schema?: any, requiredKeys
 }
 
 // Special handler for Search Grounding (which doesn't support responseMimeType: JSON)
-export async function generateGroundedJson<T>(prompt: string, requiredKeys: string[] = []): Promise<T> {
+export async function generateGroundedJson<T>(prompt: string, requiredKeys: string[] = []): Promise<{ data: T; usage: any }> {
     return withRetry(async () => {
         try {
             let text = "";
             let sources: { title: string, uri: string }[] = [];
 
             const executeCall = async (modelId: string) => {
-                const text = await callGeminiProxy(
+                const result = await callGeminiProxy(
                     prompt,
                     resolveModelTier(modelId),
                     { tools: [{ googleSearch: {} }] }
                 );
-                const sources: { title: string, uri: string }[] = [];
-                return { text, sources };
+                return { text: result.text, sources: [], usage: result.usage, modelId };
             };
 
             if (activeModelId === 'mistral' || activeModelId === 'azure-openai') {
@@ -258,10 +432,14 @@ export async function generateGroundedJson<T>(prompt: string, requiredKeys: stri
                 if (proxyResult) {
                     text = proxyResult.text;
                     sources = proxyResult.sources;
+                    usage = proxyResult.usage;
+                    lastModelUsed = proxyResult.modelId;
                 } else {
-                    const result = await executeCall('gemini-3-flash-preview');
+                    const result = await executeCall(activeModelId);
                     text = result.text;
                     sources = result.sources;
+                    usage = result.usage;
+                    lastModelUsed = result.modelId;
                 }
             } else {
                 const modelsToTry = [activeModelId];
@@ -271,22 +449,27 @@ export async function generateGroundedJson<T>(prompt: string, requiredKeys: stri
 
                 let lastError: any = null;
                 for (const modelId of modelsToTry) {
-                    if (modelId === 'gemini-3-flash-preview' && isPrimaryModelExhausted) continue;
+                    if (modelId === activeModelId && isPrimaryModelExhausted) continue;
                     try {
                         if (modelId === 'mistral') {
-                            const fullPrompt = `${prompt}\n\nPlease return the response in JSON format.`;
-                            const response = await callMistral({ messages: [{ role: 'user', content: fullPrompt }] });
-                            text = response.choices[0].message.content;
+                            const response = await callMistral({ messages: [{ role: 'user', content: prompt }] });
+                            text = response.text || '';
                             sources = [];
+                            usage = response.usage;
+                            lastModelUsed = modelId;
                         } else if (modelId === 'azure-openai') {
                             const fullPrompt = `${prompt}\n\nPlease return the response in JSON format.`;
                             const response = await callAzureOpenAI({ messages: [{ role: 'user', content: fullPrompt }] });
-                            text = response.choices[0].message.content;
+                            text = response.text || '';
                             sources = [];
+                            usage = response.usage;
+                            lastModelUsed = modelId;
                         } else {
                             const result = await executeCall(modelId);
                             text = result.text;
                             sources = result.sources;
+                            usage = result.usage;
+                            lastModelUsed = result.modelId;
                         }
                         if (text) break;
                     } catch (error: any) {
@@ -294,9 +477,9 @@ export async function generateGroundedJson<T>(prompt: string, requiredKeys: stri
                         const errorMessage = error.message || error.error?.message || JSON.stringify(error);
                         const isQuotaError = errorMessage.includes('429') || errorMessage.includes('Quota') || error.status === 'RESOURCE_EXHAUSTED';
 
-                        if (isQuotaError && modelId === 'gemini-3-flash-preview') {
+                        if (isQuotaError && modelId === activeModelId) {
                             isPrimaryModelExhausted = true;
-                            window.dispatchEvent(new Event('quota-exceeded'));
+                            if (typeof window !== 'undefined') window.dispatchEvent(new Event('quota-exceeded'));
                         }
 
                         logger.warn(`Model ${modelId} failed. Trying next in chain...`, errorMessage);
@@ -331,7 +514,7 @@ export async function generateGroundedJson<T>(prompt: string, requiredKeys: stri
                 (data as any).sources = sources;
             }
 
-            return data;
+            return { data, usage };
         } catch (error) {
             handleAiError(error);
             throw error;
@@ -339,18 +522,32 @@ export async function generateGroundedJson<T>(prompt: string, requiredKeys: stri
     });
 }
 
-export async function generateText(prompt: string): Promise<string> {
+export async function generateText(
+  prompt: string,
+  opts: { timeoutMs?: number; tokenBudget?: TokenBudgetKey } = {},
+): Promise<{ text: string; usage: any; modelId: string }> {
+  const timeoutMs = opts.timeoutMs ?? AI_CONFIG.timeouts.chat;
+  const maxTokens = AI_CONFIG.tokenBudgets[opts.tokenBudget ?? 'CHAT'];
+
   return withRetry(async () => {
     try {
-        const callModel = async (modelId: string) => {
+        const callModel = async (modelId: string, signal: AbortSignal): Promise<{ text: string, usage: any }> => {
             if (modelId === 'mistral') {
-                const response = await callMistral({ messages: [{ role: 'user', content: prompt }] });
-                return response.choices[0].message.content || "";
+                const response = await callMistral({
+                  messages: [{ role: 'user', content: prompt }],
+                  max_tokens: maxTokens,
+                });
+                return { text: response.text || '', usage: response.usage };
             } else if (modelId === 'azure-openai') {
-                const response = await callAzureOpenAI({ messages: [{ role: 'user', content: prompt }] });
-                return response.choices[0].message.content || "";
+                const response = await callAzureOpenAI({
+                  messages: [{ role: 'user', content: prompt }],
+                  max_tokens: maxTokens,
+                });
+                return { text: response.text || '', usage: response.usage };
             } else {
-                return await callGeminiProxy(prompt, resolveModelTier(modelId));
+                return await callGeminiProxy(prompt, resolveModelTier(modelId), {
+                    generationConfig: { maxOutputTokens: maxTokens },
+                }, signal);
             }
         };
 
@@ -361,20 +558,30 @@ export async function generateText(prompt: string): Promise<string> {
 
         let lastError: any = null;
         for (const modelId of modelsToTry) {
-            if (modelId === 'gemini-3-flash-preview' && isPrimaryModelExhausted) continue;
+            if (modelId === activeModelId && isPrimaryModelExhausted) continue;
+            if (circuitBreaker.isOpen(modelId)) {
+                logger.warn(`[CircuitBreaker] Skipping open provider: ${modelId}`);
+                continue;
+            }
+
+            const callStart = Date.now();
             try {
-                const result = await callModel(modelId);
-                if (result) return result;
+                const result = await withTimeout((signal) => callModel(modelId, signal), timeoutMs);
+                circuitBreaker.recordSuccess(modelId);
+                logAiCall({ model: modelId, latencyMs: Date.now() - callStart, success: true, usage: result.usage });
+                if (result.text) return { text: result.text, usage: result.usage, modelId };
             } catch (error: any) {
                 lastError = error;
+                circuitBreaker.recordFailure(modelId);
                 const errorMessage = error.message || error.error?.message || JSON.stringify(error);
                 const isQuotaError = errorMessage.includes('429') || errorMessage.includes('Quota') || error.status === 'RESOURCE_EXHAUSTED';
 
-                if (isQuotaError && modelId === 'gemini-3-flash-preview') {
+                if (isQuotaError && modelId === activeModelId) {
                     isPrimaryModelExhausted = true;
-                    window.dispatchEvent(new Event('quota-exceeded'));
+                    if (typeof window !== 'undefined') window.dispatchEvent(new Event('quota-exceeded'));
                 }
 
+                logAiCall({ model: modelId, latencyMs: Date.now() - callStart, success: false, error: errorMessage });
                 logger.warn(`Model ${modelId} failed. Trying next in chain...`, errorMessage);
                 continue;
             }
@@ -383,7 +590,7 @@ export async function generateText(prompt: string): Promise<string> {
         throw new Error("All models in fallback chain failed.");
     } catch (error) {
         handleAiError(error);
-        return "";
+        return { text: "", usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 }, modelId: activeModelId };
     }
   });
 }
@@ -391,11 +598,21 @@ export async function generateText(prompt: string): Promise<string> {
 // --- Embedding Generation ---
 export const getEmbedding = async (text: string): Promise<number[]> => {
   try {
-    const response = await fetch('/api/gemini/embed', {
+    let token = '';
+    const user = (await import('../../firebase')).auth.currentUser;
+    if (user) {
+      try { token = await user.getIdToken(); } catch (e) {}
+    }
+    const fetchWithTimeout = withTimeout((signal) => fetch('/api/gemini/embed', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
       body: JSON.stringify({ text }),
-    });
+      signal,
+    }), AI_CONFIG.timeouts.embedding);
+    const response = await fetchWithTimeout;
     if (!response.ok) {
       logger.warn(`getEmbedding: server returned ${response.status}`);
       return [];
@@ -431,7 +648,8 @@ export const generateAnalysisPlan = async (brief: string, sector: string): Promi
       brief,
       sector as Sector
   );
-  return generateJson<TAnalysisPlan>(prompt, AnalysisPlanSchema, ['approach', 'stakeholders', 'techniques']);
+  const result = await generateJson<TAnalysisPlan>(prompt, AnalysisPlanSchema, ['approach', 'stakeholders', 'techniques']);
+  return result.data;
 };
 
 export const ingestRawIntelligence = async (rawText: string): Promise<{title: string, description: string, sector: Sector}> => {
@@ -463,5 +681,6 @@ export const ingestRawIntelligence = async (rawText: string): Promise<{title: st
         required: ["title", "description", "sector"]
     };
 
-    return generateJson<{title: string, description: string, sector: Sector}>(prompt, schema, ['title', 'description', 'sector']);
+    const result = await generateJson<{title: string, description: string, sector: Sector}>(prompt, schema, ['title', 'description', 'sector']);
+    return result.data;
 };

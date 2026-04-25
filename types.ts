@@ -108,6 +108,7 @@ export interface TProject {
   orgId: string;
   name: string;
   description: string;
+  lastUpdated?: string;
 }
 
 export interface TInitiative {
@@ -1583,6 +1584,12 @@ export interface TEthicalCheck {
     summary: string;
 }
 
+export interface TUsage {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+}
+
 export type THiveAgent = 'Orchestrator' | 'Scout' | 'Guardian' | 'Integromat' | 'Simulation';
 
 export interface THiveMessage {
@@ -1594,6 +1601,8 @@ export interface THiveMessage {
     timestamp: number;
     status?: 'thinking' | 'done' | 'waiting_approval';
     metadata?: any; // For structured data like search results or risk flags
+    usage?: TUsage;
+    cost?: number;
 }
 
 // Graph Logic Types
@@ -1603,7 +1612,7 @@ export interface THiveStep {
     action: string;
     data?: any;
     nextAgent?: THiveAgent;
-    status: 'pending' | 'active' | 'completed' | 'failed';
+    status: 'pending' | 'active' | 'completed' | 'failed' | 'timed_out';
 }
 
 export interface THiveState {
@@ -1616,6 +1625,10 @@ export interface THiveState {
     // Graph specific
     stepQueue: THiveStep[];
     history: THiveStep[];
+
+    // Telemetry
+    totalTokens?: TUsage;
+    totalCost?: number;
     
     // HITL (Human-in-the-Loop)
     approvalRequest?: {
@@ -1653,6 +1666,7 @@ export interface IAgentResponse {
     targetAgent?: THiveAgent;
     instructions?: string;
     toolCall?: { name: string; args: any };
+    usage?: TUsage;
 }
 
 export interface IAgent {

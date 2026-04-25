@@ -12,7 +12,7 @@ interface InitiativeActionsProps {
 }
 
 const statusStyles: { [key in InitiativeStatus]: { text: string, bg: string, ring: string } } = {
-  [InitiativeStatus.PLANNING]: { text: 'text-accent-purple dark:text-accent-purple/90', bg: 'bg-accent-purple/10 dark:bg-accent-purple/20', ring: 'ring-accent-purple/20' },
+  [InitiativeStatus.PLANNING]: { text: 'text-accent-teal dark:text-accent-teal/90', bg: 'bg-accent-teal/10 dark:bg-accent-teal/20', ring: 'ring-accent-teal/20' },
   [InitiativeStatus.AWAITING_APPROVAL]: { text: 'text-accent-amber dark:text-accent-amber/90', bg: 'bg-accent-amber/10 dark:bg-accent-amber/20', ring: 'ring-accent-amber/20' },
   [InitiativeStatus.IN_DEVELOPMENT]: { text: 'text-accent-blue dark:text-accent-blue/90', bg: 'bg-accent-blue/10 dark:bg-accent-blue/20', ring: 'ring-accent-blue/20' },
   [InitiativeStatus.LIVE]: { text: 'text-accent-emerald dark:text-accent-emerald/90', bg: 'bg-accent-emerald/10 dark:bg-accent-emerald/20', ring: 'ring-accent-emerald/20' },
@@ -27,7 +27,7 @@ export const InitiativeActions: React.FC<InitiativeActionsProps> = ({ initiative
     switch(initiative.status) {
       case InitiativeStatus.PLANNING:
         return (
-          <Button onClick={() => onUpdateStatus(initiative.id, InitiativeStatus.AWAITING_APPROVAL)} className="shadow-lg shadow-accent-purple/20">
+          <Button onClick={() => onUpdateStatus(initiative.id, InitiativeStatus.AWAITING_APPROVAL)} className="shadow-lg shadow-accent-teal/20">
             <Send className="h-4 w-4 me-2 rtl:rotate-180" />
             {t('actions.submit_approval')}
           </Button>
@@ -42,7 +42,7 @@ export const InitiativeActions: React.FC<InitiativeActionsProps> = ({ initiative
              <div className="flex gap-2">
                 <button 
                     onClick={() => onUpdateStatus(initiative.id, InitiativeStatus.IN_DEVELOPMENT)} 
-                    className="text-[10px] uppercase tracking-wider font-bold text-text-muted-light hover:text-accent-purple transition-colors"
+                    className="text-[10px] uppercase tracking-wider font-bold text-text-muted-light hover:text-accent-teal transition-colors"
                 >
                     {t('actions.force_approve')}
                 </button>

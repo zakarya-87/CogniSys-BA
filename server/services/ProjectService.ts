@@ -17,6 +17,10 @@ export class ProjectService {
     return this.repo.getByOrgId(orgId);
   }
 
+  async getProjectsByOrgPaginated(orgId: string, limit: number, cursor?: string): Promise<{ data: TProject[]; nextCursor: string | null }> {
+    return this.repo.getByOrgIdPaginated(orgId, limit, cursor);
+  }
+
   async updateProject(
     project: TProject,
     before: Partial<TProject>,

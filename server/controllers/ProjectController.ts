@@ -22,8 +22,11 @@ export class ProjectController {
   static async list(req: Request, res: Response) {
     try {
       const { orgId } = req.params as { orgId: string };
-      const projects = await projectService.getProjectsByOrg(orgId);
-      res.json(projects);
+      const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 20, 1), 100);
+      const cursor = req.query.cursor as string | undefined;
+
+      const { data, nextCursor } = await projectService.getProjectsByOrgPaginated(orgId, limit, cursor);
+      res.json({ data, nextCursor });
     } catch (error) {
       safeError(res, error, 'ProjectController.list');
     }

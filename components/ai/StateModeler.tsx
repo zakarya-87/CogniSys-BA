@@ -78,7 +78,7 @@ export const StateModeler: React.FC<StateModelerProps> = ({ initiative }) => {
             <div className="flex justify-between items-start mb-6">
                 <div>
                     <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <ArrowPathRoundedSquareIcon className="h-7 w-7 text-accent-purple" />
+                        <ArrowPathRoundedSquareIcon className="h-7 w-7 text-accent-teal" />
                         Intelligent State Modeler
                     </h2>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -95,7 +95,7 @@ export const StateModeler: React.FC<StateModelerProps> = ({ initiative }) => {
                         value={entityName}
                         onChange={(e) => setEntityName(e.target.value)}
                         placeholder="e.g., Order, Ticket, Patient Enrollment"
-                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-purple"
+                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-teal"
                     />
                 </div>
                 <Button onClick={handleGenerate} disabled={isLoading || !entityName}>
@@ -133,7 +133,7 @@ export const StateModeler: React.FC<StateModelerProps> = ({ initiative }) => {
                                     {(Array.isArray(model?.transitions) ? model.transitions : []).map((t, i) => (
                                         <tr key={i}>
                                             <td className="px-3 py-2 font-medium">{t.from}</td>
-                                            <td className="px-3 py-2 text-accent-purple dark:text-accent-purple/80">{t.label}</td>
+                                            <td className="px-3 py-2 text-accent-teal dark:text-accent-teal/80">{t.label}</td>
                                             <td className="px-3 py-2 italic text-gray-500">{t.condition}</td>
                                             <td className="px-3 py-2 font-medium">{t.to}</td>
                                         </tr>

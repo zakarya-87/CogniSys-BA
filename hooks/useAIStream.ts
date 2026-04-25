@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { auth } from '../firebase';
 
 export type AIStreamStatus = 'idle' | 'pending' | 'running' | 'complete' | 'error';
 
@@ -10,12 +11,6 @@ export interface AIStreamState {
 
 /**
  * Sends an async AI generation request and streams the result via SSE.
- *
- * Usage:
- *   const { stream, state } = useAIStream();
- *   await stream({ prompt: '...', model: 'flash' });
- *   // state.status tracks: idle → pending → running → complete | error
- *   // state.result contains the final text when complete
  */
 export function useAIStream() {
   const [state, setState] = useState<AIStreamState>({ status: 'idle', result: null, error: null });
@@ -32,9 +27,17 @@ export function useAIStream() {
     setState({ status: 'pending', result: null, error: null });
 
     // 1. Kick off async generation — get operationId
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const user = auth.currentUser;
+    const token = user ? await user.getIdToken() : null;
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const res = await fetch('/api/gemini/generate/stream', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       credentials: 'include',
       body: JSON.stringify(body),
     });
@@ -46,12 +49,18 @@ export function useAIStream() {
       throw new Error(errorMsg);
     }
 
-    const { operationId } = await res.json() as { operationId: string };
+    const { operationId, sseToken } = await res.json() as { operationId: string; sseToken?: string };
     setState(prev => ({ ...prev, status: 'running' }));
 
     // 2. Open SSE connection to receive progress/complete/error events
     return new Promise((resolve, reject) => {
-      const es = new EventSource(`/api/ai/stream/${operationId}`, { withCredentials: true });
+      // Use the short-lived, single-use sseToken instead of the Firebase ID token
+      // to avoid exposing long-lived credentials in URL query params.
+      const tokenParam = sseToken
+        ? `?sseToken=${encodeURIComponent(sseToken)}`
+        : token ? `?token=${encodeURIComponent(token)}` : '';
+      const url = `/api/ai/stream/${operationId}${tokenParam}`;
+      const es = new EventSource(url, { withCredentials: true });
       esRef.current = es;
 
       es.addEventListener('progress', () => {

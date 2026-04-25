@@ -1,22 +1,30 @@
 
-import React, { useState } from 'react';
-import { TInitiative, TEstimationReport, TEstimationItem } from '../../types';
+import React, { useState, useEffect } from 'react';
+import { TInitiative, TEstimationReport } from '../../types';
 import { generateEstimates } from '../../services/geminiService';
 import { Button } from '../ui/Button';
 import { Spinner } from '../ui/Spinner';
+import { useCatalyst } from '../../context/CatalystContext';
 
 interface EstimationEngineProps {
     initiative: TInitiative;
 }
 
 const CalculatorIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V13.5zm0 2.25h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V18zm2.498-6.75h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V13.5zm0 2.25h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V18zm2.504-6.75h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zm0 2.25h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V18m2.498-6.75h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zM8.25 6h7.5a2.25 2.25 0 012.25 2.25v12a2.25 2.25 0 01-2.25 2.25H8.25a2.25 2.25 0 01-2.25-2.25V8.25A2.25 2.25 0 018.25 6z" /></svg>;
-const ChartBarIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>;
 
 export const EstimationEngine: React.FC<EstimationEngineProps> = ({ initiative }) => {
+    const { saveArtifact } = useCatalyst();
     const [storiesInput, setStoriesInput] = useState('Login, Dashboard, Reports, User Profile, Payment Gateway');
     const [error, setError] = useState<string | null>(null);
     const [report, setReport] = useState<TEstimationReport | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+
+    // Sync with persistence on mount or initiative change
+    useEffect(() => {
+        if (initiative.artifacts?.estimation) {
+            setReport(initiative.artifacts.estimation);
+        }
+    }, [initiative.id, initiative.artifacts?.estimation]);
 
     const handleGenerate = async () => {
         if (!storiesInput.trim()) return;
@@ -26,6 +34,7 @@ export const EstimationEngine: React.FC<EstimationEngineProps> = ({ initiative }
             const storyList = storiesInput.split(',').map(s => s.trim()).filter(Boolean);
             const result = await generateEstimates(storyList, initiative.sector);
             setReport(result);
+            saveArtifact(initiative.id, 'estimation', result);
         } catch (error) {
             console.error(error);
             setError("Failed to generate estimates.");
@@ -49,123 +58,138 @@ export const EstimationEngine: React.FC<EstimationEngineProps> = ({ initiative }
         
         // Recalculate totals
         const totalEffort = newItems.reduce((acc, curr) => acc + curr.weightedAvg, 0);
-        // 2-Sigma Confidence Interval (Approx sum of variances square root)
         const varianceSum = newItems.reduce((acc, curr) => acc + Math.pow(curr.stdDev, 2), 0);
-        const confidenceInterval = parseFloat((Math.sqrt(varianceSum) * 2).toFixed(1)); // 95% confidence roughly 2 SD
+        const confidenceInterval = parseFloat((Math.sqrt(varianceSum) * 2).toFixed(1)); 
 
-        setReport({ ...report, items: newItems, totalEffort, confidenceInterval });
+        const updatedReport = { ...report, items: newItems, totalEffort, confidenceInterval };
+        setReport(updatedReport);
+        saveArtifact(initiative.id, 'estimation', updatedReport);
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md h-full flex flex-col">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md h-full flex flex-col border border-border-light dark:border-border-dark">
             {error && (
-                <div className="p-4 bg-accent-red/10 text-accent-red rounded-lg border border-accent-red/20">
-                    <h3 className="font-bold mb-2">Error</h3>
-                    <p>{error}</p>
+                <div className="p-4 bg-accent-red/10 text-accent-red rounded-lg border border-accent-red/20 mb-4 animate-in fade-in slide-in-from-top-2">
+                    <h3 className="font-bold mb-1">Error</h3>
+                    <p className="text-sm">{error}</p>
                 </div>
             )}
             <div className="flex justify-between items-start mb-6">
                 <div>
-                    <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <CalculatorIcon className="h-7 w-7 text-accent-purple" />
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
+                        <div className="p-2 bg-accent-teal/10 rounded-lg">
+                            <CalculatorIcon className="h-6 w-6 text-accent-teal" />
+                        </div>
                         Intelligent Estimation Engine
                     </h2>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">
-                        PERT (Three-Point) Estimation for accurate project forecasting (BABOK 10.19).
+                    <p className="text-sm text-text-muted-light dark:text-text-muted-dark mt-1 max-w-xl">
+                        Apply PERT (Program Evaluation and Review Technique) based on <strong>BABOK 10.19</strong> to generate three-point estimates and calculate weighted averages with 95% confidence intervals.
                     </p>
                 </div>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Backlog Items to Estimate (Comma Separated)
+            <div className="bg-gray-50 dark:bg-gray-900/50 p-5 rounded-2xl border border-border-light dark:border-border-dark mb-6 group transition-all hover:bg-white dark:hover:bg-gray-900 shadow-sm hover:shadow-md">
+                <label className="block text-[10px] font-black text-text-muted-light dark:text-text-muted-dark mb-2.5 uppercase tracking-[0.2em]">
+                    Backlog Items to Estimate
                 </label>
-                <div className="flex gap-3">
+                <div className="flex flex-col md:flex-row gap-4">
                     <textarea 
-                        className="flex-grow p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus:ring-2 focus:ring-accent-purple"
+                        className="flex-grow p-4 border border-border-light dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark focus:ring-2 focus:ring-accent-teal/50 outline-none transition-all placeholder:text-gray-400 text-sm leading-relaxed"
                         rows={2}
                         value={storiesInput}
                         onChange={(e) => setStoriesInput(e.target.value)}
-                        placeholder="e.g. Create User API, Design Home Screen, Implement OAuth"
+                        placeholder="e.g. Authentication Flow, Data Pipeline, Analytics Dashboard..."
                     />
-                    <Button onClick={handleGenerate} disabled={isLoading || !storiesInput}>
-                        {isLoading ? <Spinner /> : 'Calculate Estimates'}
-                    </Button>
+                    <div className="flex-shrink-0">
+                        <Button 
+                            onClick={handleGenerate} 
+                            disabled={isLoading || !storiesInput}
+                            className="w-full md:w-auto h-full px-8 bg-accent-teal hover:bg-accent-teal/90 text-white rounded-xl shadow-lg shadow-accent-teal/20 transition-all active:scale-95"
+                        >
+                            {isLoading ? <Spinner /> : 'Analyze & Calculate'}
+                        </Button>
+                    </div>
                 </div>
             </div>
 
             {report && (
-                <div className="flex-grow animate-fade-in-down flex flex-col">
+                <div className="flex-grow animate-in fade-in slide-in-from-bottom-4 flex flex-col">
                     {/* Summary Card */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <div className="bg-accent-purple/10 p-4 rounded-lg text-center border border-accent-purple/20">
-                            <p className="text-xs uppercase font-bold text-accent-purple/80">Expected Total Effort</p>
-                            <p className="text-3xl font-black text-accent-purple">{(report.totalEffort || 0).toFixed(1)} <span className="text-sm font-normal">hrs</span></p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div className="bg-white dark:bg-gray-800/50 p-5 rounded-2xl text-center border border-border-light dark:border-border-dark shadow-sm group hover:border-accent-teal transition-colors">
+                            <p className="text-[10px] uppercase font-black text-text-muted-light dark:text-text-muted-dark tracking-[0.2em] mb-3">Expected Total Effort</p>
+                            <p className="text-4xl font-black text-accent-teal tabular-nums">
+                                {(report.totalEffort || 0).toFixed(1)} <span className="text-sm font-medium text-gray-400">hrs</span>
+                            </p>
                         </div>
-                        <div className="bg-accent-emerald/10 p-4 rounded-lg text-center border border-accent-emerald/20">
-                            <p className="text-xs uppercase font-bold text-accent-emerald/80">Confidence Range (95%)</p>
-                            <p className="text-3xl font-black text-accent-emerald">+/- {(report.confidenceInterval || 0).toFixed(1)} <span className="text-sm font-normal">hrs</span></p>
+                        <div className="bg-white dark:bg-gray-800/50 p-5 rounded-2xl text-center border border-border-light dark:border-border-dark shadow-sm group hover:border-accent-emerald transition-colors">
+                            <p className="text-[10px] uppercase font-black text-text-muted-light dark:text-text-muted-dark tracking-[0.2em] mb-3">Confidence Range (95%)</p>
+                            <p className="text-4xl font-black text-accent-emerald tabular-nums">
+                                ± {(report.confidenceInterval || 0).toFixed(1)} <span className="text-sm font-medium text-gray-400">hrs</span>
+                            </p>
                         </div>
-                        <div className="bg-accent-purple/10 p-4 rounded-lg text-center border border-accent-purple/20">
-                            <p className="text-xs uppercase font-bold text-accent-purple/80">Items Estimated</p>
-                            <p className="text-3xl font-black text-accent-purple">{(report.items || []).length}</p>
+                        <div className="bg-white dark:bg-gray-800/50 p-5 rounded-2xl text-center border border-border-light dark:border-border-dark shadow-sm group hover:border-accent-teal transition-colors">
+                            <p className="text-[10px] uppercase font-black text-text-muted-light dark:text-text-muted-dark tracking-[0.2em] mb-3">Items Estimated</p>
+                            <p className="text-4xl font-black text-accent-teal tabular-nums">{(report.items || []).length}</p>
                         </div>
                     </div>
 
                     {/* Table */}
-                    <div className="flex-grow overflow-auto custom-scrollbar border border-gray-200 dark:border-gray-700 rounded-lg">
-                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead className="bg-gray-100 dark:bg-gray-800 sticky top-0 z-10">
-                                <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-300 uppercase w-1/3">Story</th>
-                                    <th className="px-4 py-3 text-center text-xs font-bold text-accent-emerald uppercase" title="Optimistic">O (Best)</th>
-                                    <th className="px-4 py-3 text-center text-xs font-bold text-accent-purple uppercase" title="Most Likely">M (Likely)</th>
-                                    <th className="px-4 py-3 text-center text-xs font-bold text-accent-red uppercase" title="Pessimistic">P (Worst)</th>
-                                    <th className="px-4 py-3 text-center text-xs font-bold text-accent-purple uppercase bg-accent-purple/5">Expected</th>
-                                    <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase" title="Standard Deviation">SD</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                                {(report.items || []).map((item, i) => (
-                                    <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                        <td className="px-4 py-3">
-                                            <p className="text-sm font-medium text-gray-900 dark:text-white">{item.title}</p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 italic">{item.rationale}</p>
-                                        </td>
-                                        <td className="px-2 py-3 text-center">
-                                            <input 
-                                                type="number" 
-                                                value={item.optimistic}
-                                                onChange={(e) => handleValueChange(i, 'optimistic', parseFloat(e.target.value))}
-                                                className="w-16 p-1 text-center border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-sm"
-                                            />
-                                        </td>
-                                        <td className="px-2 py-3 text-center">
-                                            <input 
-                                                type="number" 
-                                                value={item.mostLikely}
-                                                onChange={(e) => handleValueChange(i, 'mostLikely', parseFloat(e.target.value))}
-                                                className="w-16 p-1 text-center border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-sm font-bold"
-                                            />
-                                        </td>
-                                        <td className="px-2 py-3 text-center">
-                                            <input 
-                                                type="number" 
-                                                value={item.pessimistic}
-                                                onChange={(e) => handleValueChange(i, 'pessimistic', parseFloat(e.target.value))}
-                                                className="w-16 p-1 text-center border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-sm"
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3 text-center font-bold text-accent-purple bg-accent-purple/5">
-                                            {item.weightedAvg}
-                                        </td>
-                                        <td className="px-4 py-3 text-center text-gray-500 text-xs">
-                                            ±{item.stdDev}
-                                        </td>
+                    <div className="flex-grow overflow-hidden flex flex-col border border-border-light dark:border-border-dark rounded-2xl shadow-sm bg-white dark:bg-gray-900/40">
+                        <div className="overflow-auto custom-scrollbar flex-grow">
+                            <table className="min-w-full divide-y divide-border-light dark:divide-border-dark">
+                                <thead className="bg-gray-50/50 dark:bg-surface-darker/50 sticky top-0 z-10">
+                                    <tr>
+                                        <th className="px-6 py-4 text-left text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">Requirement / Step</th>
+                                        <th className="px-4 py-4 text-center text-[10px] font-black text-accent-emerald uppercase tracking-widest" title="Optimistic">O (Best)</th>
+                                        <th className="px-4 py-4 text-center text-[10px] font-black text-accent-teal uppercase tracking-widest" title="Most Likely">M (Likely)</th>
+                                        <th className="px-4 py-4 text-center text-[10px] font-black text-accent-red uppercase tracking-widest" title="Pessimistic">P (Worst)</th>
+                                        <th className="px-4 py-4 text-center text-[10px] font-black text-accent-teal uppercase tracking-widest bg-accent-teal/5">Expected</th>
+                                        <th className="px-6 py-4 text-center text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">S.D.</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-border-light dark:divide-border-dark">
+                                    {(report.items || []).map((item, i) => (
+                                        <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors group">
+                                            <td className="px-6 py-5">
+                                                <p className="text-sm font-bold text-gray-900 dark:text-white mb-1 group-hover:text-accent-teal transition-colors">{item.title}</p>
+                                                <p className="text-[11px] text-text-muted-light dark:text-text-muted-dark italic leading-relaxed line-clamp-2">{item.rationale}</p>
+                                            </td>
+                                            <td className="px-2 py-5 text-center">
+                                                <input 
+                                                    type="number" 
+                                                    value={item.optimistic}
+                                                    onChange={(e) => handleValueChange(i, 'optimistic', parseFloat(e.target.value))}
+                                                    className="w-16 p-1.5 text-center border-b border-transparent focus:border-accent-emerald rounded bg-transparent focus:bg-accent-emerald/5 transition-all outline-none text-sm font-medium tabular-nums"
+                                                />
+                                            </td>
+                                            <td className="px-2 py-5 text-center">
+                                                <input 
+                                                    type="number" 
+                                                    value={item.mostLikely}
+                                                    onChange={(e) => handleValueChange(i, 'mostLikely', parseFloat(e.target.value))}
+                                                    className="w-16 p-1.5 text-center border-b border-transparent focus:border-accent-teal rounded bg-transparent focus:bg-accent-teal/5 transition-all outline-none text-sm font-black tabular-nums text-accent-teal"
+                                                />
+                                            </td>
+                                            <td className="px-2 py-5 text-center">
+                                                <input 
+                                                    type="number" 
+                                                    value={item.pessimistic}
+                                                    onChange={(e) => handleValueChange(i, 'pessimistic', parseFloat(e.target.value))}
+                                                    className="w-16 p-1.5 text-center border-b border-transparent focus:border-accent-red rounded bg-transparent focus:bg-accent-red/5 transition-all outline-none text-sm font-medium tabular-nums"
+                                                />
+                                            </td>
+                                            <td className="px-4 py-5 text-center font-black text-accent-teal bg-accent-teal/5 tabular-nums text-sm">
+                                                {item.weightedAvg}
+                                            </td>
+                                            <td className="px-6 py-5 text-center text-text-muted-light dark:text-text-muted-dark text-[10px] font-mono font-bold tracking-tighter tabular-nums">
+                                                ± {item.stdDev}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             )}

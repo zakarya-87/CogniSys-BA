@@ -52,7 +52,7 @@ export const InitiativeForm: React.FC<InitiativeFormProps> = ({ initiative, proj
                 type="text" 
                 value={title} 
                 onChange={(e) => setTitle(e.target.value)} 
-                className="w-full px-4 py-3 bg-surface-darker/5 dark:bg-surface-darker/30 border border-border-light dark:border-border-dark rounded-xl focus:ring-2 focus:ring-accent-purple/50 focus:border-accent-purple outline-none transition-all text-text-light dark:text-text-dark placeholder:text-text-muted-light/50" 
+                className="w-full px-4 py-3 bg-surface-darker/5 dark:bg-surface-darker/30 border border-border-light dark:border-border-dark rounded-xl focus:ring-2 focus:ring-accent-teal/50 focus:border-accent-teal outline-none transition-all text-text-light dark:text-text-dark placeholder:text-text-muted-light/50" 
                 required 
                 placeholder="e.g. Project Phoenix"
             />
@@ -63,7 +63,7 @@ export const InitiativeForm: React.FC<InitiativeFormProps> = ({ initiative, proj
             <textarea 
                 value={description} 
                 onChange={(e) => setDescription(e.target.value)} 
-                className="w-full px-4 py-3 bg-surface-darker/5 dark:bg-surface-darker/30 border border-border-light dark:border-border-dark rounded-xl focus:ring-2 focus:ring-accent-purple/50 focus:border-accent-purple outline-none transition-all text-text-light dark:text-text-dark placeholder:text-text-muted-light/50 min-h-[120px] resize-none" 
+                className="w-full px-4 py-3 bg-surface-darker/5 dark:bg-surface-darker/30 border border-border-light dark:border-border-dark rounded-xl focus:ring-2 focus:ring-accent-teal/50 focus:border-accent-teal outline-none transition-all text-text-light dark:text-text-dark placeholder:text-text-muted-light/50 min-h-[120px] resize-none" 
                 required 
                 placeholder="Briefly describe the initiative's goals..."
             />
@@ -74,7 +74,7 @@ export const InitiativeForm: React.FC<InitiativeFormProps> = ({ initiative, proj
             <select 
                 value={sector} 
                 onChange={(e) => setSector(e.target.value as Sector)} 
-                className="w-full px-4 py-3 bg-surface-darker/5 dark:bg-surface-darker/30 border border-border-light dark:border-border-dark rounded-xl focus:ring-2 focus:ring-accent-purple/50 focus:border-accent-purple outline-none transition-all text-text-light dark:text-text-dark appearance-none cursor-pointer"
+                className="w-full px-4 py-3 bg-surface-darker/5 dark:bg-surface-darker/30 border border-border-light dark:border-border-dark rounded-xl focus:ring-2 focus:ring-accent-teal/50 focus:border-accent-teal outline-none transition-all text-text-light dark:text-text-dark appearance-none cursor-pointer"
             >
             {Object.values(Sector).map(s => <option key={s} value={s} className="bg-surface-light dark:bg-surface-dark">{s}</option>)}
             </select>
@@ -85,7 +85,7 @@ export const InitiativeForm: React.FC<InitiativeFormProps> = ({ initiative, proj
 
       <div className="flex justify-end gap-3 pt-6 border-t border-border-light dark:border-border-dark">
         <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
-        <Button type="submit" className="shadow-lg shadow-accent-purple/20 px-8">
+        <Button type="submit" className="shadow-lg shadow-accent-teal/20 px-8">
             {initiative ? 'Save Changes' : 'Create Initiative'}
         </Button>
       </div>

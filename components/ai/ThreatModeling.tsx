@@ -53,7 +53,7 @@ export const ThreatModeling: React.FC<ThreatModelingProps> = ({ initiative }) =>
             <div className="flex justify-between items-start mb-6">
                 <div>
                     <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <ShieldExclamationIcon className="h-7 w-7 text-accent-purple" />
+                        <ShieldExclamationIcon className="h-7 w-7 text-accent-teal" />
                         Intelligent Threat Modeling (STRIDE)
                     </h2>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -66,7 +66,7 @@ export const ThreatModeling: React.FC<ThreatModelingProps> = ({ initiative }) =>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">System Context</label>
                 <div className="flex gap-4">
                     <textarea 
-                        className="flex-grow p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus:ring-2 focus:ring-accent-purple"
+                        className="flex-grow p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus:ring-2 focus:ring-accent-teal"
                         rows={2}
                         value={context}
                         onChange={(e) => setContext(e.target.value)}

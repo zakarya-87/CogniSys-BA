@@ -46,25 +46,35 @@ import {
   CheckCircle as CheckCircleIcon,
   Film as FilmIcon,
   XCircle as XCircleIcon,
-  Square as StopIcon
+  Square as StopIcon,
+  Eye,
+  ShieldCheck as ShieldCheckIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const AgentAvatar: React.FC<{ agent: THiveAgent; active: boolean; size?: 'sm' | 'lg' }> = React.memo(({ agent, active, size = 'lg' }) => {
     const { t } = useTranslation('dashboard');
     const colors: Record<THiveAgent, string> = {
-        Orchestrator: 'bg-accent-purple',
+        Orchestrator: 'bg-accent-teal',
         Scout: 'bg-accent-blue',
         Guardian: 'bg-accent-red',
         Integromat: 'bg-accent-green',
         Simulation: 'bg-accent-amber'
     };
 
-    const sizeClasses = size === 'lg' ? 'w-20 h-20 text-3xl' : 'w-10 h-10 text-xs';
+    const glowColors: Record<THiveAgent, string> = {
+        Orchestrator: 'shadow-[0_0_30px_rgba(139,92,246,0.3)]',
+        Scout: 'shadow-[0_0_30px_rgba(62,146,204,0.3)]',
+        Guardian: 'shadow-[0_0_30px_rgba(239,68,68,0.3)]',
+        Integromat: 'shadow-[0_0_30px_rgba(16,185,129,0.3)]',
+        Simulation: 'shadow-[0_0_30px_rgba(245,158,11,0.3)]'
+    };
+
+    const sizeClasses = size === 'lg' ? 'w-24 h-24 text-4xl' : 'w-12 h-12 text-sm';
 
     return (
-        <div className={`flex flex-col items-center transition-all duration-500 ${active ? 'scale-110 opacity-100' : size === 'lg' ? 'scale-90 opacity-40 grayscale' : 'opacity-100'}`}>
-            <div className={`${sizeClasses} rounded-[2rem] flex items-center justify-center text-white font-bold shadow-xl ${colors[agent]} relative overflow-hidden group`}>
+        <div className={`flex flex-col items-center transition-all duration-700 ${active ? 'scale-110 opacity-100' : size === 'lg' ? 'scale-90 opacity-40 grayscale' : 'opacity-100'}`}>
+            <div className={`${sizeClasses} rounded-[2.5rem] flex items-center justify-center text-white font-black ${colors[agent]} ${active ? glowColors[agent] : 'shadow-xl'} relative overflow-hidden group border-4 border-white/10`}>
                 {active && (
                     <motion.div 
                         layoutId="active-glow"
@@ -73,11 +83,11 @@ const AgentAvatar: React.FC<{ agent: THiveAgent; active: boolean; size?: 'sm' | 
                 )}
                 <span className="relative z-10">{agent.charAt(0)}</span>
                 {active && size === 'lg' && (
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-accent-green border-4 border-surface-light dark:border-surface-dark rounded-full" />
+                    <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-accent-green border-4 border-surface-dark rounded-full shadow-lg" />
                 )}
             </div>
             {size === 'lg' && (
-                <span className={`mt-3 text-[10px] font-bold uppercase tracking-widest ${active ? 'text-accent-purple' : 'text-text-muted-light dark:text-text-muted-dark'}`}>
+                <span className={`mt-4 text-[11px] font-black uppercase tracking-[0.2em] ${active ? 'text-accent-teal' : 'text-text-muted-light dark:text-text-muted-dark'}`}>
                     {t(`hive.agent${agent}`)}
                 </span>
             )}
@@ -91,8 +101,8 @@ const NeuralGraph: React.FC<{ history: THiveStep[], activeAgent: THiveAgent, isA
     return (
         <div className="flex items-center gap-4 overflow-x-auto p-6 mask-fade-right custom-scrollbar bg-surface-darker/5 dark:bg-surface-darker/20 rounded-2xl border border-border-light dark:border-border-dark">
             <div className="flex items-center gap-3">
-                <div className="p-2 bg-accent-purple/10 rounded-lg">
-                    <Zap className="h-4 w-4 text-accent-purple" />
+                <div className="p-2 bg-accent-teal/10 rounded-lg">
+                    <Zap className="h-4 w-4 text-accent-teal" />
                 </div>
                 <div className="h-px w-8 bg-border-light dark:bg-border-dark"></div>
             </div>
@@ -106,11 +116,11 @@ const NeuralGraph: React.FC<{ history: THiveStep[], activeAgent: THiveAgent, isA
                 >
                     <div className="flex flex-col items-center group">
                         <AgentAvatar agent={step.agent} active={false} size="sm" />
-                        <span className="text-[9px] font-bold text-text-muted-light dark:text-text-muted-dark mt-2 max-w-[80px] truncate text-center uppercase tracking-tighter group-hover:text-accent-purple transition-colors">{step.action}</span>
+                        <span className="text-[9px] font-bold text-text-muted-light dark:text-text-muted-dark mt-2 max-w-[80px] truncate text-center uppercase tracking-tighter group-hover:text-accent-teal transition-colors">{step.action}</span>
                     </div>
                     <div className="h-px w-10 bg-border-light dark:bg-border-dark relative">
                         {step.nextAgent && (
-                            <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-accent-purple shadow-sm shadow-accent-purple/50" />
+                            <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-accent-teal shadow-sm shadow-accent-teal/50" />
                         )}
                     </div>
                 </motion.div>
@@ -119,11 +129,11 @@ const NeuralGraph: React.FC<{ history: THiveStep[], activeAgent: THiveAgent, isA
             <div className="flex flex-col items-center flex-shrink-0">
                 <div className="relative">
                     {isAutoRunning && (
-                        <div className="absolute inset-0 bg-accent-purple rounded-[1rem] animate-ping opacity-20"></div>
+                        <div className="absolute inset-0 bg-accent-teal rounded-[1rem] animate-ping opacity-20"></div>
                     )}
                     <AgentAvatar agent={activeAgent} active={true} size="sm" />
                 </div>
-                <span className="text-[9px] font-bold text-accent-purple mt-2 uppercase tracking-widest animate-pulse">
+                <span className="text-[9px] font-bold text-accent-teal mt-2 uppercase tracking-widest animate-pulse">
                     {isAutoRunning ? t('hive.processing') : t('hive.thinking')}
                 </span>
             </div>
@@ -196,7 +206,9 @@ export const TheHive: React.FC = () => {
     const [memories, setMemories] = useState<TVectorMemory[]>([]);
 
     // Persistent State Hook
-    const { state, setState, resetState, isLoaded } = useHivePersistence(selectedInitiativeId);
+    const { state, setState, resetState, isLoaded, missionId, setMissionId } = useHivePersistence(selectedInitiativeId);
+    const { user } = useCatalyst();
+    const orgId = user?.orgId || '';
 
     const activeInitiative = initiatives.find(i => i.id === selectedInitiativeId);
 
@@ -253,12 +265,15 @@ export const TheHive: React.FC = () => {
             history: state.history.length > 0 ? state.history : []
         };
         
+        const currentMissionId = missionId || `mission_${Date.now()}`;
+        if (!missionId) setMissionId(currentMissionId);
+
         setState(newState);
         setGoal('');
-        runLoop(newState);
+        runLoop(newState, currentMissionId);
     };
 
-    const runLoop = async (currentState: THiveState) => {
+    const runLoop = async (currentState: THiveState, currentMissionId: string) => {
         if (stopRef.current) {
              setIsProcessing(false);
              return;
@@ -266,13 +281,13 @@ export const TheHive: React.FC = () => {
 
         setIsProcessing(true);
         try {
-            const nextState = await HiveService.processStep(currentState, activeInitiative);
+            const nextState = await HiveService.processStep(currentState, orgId, currentMissionId, activeInitiative);
             setState(nextState);
 
             // Autonomous Loop Logic
             if (nextState.status === 'running' && !nextState.approvalRequest) {
                 // Recursive call with delay for UX
-                setTimeout(() => runLoop(nextState), 1500); 
+                setTimeout(() => runLoop(nextState, currentMissionId), 1500); 
             } else {
                 setIsProcessing(false);
             }
@@ -343,7 +358,7 @@ export const TheHive: React.FC = () => {
             {/* Context Header */}
             <div className="bg-surface-light dark:bg-surface-darker border-b border-gray-200 dark:border-border-dark p-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <CubeTransparentIcon className="h-6 w-6 text-accent-purple" />
+                    <CubeTransparentIcon className="h-6 w-6 text-accent-teal" />
                     <h2 className="text-lg font-bold text-gray-800 dark:text-white">{t('hive.missionControl')}</h2>
                     {isProcessing && (
                         <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full animate-pulse border border-green-200">
@@ -356,7 +371,7 @@ export const TheHive: React.FC = () => {
                     <select 
                         value={selectedInitiativeId}
                         onChange={(e) => setSelectedInitiativeId(e.target.value)}
-                        className="text-sm p-2 rounded border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-darker focus:ring-2 focus:ring-accent-purple"
+                        className="text-sm p-2 rounded border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-darker focus:ring-2 focus:ring-accent-teal"
                     >
                         <option value="">{t('hive.selectActiveProject')}</option>
                         {initiatives.map(i => (
@@ -398,75 +413,111 @@ export const TheHive: React.FC = () => {
                     </div>
 
                     {/* Chat Area */}
-                    <div className="flex-grow overflow-y-auto p-6 space-y-6 bg-surface-light dark:bg-surface-darker custom-scrollbar" ref={scrollRef}>
+                    <div className="flex-grow overflow-y-auto p-8 space-y-8 bg-black/5 dark:bg-black/20 custom-scrollbar relative" ref={scrollRef}>
                         {state.messages.length === 0 && (
-                            <div className="text-center text-gray-500 dark:text-gray-400 mt-10">
-                                <CubeTransparentIcon className="h-20 w-20 mx-auto mb-4 opacity-20" />
-                                <h2 className="text-xl font-bold mb-2">{t('hive.theHiveIsDormant')}</h2>
-                                <p>
+                            <div className="text-center text-gray-500 dark:text-gray-400 mt-20">
+                                <CubeTransparentIcon className="h-24 w-24 mx-auto mb-6 opacity-20 text-accent-teal" />
+                                <h2 className="text-2xl font-black mb-3 tracking-tighter text-text-main-dark">{t('hive.theHiveIsDormant')}</h2>
+                                <p className="text-sm font-medium opacity-60">
                                     {selectedInitiativeId 
                                         ? t('hive.assignGoal', { title: activeInitiative?.title }) 
                                         : t('hive.selectProjectFirst')}
                                 </p>
                                 
                                 {selectedInitiativeId && (
-                                    <div className="mt-8 flex justify-center gap-3 flex-wrap">
+                                    <div className="mt-12 flex justify-center gap-4 flex-wrap max-w-2xl mx-auto">
                                         {quickActions.map((action, i) => (
-                                            <button 
+                                            <motion.button 
                                                 key={i}
+                                                whileHover={{ scale: 1.05, y: -2 }}
+                                                whileTap={{ scale: 0.98 }}
                                                 onClick={() => handleStart(action.query)}
-                                                className="flex items-center gap-2 px-4 py-2 bg-surface-light dark:bg-surface-darker border border-border-light dark:border-border-dark rounded-lg hover:bg-surface-dark transition-colors shadow-sm text-sm font-medium text-text-light dark:text-text-dark"
+                                                className="flex items-center gap-3 px-5 py-3 glass-surface-light dark:glass-surface border border-white/10 rounded-2xl hover:bg-white/10 transition-all shadow-lg text-sm font-bold text-text-light dark:text-text-dark"
                                             >
-                                                {action.icon} {action.label}
-                                            </button>
+                                                <span className="p-1.5 bg-accent-teal/10 rounded-lg text-accent-teal">{action.icon}</span> 
+                                                <span>{action.label}</span>
+                                            </motion.button>
                                         ))}
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        {state.messages.map((msg, i) => (
-                            <div key={msg.id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                                
-                                 {/* Chain of Thought Bubble */}
-                                {msg.thought && msg.role !== 'user' && (
-                                     <div className="max-w-[70%] mb-2 ml-4 relative group">
-                                        <div className="absolute -left-2 top-2 w-1 h-full bg-accent-purple/50 dark:bg-accent-purple/80 rounded-full opacity-50"></div>
-                                        <div className="pl-3 text-xs italic text-gray-500 dark:text-gray-400 bg-surface-light/50 dark:bg-surface-darker/50 p-2 rounded-r-lg border border-border-light/50 dark:border-border-dark/50 shadow-sm">
-                                            <span className="font-bold text-accent-purple text-[10px] uppercase tracking-wider block mb-1">{t('hive.internalMonologue')}</span>
-                                            {msg.thought}
+                        <AnimatePresence initial={false}>
+                            {state.messages.map((msg, i) => (
+                                <motion.div 
+                                    key={msg.id} 
+                                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
+                                >
+                                    
+                                    {/* Chain of Thought Bubble */}
+                                    {msg.thought && msg.role !== 'user' && (
+                                        <div className="max-w-[70%] mb-3 ml-6 relative group">
+                                            <div className="absolute -left-3 top-2 w-1.5 h-full bg-accent-teal/30 dark:bg-accent-teal/50 rounded-full"></div>
+                                            <div className="pl-4 text-xs font-medium italic text-gray-500 dark:text-gray-400 p-3 glass-surface dark:bg-accent-teal/5 rounded-r-2xl border border-white/5 shadow-sm">
+                                                <span className="font-black text-accent-teal text-[10px] uppercase tracking-[0.2em] block mb-2">{t('hive.internalMonologue')}</span>
+                                                {msg.thought}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
 
-                                <div className={`max-w-[85%] rounded-xl p-4 shadow-md ${
-                                    msg.role === 'user' 
-                                        ? 'bg-accent-purple text-white' 
-                                        : 'bg-surface-light dark:bg-surface-darker border border-border-light dark:border-border-dark'
-                                }`}>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        {msg.role === 'user' ? <UserCircleIcon className="h-5 w-5"/> : <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded text-white ${
-                                            msg.agent === 'Orchestrator' ? 'bg-purple-600' :
-                                            msg.agent === 'Scout' ? 'bg-indigo-500' :
-                                            msg.agent === 'Guardian' ? 'bg-red-500' : 
-                                            msg.agent === 'Simulation' ? 'bg-amber-500' :
-                                            'bg-green-500'
-                                        }`}>{t(`hive.agent${msg.agent}`, { defaultValue: msg.agent })}</span>}
-                                        <span className={`text-xs ${msg.role === 'user' ? 'text-white/80' : 'text-gray-400'}`}>
-                                            {new Date(msg.timestamp).toLocaleTimeString()}
-                                        </span>
+                                    <div className={`max-w-[85%] rounded-[2rem] p-6 shadow-2xl relative overflow-hidden ${
+                                        msg.role === 'user' 
+                                            ? 'bg-accent-teal text-white shadow-[0_10px_30px_rgba(139,92,246,0.3)]' 
+                                            : 'glass-card-light dark:glass-card'
+                                    }`}>
+                                        <div className="flex items-center justify-between gap-4 mb-4">
+                                            <div className="flex items-center gap-3">
+                                                {msg.role === 'user' ? (
+                                                    <UserCircleIcon className="h-6 w-6 text-white/90"/>
+                                                ) : (
+                                                    <span className={`text-[10px] uppercase font-black px-3 py-1 rounded-full text-white shadow-lg ${
+                                                        msg.agent === 'Orchestrator' ? 'bg-purple-600' :
+                                                        msg.agent === 'Scout' ? 'bg-indigo-500' :
+                                                        msg.agent === 'Guardian' ? 'bg-red-500 shadow-red-500/20' : 
+                                                        msg.agent === 'Simulation' ? 'bg-amber-500 shadow-amber-500/20' :
+                                                        'bg-green-500'
+                                                    }`}>{t(`hive.agent${msg.agent}`, { defaultValue: msg.agent })}</span>
+                                                )}
+                                                <span className={`text-[10px] font-black font-mono tracking-widest ${msg.role === 'user' ? 'text-white/60' : 'text-slate-500 dark:text-slate-400'}`}>
+                                                    {new Date(msg.timestamp).toLocaleTimeString()}
+                                                </span>
+                                            </div>
+
+                                        {/* SAFETY BADGE */}
+                                        {msg.role !== 'user' && msg.agent !== 'User' && msg.metadata?.safetyStatus !== 'violation' && (
+                                            <div className="flex items-center gap-1 px-1.5 py-0.5 bg-accent-emerald/10 text-accent-emerald text-[9px] font-bold uppercase tracking-wider rounded border border-accent-emerald/20 animate-in fade-in zoom-in">
+                                                <ShieldCheckIcon className="w-2.5 h-2.5" />
+                                                Verified
+                                            </div>
+                                        )}
                                     </div>
                                     
                                     <div className={`text-sm leading-relaxed whitespace-pre-wrap ${msg.role === 'user' ? 'text-white' : 'text-text-light dark:text-text-dark'}`}>
                                         {msg.content}
                                     </div>
+
+                                    {/* Reasoning Trace Collapsible */}
+                                    {msg.thought && msg.role !== 'user' && (
+                                        <details className="mt-3 group border-t border-gray-100 dark:border-gray-800 pt-3">
+                                            <summary className="flex items-center gap-2 text-[10px] font-bold text-gray-400 cursor-pointer hover:text-accent-teal transition-colors list-none uppercase tracking-widest">
+                                                <Eye className="w-3 h-3" />
+                                                {t('hive.reasoningTrace')}
+                                            </summary>
+                                            <div className="mt-2 text-xs italic text-gray-500 dark:text-gray-400 animate-in fade-in slide-in-from-top-1">
+                                                {msg.thought}
+                                            </div>
+                                        </details>
+                                    )}
                                     
                                     {/* Ethical Check Visualization */}
                                     {msg.metadata?.type === 'ethical_check' && msg.metadata.data && (
                                         <div className="mt-4 bg-surface-light dark:bg-surface-darker border border-border-light dark:border-border-dark rounded-lg p-4">
                                             <div className="flex justify-between items-start mb-4">
                                                 <div className="flex items-center gap-2">
-                                                    <ShieldExclamationIcon className="h-5 w-5 text-accent-purple" />
+                                                    <ShieldExclamationIcon className="h-5 w-5 text-accent-teal" />
                                                     <h3 className="font-bold text-text-light dark:text-text-dark text-sm">{t('hive.guardianEthicsAudit')}</h3>
                                                 </div>
                                                 <div className={`text-xs font-bold px-2 py-1 rounded ${
@@ -534,7 +585,7 @@ export const TheHive: React.FC = () => {
                                      {msg.metadata?.type === 'jira' && msg.metadata.data && (
                                         <div className="mt-4 space-y-2">
                                             {(msg.metadata.data as any[]).map((ticket, idx) => (
-                                                <div key={idx} className="bg-indigo-50/50 dark:bg-indigo-900/20 p-3 rounded-lg border-l-4 border-accent-purple flex justify-between items-center">
+                                                <div key={idx} className="bg-indigo-50/50 dark:bg-indigo-900/20 p-3 rounded-lg border-l-4 border-accent-teal flex justify-between items-center">
                                                     <div>
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{ticket.id}</span>
@@ -678,9 +729,9 @@ export const TheHive: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
-                            </div>
-                        ))}
-                        
+                            </motion.div>
+                            ))}
+                        </AnimatePresence>                        
                         {/* APPROVAL CARD */}
                         {state.status === 'waiting_approval' && state.approvalRequest && (
                             <div className="flex justify-start animate-fade-in-down">
@@ -743,7 +794,7 @@ export const TheHive: React.FC = () => {
                                 onChange={(e) => setGoal(e.target.value)}
                                 placeholder={selectedInitiativeId ? t('hive.commandTheSwarm') : t('hive.selectProjectFirstInput')}
                                 disabled={!selectedInitiativeId || state.status === 'waiting_approval' || (isProcessing && !stopRef.current)}
-                                className="flex-grow p-4 bg-surface-light dark:bg-surface-darker border border-border-light dark:border-border-dark focus:border-accent-purple rounded-xl focus:ring-0 text-text-light dark:text-text-dark disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex-grow p-4 bg-surface-light dark:bg-surface-darker border border-border-light dark:border-border-dark focus:border-accent-teal rounded-xl focus:ring-0 text-text-light dark:text-text-dark disabled:opacity-50 disabled:cursor-not-allowed"
                                 onKeyDown={(e) => e.key === 'Enter' && handleStart()}
                             />
                             <Button onClick={() => handleStart()} disabled={isProcessing || !goal.trim() || !selectedInitiativeId || state.status === 'waiting_approval'} className="px-8 rounded-xl">

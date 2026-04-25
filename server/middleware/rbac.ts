@@ -1,6 +1,32 @@
 import { Request, Response, NextFunction } from 'express';
 import { getAdminAuth } from '../lib/firebaseAdmin';
+import { logger } from '../logger';
 import { Permission, roleHasPermission, LEGACY_ROLE_ORDER } from './permissions';
+
+/**
+ * Lightweight auth guard: verifies a Firebase ID token but does NOT require
+ * org claims (orgId / role). Use for routes a newly signed-in user without
+ * an org must access, e.g. POST /organizations to create their first org.
+ */
+export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
+  let token: string | undefined;
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split('Bearer ')[1];
+  } else if (typeof req.query.token === 'string' && req.query.token) {
+    token = req.query.token;
+  }
+
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+
+  try {
+    req.user = await getAdminAuth().verifyIdToken(token);
+    next();
+  } catch {
+    return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+  }
+};
 
 /**
  * Backward-compatible role-based guard.
@@ -42,7 +68,10 @@ export const authorize = (requiredRole: string) => {
 
       req.user = decodedToken;
       next();
-    } catch {
+    } catch (error) {
+      if (process.env.LOG_LEVEL === 'debug') {
+        logger.debug({ err: error, token: token?.slice(0, 10) + '...' }, 'RBAC: Token verification failed');
+      }
       return res.status(401).json({ error: 'Unauthorized: Invalid token' });
     }
   };
@@ -82,7 +111,10 @@ export const can = (permission: Permission) => {
 
       req.user = decodedToken;
       next();
-    } catch {
+    } catch (error) {
+      if (process.env.LOG_LEVEL === 'debug') {
+        logger.debug({ err: error, token: token?.slice(0, 10) + '...' }, 'Permission check: Token verification failed');
+      }
       return res.status(401).json({ error: 'Unauthorized: Invalid token' });
     }
   };

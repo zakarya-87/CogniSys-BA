@@ -59,7 +59,8 @@ Return a JSON object with two properties:
       `${title}: ${desc}`,
       sector as Sector
   );
-  return generateJson<{ slides: TSlide[], executiveSummary: string }>(prompt);
+    const result = await generateJson<{ slides: TSlide[], executiveSummary: string }>(prompt);
+    return result.data;
 };
 
 export const generateReleaseNotes = async (items: string[], sector: string, version: string): Promise<TReleaseNote> => {
@@ -68,7 +69,8 @@ export const generateReleaseNotes = async (items: string[], sector: string, vers
         "Release Management",
         sector as Sector
     );
-    return generateJson<TReleaseNote>(prompt, generatedSchemas['TReleaseNote'], generatedSchemas['TReleaseNote']?.required || []);
+    const result = await generateJson<TReleaseNote>(prompt, generatedSchemas['TReleaseNote'], generatedSchemas['TReleaseNote']?.required || []);
+    return result.data;
 };
 
 export const generateProjectDocument = async (initiative: TInitiative, type: string): Promise<string> => {
@@ -78,7 +80,8 @@ export const generateProjectDocument = async (initiative: TInitiative, type: str
       initiative.sector,
       "Markdown"
   );
-  return generateText(prompt);
+  const result = await generateText(prompt);
+  return result.text;
 };
 
 export const generateReleaseChecklist = async (sector: string): Promise<TReleaseChecklistItem[]> => {
@@ -87,7 +90,8 @@ export const generateReleaseChecklist = async (sector: string): Promise<TRelease
       "Release Management",
       sector as Sector
   );
-  return generateJson<TReleaseChecklistItem[]>(prompt, { type: 'array', items: generatedSchemas['TReleaseChecklistItem'] }, []);
+  const result = await generateJson<TReleaseChecklistItem[]>(prompt, { type: 'array', items: generatedSchemas['TReleaseChecklistItem'] }, []);
+  return result.data;
 };
 
 export const analyzeLaunchReadiness = async (checklist: TReleaseChecklistItem[], openBugs: number, sector: string): Promise<TReadinessAssessment> => {
@@ -96,7 +100,8 @@ export const analyzeLaunchReadiness = async (checklist: TReleaseChecklistItem[],
       "Release Gate",
       sector as Sector
   );
-  return generateJson<TReadinessAssessment>(prompt, generatedSchemas['TReadinessAssessment'], generatedSchemas['TReadinessAssessment']?.required || []);
+  const result = await generateJson<TReadinessAssessment>(prompt, generatedSchemas['TReadinessAssessment'], generatedSchemas['TReadinessAssessment']?.required || []);
+  return result.data;
 };
 
 export const chatWithCatalyst = async (history: { sender: string; text: string }[], newMessage: string, context: string, sector: string): Promise<string> => {
@@ -107,7 +112,8 @@ export const chatWithCatalyst = async (history: { sender: string; text: string }
         sector as Sector,
         "Text"
     );
-    return generateText(prompt);
+    const result = await generateText(prompt);
+    return result.text;
 };
 
 export const generateAgentComment = async (agent: TTeamMember, artifactType: string, content: any): Promise<string> => {
@@ -126,7 +132,8 @@ export const generateAgentComment = async (agent: TTeamMember, artifactType: str
     Do not use hashtags.
     `;
 
-    return generateText(prompt);
+    const result = await generateText(prompt);
+    return result.text;
 };
 
 export const generateDebateTurn = async (agent: TTeamMember, topic: string, history: TDebateTurn[]): Promise<TDebateTurn> => {
@@ -150,13 +157,14 @@ export const generateDebateTurn = async (agent: TTeamMember, topic: string, hist
     Return JSON: { "text": "...", "sentiment": "..." }
     `;
 
-    const response = await generateJson<{text: string, sentiment: any}>(prompt);
+    const result = await generateJson<{text: string, sentiment: any}>(prompt);
+    const data = result.data;
 
     return {
         id: `turn-${Date.now()}`,
         agentId: agent.id,
-        text: response.text,
-        sentiment: response.sentiment,
+        text: data.text,
+        sentiment: data.sentiment,
         timestamp: Date.now()
     };
 };
@@ -164,7 +172,8 @@ export const generateDebateTurn = async (agent: TTeamMember, topic: string, hist
 export const generateConsensus = async (topic: string, history: TDebateTurn[]): Promise<string> => {
     const transcript = history.map(t => `${t.agentId}: ${t.text}`).join('\n');
     const prompt = `Summarize the debate on "${topic}" into a final consensus statement or board resolution. Transcript:\n${transcript}`;
-    return generateText(prompt);
+    const result = await generateText(prompt);
+    return result.text;
 };
 
 export const generateCodeArtifact = async (context: string, sourceType: string, targetLanguage: string, sector: string): Promise<TCodeArtifact> => {
@@ -180,7 +189,8 @@ export const generateCodeArtifact = async (context: string, sourceType: string, 
         "Text"
     );
 
-    const code = await generateText(prompt);
+    const result = await generateText(prompt);
+    const code = result.text;
 
     const cleanedCode = code.replace(/```[a-z]*\n?|```/g, '').trim();
 
@@ -222,7 +232,7 @@ export const analyzeImageArtifact = async (
         sector as Sector
     );
 
-    const visionText = await callGeminiProxy(
+    const response = await callGeminiProxy(
         prompt,
         'flash',
         {
@@ -232,6 +242,8 @@ export const analyzeImageArtifact = async (
             }
         }
     );
+
+    const visionText = (response as any).text;
 
     const text = visionText || "{}";
     const json = safeParseJSON<any>(text);
@@ -249,12 +261,14 @@ export const analyzeImageArtifact = async (
 export const summarizeConversation = async (messages: THiveMessage[]): Promise<string> => {
     const text = messages.map(m => `${m.role}: ${m.content}`).join('\n');
     const prompt = `Summarize this conversation context to retain key facts and decisions:\n${text}`;
-    return generateText(prompt);
+    const result = await generateText(prompt);
+    return result.text;
 };
 
 export const getPersonaResponse = async (persona: TPersona, history: any[], input: string, context: string): Promise<string> => {
   const prompt = `Roleplay as ${persona.name} (${persona.role}). Context: ${context}. User says: "${input}". Reply briefly.`;
-  return generateText(prompt);
+  const result = await generateText(prompt);
+  return result.text;
 };
 
 export const generateStakeholderPersonas = async (title: string, desc: string, sector: string): Promise<TPersona[]> => {
@@ -263,7 +277,8 @@ export const generateStakeholderPersonas = async (title: string, desc: string, s
       title,
       sector as Sector
   );
-  return generateJson<TPersona[]>(prompt, { type: 'array', items: generatedSchemas['TPersona'] }, []);
+  const result = await generateJson<TPersona[]>(prompt, { type: 'array', items: generatedSchemas['TPersona'] }, []);
+  return result.data;
 };
 
 export const generateImpactAnalysis = async (description: string, title: string, sector: string): Promise<TImpactAnalysis> => {
@@ -272,5 +287,6 @@ export const generateImpactAnalysis = async (description: string, title: string,
       title,
       sector as Sector
   );
-  return generateJson<TImpactAnalysis>(prompt, generatedSchemas['TImpactAnalysis'], generatedSchemas['TImpactAnalysis']?.required || []);
+  const result = await generateJson<TImpactAnalysis>(prompt, generatedSchemas['TImpactAnalysis'], generatedSchemas['TImpactAnalysis']?.required || []);
+  return result.data;
 };

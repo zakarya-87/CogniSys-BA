@@ -6,12 +6,43 @@ const api = axios.create({
   baseURL: '/api',
 });
 
+// Helper to wait for the first auth state emission to avoid 401s on reload
+let _authPromise: Promise<void> | null = null;
+const waitForAuth = () => {
+    if (_authPromise) return _authPromise;
+    _authPromise = new Promise((resolve) => {
+        // Synchronous check: if state is already resolved, don't wait for emission
+        if (auth.currentUser) {
+            resolve();
+            return;
+        }
+        const unsubscribe = auth.onAuthStateChanged(() => {
+            unsubscribe();
+            resolve();
+        });
+    });
+    return _authPromise;
+};
+
 // Attach Firebase ID token as Bearer on every request so RBAC middleware can verify the caller.
 api.interceptors.request.use(async (config) => {
+  // If no user yet, wait for Firebase to initialize (max 2s)
+  if (!auth.currentUser) {
+      await Promise.race([waitForAuth(), new Promise(r => setTimeout(r, 2000))]);
+  }
+  
   const user = auth.currentUser;
   if (user) {
     const token = await user.getIdToken();
-    config.headers.Authorization = `Bearer ${token}`;
+    // In Axios 1.x, config.headers is an AxiosHeaders instance. 
+    // Use .set() for better compatibility if available, or direct assignment if not.
+    if (config.headers) {
+      if (typeof config.headers.set === 'function') {
+        config.headers.set('Authorization', `Bearer ${token}`);
+      } else {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
   }
   return config;
 });
@@ -23,15 +54,17 @@ export const OrganizationAPI = {
 
 export const ProjectAPI = {
   create: (orgId: string, project: Partial<TProject>) => api.post(`/organizations/${orgId}/projects`, project),
-  list: (orgId: string) => api.get<TProject[]>(`/organizations/${orgId}/projects`),
+  list: (orgId: string, params?: { limit?: number; cursor?: string }) =>
+    api.get<{ data: TProject[]; nextCursor: string | null }>(`/organizations/${orgId}/projects`, { params }),
 };
 
 export const InitiativeAPI = {
   create: (orgId: string, projectId: string, initiative: Partial<TInitiative>) => 
     api.post(`/organizations/${orgId}/projects/${projectId}/initiatives`, initiative),
-  listByOrg: (orgId: string) => api.get<TInitiative[]>(`/organizations/${orgId}/initiatives`),
-  listByProject: (orgId: string, projectId: string) => 
-    api.get<TInitiative[]>(`/organizations/${orgId}/projects/${projectId}/initiatives`),
+  listByOrg: (orgId: string, params?: { limit?: number; cursor?: string }) =>
+    api.get<{ data: TInitiative[]; nextCursor: string | null }>(`/organizations/${orgId}/initiatives`, { params }),
+  listByProject: (orgId: string, projectId: string, params?: { limit?: number; cursor?: string }) => 
+    api.get<{ data: TInitiative[]; nextCursor: string | null }>(`/organizations/${orgId}/projects/${projectId}/initiatives`, { params }),
   update: (orgId: string, projectId: string, initiativeId: string, data: Partial<TInitiative>) => 
     api.put(`/organizations/${orgId}/projects/${projectId}/initiatives/${initiativeId}`, { ...data, orgId }),
 };
@@ -41,6 +74,12 @@ export const AIAPI = {
     api.post(`/organizations/${orgId}/initiatives/${initiativeId}/wbs`),
   triggerRisks: (orgId: string, initiativeId: string) => 
     api.post(`/organizations/${orgId}/initiatives/${initiativeId}/risks`),
+};
+export const ActivityAPI = {
+  create: (orgId: string, activity: any) => api.post(`/organizations/${orgId}/activities`, activity),
+  list: (orgId: string, params?: { limit?: number; cursor?: string }) => 
+    api.get<{ data: any[]; nextCursor: string | null }>(`/organizations/${orgId}/activities`, { params }),
+  addComment: (activityId: string, comment: any) => api.post(`/activities/${activityId}/comments`, { comment }),
 };
 
 // ── Phase 6–8 API modules ─────────────────────────────────────────────────
@@ -102,11 +141,26 @@ export const UsageAPI = {
     api.get(`/v1/organizations/${orgId}/usage`, { params: { month } }),
 };
 
+export const MissionAPI = {
+  save: (orgId: string, mission: any) => 
+    api.post(`/organizations/${orgId}/missions`, { mission }),
+  getById: (orgId: string, id: string) => 
+    api.get(`/organizations/${orgId}/missions/${id}`),
+  listByInitiative: (orgId: string, initiativeId: string) => 
+    api.get<{ data: any[] }>(`/organizations/${orgId}/initiatives/${initiativeId}/missions`),
+  logAudit: (orgId: string, userId: string, agent: string, action: string, metadata: any) =>
+    api.post(`/organizations/${orgId}/missions/audit`, { userId, agent, action, metadata }),
+};
+
 /** Build an authenticated EventSource URL for SSE. Returns null if no user is logged in. */
 export async function createNotificationStream(onMessage: (notification: unknown) => void): Promise<EventSource | null> {
   const user = auth.currentUser;
   if (!user) return null;
   const token = await user.getIdToken();
+  if (!token) {
+    logger.warn('Cannot create notification stream: ID token is empty');
+    return null;
+  }
   // EventSource doesn't support custom headers — pass token as query param
   const url = `/api/v1/notifications/stream?token=${encodeURIComponent(token)}`;
   const es = new EventSource(url);

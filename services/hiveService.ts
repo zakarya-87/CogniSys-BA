@@ -2,6 +2,8 @@
 import { THiveState, THiveMessage, THiveAgent, THiveStep, TInitiative } from '../types';
 import { Microservices } from './microservices';
 import { summarizeConversation } from './geminiService';
+import { MissionAPI } from '../src/services/api';
+import { TelemetryService } from './telemetryService';
 
 // --- HIVE GATEWAY (Orchestration Layer) ---
 
@@ -10,7 +12,37 @@ export const HiveService = {
      * Executes one step of the Agentic Graph.
      * Routes logic to the appropriate Microservice based on the active agent.
      */
-    async processStep(state: THiveState, initiative?: TInitiative): Promise<THiveState> {
+    async processStep(state: THiveState, orgId: string, missionId: string, initiative?: TInitiative): Promise<THiveState> {
+        const syncState = async (newState: THiveState) => {
+            try {
+                await MissionAPI.save(orgId, {
+                    id: missionId,
+                    orgId,
+                    initiativeId: initiative?.id || 'global',
+                    state: newState,
+                    status: newState.status,
+                    updatedAt: Date.now()
+                });
+            } catch (e) {
+                console.warn("Failed to sync Hive state to server:", e);
+            }
+        };
+
+        const logAudit = async (agent: string, action: string, response: any, verdict?: string) => {
+            try {
+                await MissionAPI.logAudit(orgId, 'system_orchestrator', agent, action, {
+                    thought: response.thought,
+                    instructions: response.instructions,
+                    toolCall: response.toolCall,
+                    usage: response.usage, // Added usage
+                    safetyVerdict: verdict,
+                    missionId,
+                    initiativeId: initiative?.id
+                });
+            } catch (e) {
+                console.warn("Audit logging failed:", e);
+            }
+        };
         
         // --- 0. Context Pruning (Memory Management) ---
         // If message history exceeds 12 items, summarize to prevent token overflow.
@@ -63,6 +95,13 @@ export const HiveService = {
                 initiative
             );
 
+            // Accumulate usage for Orchestrator
+            if (response.usage) {
+                state.totalTokens = TelemetryService.accumulateUsage(state.totalTokens, response.usage);
+                const modelId = (response as any).modelId || 'pro'; // Orchestrator typically uses pro
+                state.totalCost = (state.totalCost || 0) + TelemetryService.calculateCost(modelId, response.usage);
+            }
+
             // Create the Orchestrator's internal thought/command message
             const orchMsg: THiveMessage = {
                 id: Date.now().toString(),
@@ -73,7 +112,9 @@ export const HiveService = {
                     : response.content || "Processing...",
                 thought: response.thought, // Capture Chain of Thought
                 timestamp: Date.now(),
-                status: 'done'
+                status: 'done',
+                usage: response.usage,
+                cost: response.usage ? TelemetryService.calculateCost((response as any).modelId || 'pro', response.usage) : 0
             };
 
             const updatedMessages = [...messages, orchMsg];
@@ -81,26 +122,71 @@ export const HiveService = {
             if (response.nextAction === 'delegate' && response.targetAgent) {
                 // -- EXECUTE GRAPH EDGE (Call Worker Microservice) --
                 
-                // Safety: Check if target agent exists
-                const targetService = Microservices[response.targetAgent as THiveAgent];
-                if (!targetService) {
-                    console.warn(`Orchestrator attempted to delegate to unknown agent: ${response.targetAgent}`);
-                    return {
-                         ...state,
-                         messages: [...updatedMessages, {
-                             id: `err-${Date.now()}`,
-                             role: 'system',
-                             agent: 'Orchestrator',
-                             content: `System Error: Cannot delegate to '${response.targetAgent}'. Agent does not exist.`,
-                             timestamp: Date.now(),
-                             status: 'done'
-                         }],
-                         activeAgent: 'Orchestrator', // Stay on Orchestrator to try again
-                         status: 'idle'
-                    };
+                // --- PHASE 3: SAFETY INTERLEAVING (GUARDIAN SCAN) ---
+                let safetyVerdict = 'Pass';
+                if (['Integromat', 'Scout', 'Simulation'].includes(response.targetAgent)) {
+                     const guardianCheck = await Microservices.Guardian.execute(
+                         updatedMessages, 
+                         `Ethics Scan: Is it safe for ${response.targetAgent} to proceed with: "${response.instructions}"?`, 
+                         initiative
+                     );
+                     safetyVerdict = guardianCheck?.metadata?.data?.verdict || 'Pass';
+                     
+                     if (safetyVerdict === 'Fail') {
+                          const failMsg: THiveMessage = {
+                              id: `safe-${Date.now()}`,
+                              role: 'system',
+                              agent: 'Guardian',
+                              content: `SAFETY ALERT: ${guardianCheck?.content}`,
+                              metadata: { safetyStatus: 'violation', verdict: 'Fail' },
+                              timestamp: Date.now(),
+                              status: 'done'
+                          };
+                          
+                          const failState: THiveState = {
+                              ...state,
+                              status: 'waiting_approval',
+                              activeAgent: 'Orchestrator',
+                              messages: [...updatedMessages, failMsg],
+                              approvalRequest: {
+                                  id: `safety-${Date.now()}`,
+                                  agent: 'Guardian',
+                                  actionType: 'Safety Override',
+                                  summary: `The Guardian flagged this action as high risk: ${guardianCheck?.content}`,
+                                  toolName: 'safety_override',
+                                  data: { verdict: 'Fail', reason: guardianCheck?.content }
+                              }
+                          };
+                          await logAudit(response.targetAgent, 'delegate', response, 'Fail');
+                          return failState;
+                     }
                 }
 
+                const targetService = Microservices[response.targetAgent as string];
+                if (!targetService) {
+                    const errMsg = `Cannot delegate — target service ${response.targetAgent} not found`;
+                    await logAudit(response.targetAgent, 'delegate', response, 'Fail');
+                    return {
+                        ...state,
+                        status: 'idle',
+                        messages: [...updatedMessages, {
+                            id: `err-${Date.now()}`,
+                            role: 'system',
+                            agent: 'Orchestrator',
+                            content: `System Error during orchestration: ${errMsg}`,
+                            timestamp: Date.now()
+                        }]
+                    };
+                }
                 const workerResponse = await targetService.execute(updatedMessages, response.instructions || '', initiative);
+                await logAudit(response.targetAgent, 'delegate', response, safetyVerdict);
+
+                // Accumulate usage for Worker
+                if (workerResponse.usage) {
+                    state.totalTokens = TelemetryService.accumulateUsage(state.totalTokens, workerResponse.usage);
+                    const modelId = (workerResponse as any).modelId || 'flash'; // Workers typically use flash
+                    state.totalCost = (state.totalCost || 0) + TelemetryService.calculateCost(modelId, workerResponse.usage);
+                }
 
                 // --- HITL CHECK ---
                 if (workerResponse.nextAction === 'approval_required' && workerResponse.toolCall) {
@@ -129,7 +215,9 @@ export const HiveService = {
                     thought: workerResponse.thought,
                     timestamp: Date.now(),
                     status: 'done',
-                    metadata: workerResponse.metadata
+                    metadata: workerResponse.metadata,
+                    usage: workerResponse.usage,
+                    cost: workerResponse.usage ? TelemetryService.calculateCost((workerResponse as any).modelId || 'flash', workerResponse.usage) : 0
                 };
 
                 const step: THiveStep = {
@@ -140,20 +228,25 @@ export const HiveService = {
                     status: 'completed'
                 };
 
-                return {
+                const newState: THiveState = {
                     ...state,
                     activeAgent: 'Orchestrator', // Control returns after worker finishes
                     messages: [...updatedMessages, workerMsg],
                     history: [...(state.history || []), step]
                 };
 
+                await syncState(newState);
+                return newState;
+
             } else {
                 // -- TERMINATE GRAPH --
-                 return {
+                 const completeState: THiveState = {
                      ...state,
                      status: 'completed',
                      messages: updatedMessages
                  };
+                 await syncState(completeState);
+                 return completeState;
             }
         } catch (error: any) {
             console.error("Orchestrator execution failed:", error);
@@ -194,6 +287,13 @@ export const HiveService = {
             // Execute the suspended tool
             const result = await integromat.executeTool(state.approvalRequest.toolName, state.approvalRequest.data);
             
+            // Accumulate usage if available (e.g. from generated artifacts)
+            if (result.usage) {
+                state.totalTokens = TelemetryService.accumulateUsage(state.totalTokens, result.usage);
+                const modelId = (result as any).modelId || 'flash';
+                state.totalCost = (state.totalCost || 0) + TelemetryService.calculateCost(modelId, result.usage);
+            }
+
             const workerMsg: THiveMessage = {
                 id: Date.now().toString(),
                 role: 'assistant',
@@ -201,7 +301,9 @@ export const HiveService = {
                 content: result.content,
                 timestamp: Date.now(),
                 status: 'done',
-                metadata: result.metadata
+                metadata: result.metadata,
+                usage: result.usage,
+                cost: result.usage ? TelemetryService.calculateCost((result as any).modelId || 'flash', result.usage) : 0
             };
 
             return {
@@ -232,3 +334,4 @@ export const HiveService = {
         }
     }
 };
+

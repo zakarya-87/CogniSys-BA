@@ -1,15 +1,16 @@
 
 import { callGeminiProxy, resolveModelTier } from './geminiProxy';
-import { THiveMessage, THiveAgent, IAgent, IAgentResponse, TInitiative } from '../types';
+import { THiveMessage, THiveAgent, IAgent, IAgentResponse, TInitiative, TUsage } from '../types';
 import { safeParseJSON, withRetry } from '../utils/aiUtils';
 import { MockExternalServices } from './mockExternalServices';
 import { generateConceptVideo, generateBpmnFlow, generateSequenceDiagram, generateMindMap, generatePresentation } from './geminiService';
 import { MemoryService } from './memoryService';
 import { MathService } from './mathService';
 import { callMistral, callAzureOpenAI } from './llmProxyService';
+import { AI_CONFIG } from './ai/aiConfig';
 
-const MODEL = 'gemini-3-flash-preview';
-const FALLBACK_MODEL = 'gemini-2.5-flash';
+const MODEL = AI_CONFIG.models.primary;
+const FALLBACK_MODEL = AI_CONFIG.models.fallback;
 let isPrimaryModelExhausted = false;
 
 // --- BASE AGENT IMPLEMENTATION ---
@@ -46,28 +47,36 @@ ${history.map(m => `${m.agent || 'User'}: ${m.content}`).join('\n')}
         return Promise.resolve({});
     }
 
-    protected async callLLM(prompt: string, tools?: any[]): Promise<any> {
+    protected async callLLM(prompt: string, tools?: any[]): Promise<{ text: string; usage: TUsage; modelId: string }> {
         return withRetry(async () => {
             // 1. Detect if we are using Search (incompatible with JSON mode)
             const isSearchTool = tools?.some(t => t.googleSearch);
             const shouldEnforceJson = !isSearchTool;
 
-            const executeCall = async (modelId: string) => {
+            const executeCall = async (modelId: string): Promise<{ text: string; usage: TUsage; modelId: string }> => {
                 if (modelId === 'mistral') {
                     const response = await callMistral({
                         messages: [{ role: 'user', content: prompt }],
                     });
-                    return { text: response.choices[0].message.content, grounding: null };
+                    const text = response.text || response.choices?.[0]?.message?.content || "";
+                    const usage = response.usage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
+                    return { text, usage, modelId: modelId === 'mistral' ? 'mistral-large-latest' : modelId };
                 } else if (modelId === 'azure-openai') {
                     const response = await callAzureOpenAI({
                         messages: [{ role: 'user', content: prompt }],
                     });
-                    return { text: response.choices[0].message.content, grounding: null };
+                    const text = response.text || response.choices?.[0]?.message?.content || "";
+                    const usage = response.usage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
+                    return { text, usage, modelId: 'azure-openai' };
                 } else {
                     // Route through server-side proxy (key never leaves server)
                     const proxyConfig = tools ? { tools } : undefined;
-                    const text = await callGeminiProxy(prompt, resolveModelTier(modelId), proxyConfig);
-                    return { text: text || '{}', grounding: null };
+                    const result = await callGeminiProxy(prompt, resolveModelTier(modelId), proxyConfig);
+                    return { 
+                        text: result.text || '{}', 
+                        usage: result.usage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+                        modelId: modelId
+                    };
                 }
             };
 
@@ -89,7 +98,6 @@ ${history.map(m => `${m.agent || 'User'}: ${m.content}`).join('\n')}
                     lastError = error;
                     const errorMessage = error.message || error.error?.message || JSON.stringify(error);
                     const errorStatus = error.status || error.error?.status;
-                    const errorCode = error.code || error.error?.code;
 
                     const isQuotaError = errorMessage.includes('429') || errorMessage.includes('Quota') || errorStatus === 'RESOURCE_EXHAUSTED';
                     const isConfigError = errorMessage.includes('not configured') || errorMessage.includes('missing');
@@ -106,14 +114,15 @@ ${history.map(m => `${m.agent || 'User'}: ${m.content}`).join('\n')}
                     if (shouldEnforceJson && isNetworkOrServerError && (modelId === MODEL || modelId === FALLBACK_MODEL)) {
                         console.warn(`[${this.name}] JSON mode failed with RPC error on ${modelId}. Retrying with text mode...`);
                         try {
-                            const text = await callGeminiProxy(
+                            const result = await callGeminiProxy(
                                 prompt,
                                 resolveModelTier(modelId),
                                 tools ? { tools } : undefined
                             );
                             return {
-                                text: text || "{}",
-                                grounding: null
+                                text: result.text || "{}",
+                                usage: result.usage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+                                modelId: modelId
                             };
                         } catch (retryError) {
                             console.error(`[${this.name}] Text mode retry also failed on ${modelId}`);
@@ -165,7 +174,9 @@ class ScoutService extends BaseAgent {
 
         return {
             content: json.content,
-            metadata: { ...json, sources }
+            metadata: { ...json, sources },
+            usage: raw.usage,
+            modelId: raw.modelId
         };
     }
 }
@@ -205,7 +216,9 @@ class GuardianService extends BaseAgent {
         
         return {
             content: json.content,
-            metadata: { type: json.type || 'compliance', data: json.data || json }
+            metadata: { type: json.type || 'compliance', data: json.data || json },
+            usage: raw.usage,
+            modelId: raw.modelId
         };
     }
 }
@@ -260,7 +273,9 @@ class SimulationService extends BaseAgent {
 
         return {
             content: json.content,
-            metadata: { type: 'simulation', data: simulationResult || json }
+            metadata: { type: 'simulation', data: simulationResult || json },
+            usage: raw.usage,
+            modelId: raw.modelId
         };
     }
 }
@@ -312,7 +327,11 @@ class IntegromatService extends BaseAgent {
             return result;
         }
 
-        return { content: json.content || "I couldn't process that request." };
+        return { 
+            content: json.content || "I couldn't process that request.",
+            usage: raw.usage,
+            modelId: raw.modelId
+        };
     }
 
     // Actual execution logic (can be called directly or after approval)
@@ -451,7 +470,9 @@ class OrchestratorService extends BaseAgent {
             thought: json.thought,
             nextAction: json.action,
             targetAgent: json.target,
-            instructions: json.instructions
+            instructions: json.instructions,
+            usage: raw.usage,
+            modelId: raw.modelId
         };
     }
 }

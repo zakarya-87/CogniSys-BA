@@ -14,7 +14,7 @@ interface ReportsViewProps {
   onSelectInitiative: (initiative: TInitiative) => void;
 }
 
-const SummaryCard: React.FC<{ title: string; value: string; icon: React.ReactNode; color?: string }> = ({ title, value, icon, color = 'bg-accent-purple' }) => (
+const SummaryCard: React.FC<{ title: string; value: string; icon: React.ReactNode; color?: string }> = ({ title, value, icon, color = 'bg-accent-teal' }) => (
   <div className="bg-surface-light dark:bg-surface-dark p-6 rounded-2xl shadow-sm border border-border-light dark:border-border-dark flex items-center space-x-4 transition-all duration-300 hover:shadow-md">
     <div className={`${color} text-white p-3.5 rounded-xl shadow-lg shadow-current/20`}>{icon}</div>
     <div>
@@ -28,7 +28,7 @@ const BarChart: React.FC<{ data: { label: string; value: number }[]; onClick: (l
     const { t } = useTranslation(['reports']);
     const maxValue = Math.max(...data.map(d => d.value), 1);
     const statusColors: { [key in InitiativeStatus]?: string } = {
-        [InitiativeStatus.PLANNING]: 'bg-accent-purple',
+        [InitiativeStatus.PLANNING]: 'bg-accent-teal',
         [InitiativeStatus.AWAITING_APPROVAL]: 'bg-accent-amber',
         [InitiativeStatus.IN_DEVELOPMENT]: 'bg-accent-blue',
         [InitiativeStatus.LIVE]: 'bg-accent-emerald',
@@ -50,7 +50,7 @@ const BarChart: React.FC<{ data: { label: string; value: number }[]; onClick: (l
                         <span className="text-xs font-bold text-text-muted-light dark:text-text-muted-dark w-36 truncate uppercase tracking-wider">{label}</span>
                         <div className="flex-1 bg-surface-darker/5 dark:bg-surface-darker/20 rounded-full h-7 relative overflow-hidden">
                             <div 
-                                className={`h-full rounded-full transition-all duration-500 ease-out ${statusColors[label as InitiativeStatus] || 'bg-gray-400'} ${selected === label ? 'ring-2 ring-offset-2 ring-accent-purple dark:ring-offset-surface-dark' : 'group-hover:opacity-80'}`} 
+                                className={`h-full rounded-full transition-all duration-500 ease-out ${statusColors[label as InitiativeStatus] || 'bg-gray-400'} ${selected === label ? 'ring-2 ring-offset-2 ring-accent-teal dark:ring-offset-surface-dark' : 'group-hover:opacity-80'}`} 
                                 style={{ width: `${(value / maxValue) * 100}%` }}
                             />
                              <span className="absolute inset-y-0 left-3 flex items-center text-xs font-bold text-white drop-shadow-sm">{value}</span>
@@ -118,7 +118,7 @@ const PieChart: React.FC<{ data: { label: string; value: number }[]; onClick: (l
                     {data.map((item, index) => (
                         <div 
                             key={item.label} 
-                            className={`flex items-center p-2 rounded-xl cursor-pointer transition-all duration-200 ${selected === item.label ? 'bg-accent-purple/10 ring-1 ring-accent-purple/20' : 'hover:bg-surface-darker/5 dark:hover:bg-surface-darker/20'}`} 
+                            className={`flex items-center p-2 rounded-xl cursor-pointer transition-all duration-200 ${selected === item.label ? 'bg-accent-teal/10 ring-1 ring-accent-teal/20' : 'hover:bg-surface-darker/5 dark:hover:bg-surface-darker/20'}`} 
                             onClick={() => onClick(item.label)}
                             onMouseEnter={(e) => onHover(e, item)}
                             onMouseLeave={() => onHover(null, null)}
@@ -280,7 +280,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initiatives, onSelectI
                     onClick={() => setActiveTab(tab)} 
                     className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-300 ${
                         activeTab === tab 
-                            ? 'bg-surface-light dark:bg-surface-dark text-accent-purple shadow-sm ring-1 ring-border-light dark:ring-border-dark' 
+                            ? 'bg-surface-light dark:bg-surface-dark text-accent-teal shadow-sm ring-1 ring-border-light dark:ring-border-dark' 
                             : 'text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-text-dark'
                     }`}
                   >
@@ -293,7 +293,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initiatives, onSelectI
       {activeTab === 'Executive' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <SummaryCard title={t('reports:totalInitiatives')} value={summaryData.total.toString()} icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>} color="bg-accent-purple" />
+                <SummaryCard title={t('reports:totalInitiatives')} value={summaryData.total.toString()} icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>} color="bg-accent-teal" />
                 <SummaryCard title={t('reports:liveProjects')} value={summaryData.live.toString()} icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} color="bg-accent-emerald" />
                 <SummaryCard title={t('reports:inPlanning')} value={summaryData.planning.toString()} icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>} color="bg-accent-amber" />
               </div>
@@ -325,7 +325,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initiatives, onSelectI
                         </p>
                       </div>
                       {!filter && (
-                          <Button onClick={handleGenerateReport} disabled={isGeneratingReport} className="shadow-lg shadow-accent-purple/20">
+                          <Button onClick={handleGenerateReport} disabled={isGeneratingReport} className="shadow-lg shadow-accent-teal/20">
                               {isGeneratingReport ? <Spinner className="mr-2" /> : null}
                               {isGeneratingReport ? t('reports:analyzingPortfolio') : t('reports:generateAiReport')}
                           </Button>
@@ -337,11 +337,11 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initiatives, onSelectI
                           {filteredInitiatives.map(init => (
                               <div 
                                 key={init.id} 
-                                className="group p-4 bg-surface-darker/5 dark:bg-surface-darker/20 rounded-xl border border-border-light dark:border-border-dark hover:border-accent-purple/50 transition-all duration-300 cursor-pointer" 
+                                className="group p-4 bg-surface-darker/5 dark:bg-surface-darker/20 rounded-xl border border-border-light dark:border-border-dark hover:border-accent-teal/50 transition-all duration-300 cursor-pointer" 
                                 onClick={() => onSelectInitiative(init)}
                               >
                                   <div className="flex justify-between items-start mb-2">
-                                    <span className="font-bold text-text-light dark:text-text-dark group-hover:text-accent-purple transition-colors">{init.title}</span>
+                                    <span className="font-bold text-text-light dark:text-text-dark group-hover:text-accent-teal transition-colors">{init.title}</span>
                                     <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${STATUS_STYLES[init.status]}`}>{init.status}</span>
                                   </div>
                                   <p className="text-xs text-text-muted-light dark:text-text-muted-dark line-clamp-2">{init.description}</p>
@@ -357,7 +357,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initiatives, onSelectI
                           ) : (
                               <div className="text-center space-y-2">
                                 <p className="text-text-muted-light dark:text-text-muted-dark italic">{t('reports:strategicIntelligenceReady')}</p>
-                                <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-accent-purple/60">{t('reports:clickButtonToBegin')}</p>
+                                <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-accent-teal/60">{t('reports:clickButtonToBegin')}</p>
                               </div>
                           )}
                           {reportError && <p className="text-accent-red text-sm mt-2 font-bold">{reportError}</p>}
@@ -388,7 +388,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initiatives, onSelectI
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                           <SummaryCard title={t('reports:totalBudget')} value={`$${financials.totalBudget.toLocaleString()}`} icon={<span>💰</span>} color="bg-accent-emerald" />
                           <SummaryCard title={t('reports:totalSpend')} value={`$${financials.totalSpend.toLocaleString()}`} icon={<span>💸</span>} color="bg-accent-red" />
-                          <SummaryCard title={t('reports:projRoi')} value={`${financials.projectedROI}%`} icon={<span>📈</span>} color="bg-accent-purple" />
+                          <SummaryCard title={t('reports:projRoi')} value={`${financials.projectedROI}%`} icon={<span>📈</span>} color="bg-accent-teal" />
                       </div>
                       
                       <div className="bg-surface-light dark:bg-surface-dark p-8 rounded-2xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden">
@@ -417,12 +417,12 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ initiatives, onSelectI
                           </div>
                       </div>
                       
-                      <div className="bg-accent-purple/5 dark:bg-accent-purple/10 p-8 rounded-2xl border border-accent-purple/20 shadow-sm">
+                      <div className="bg-accent-teal/5 dark:bg-accent-teal/10 p-8 rounded-2xl border border-accent-teal/20 shadow-sm">
                           <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 bg-accent-purple text-white rounded-lg flex items-center justify-center shadow-lg shadow-accent-purple/20">
+                            <div className="w-8 h-8 bg-accent-teal text-white rounded-lg flex items-center justify-center shadow-lg shadow-accent-teal/20">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                             </div>
-                            <h4 className="font-bold text-accent-purple uppercase tracking-widest text-xs">{t('reports:aiFinancialInsight')}</h4>
+                            <h4 className="font-bold text-accent-teal uppercase tracking-widest text-xs">{t('reports:aiFinancialInsight')}</h4>
                           </div>
                           <p className="text-text-light dark:text-text-dark leading-relaxed">{financials.aiAnalysis}</p>
                       </div>

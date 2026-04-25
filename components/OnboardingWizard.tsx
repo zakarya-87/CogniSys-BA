@@ -56,10 +56,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
         if (orgName.trim().length < 2) return;
         setLoading(true);
         try {
-            await addOrganization({ name: orgName.trim(), ownerId: user?.id ?? '' });
-            // After creation, the new org is appended to organizations in context
-            // We grab the last one since addOrganization appends it
-            // We'll resolve the id in handleCreateProject via organizations state
+            const newOrg = await addOrganization({ name: orgName.trim(), ownerId: user?.id ?? '' });
+            setCreatedOrgId(newOrg.id);
             goTo(1);
         } finally {
             setLoading(false);

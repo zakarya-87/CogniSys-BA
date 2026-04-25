@@ -13,8 +13,8 @@ export class OrganizationController {
       if (!org) return;
       const userId = req.user?.uid ?? 'anonymous';
       await orgService.createOrganization(org, userId, auditContextFromRequest(req));
-      res.status(201).json({ message: 'Organization created successfully' });
-    } catch (error) {
+      res.status(201).json(org);
+    } catch (error: any) {
       safeError(res, error, 'OrganizationController.create');
     }
   }

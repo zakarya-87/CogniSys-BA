@@ -86,7 +86,7 @@ export const WorkshopFacilitator: React.FC<WorkshopFacilitatorProps> = ({ initia
             <div className="flex justify-between items-start mb-6">
                 <div>
                     <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <UserGroupIcon className="h-7 w-7 text-accent-purple" />
+                        <UserGroupIcon className="h-7 w-7 text-accent-teal" />
                         Intelligent Workshop Facilitator
                     </h2>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -137,14 +137,14 @@ export const WorkshopFacilitator: React.FC<WorkshopFacilitatorProps> = ({ initia
             {plan && (
                 <div className="flex-grow flex flex-col gap-6 animate-fade-in-down">
                     {/* Header */}
-                    <div className="bg-accent-purple/10 dark:bg-accent-purple/20 p-4 rounded-lg border border-accent-purple/20 flex justify-between items-center">
+                    <div className="bg-accent-teal/10 dark:bg-accent-teal/20 p-4 rounded-lg border border-accent-teal/20 flex justify-between items-center">
                         <div>
-                            <h3 className="text-xl font-bold text-accent-purple">{plan.title}</h3>
-                            <p className="text-sm text-accent-purple/80">Total Duration: {plan.totalDuration}</p>
+                            <h3 className="text-xl font-bold text-accent-teal">{plan.title}</h3>
+                            <p className="text-sm text-accent-teal/80">Total Duration: {plan.totalDuration}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs uppercase font-bold text-accent-purple/60">Icebreaker</p>
-                            <p className="text-sm font-medium italic text-accent-purple/90">"{plan.icebreaker}"</p>
+                            <p className="text-xs uppercase font-bold text-accent-teal/60">Icebreaker</p>
+                            <p className="text-sm font-medium italic text-accent-teal/90">"{plan.icebreaker}"</p>
                         </div>
                     </div>
 
@@ -191,7 +191,7 @@ export const WorkshopFacilitator: React.FC<WorkshopFacilitatorProps> = ({ initia
                                             <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{item.description}</p>
                                             
                                             {item.relatedModule && (
-                                                <span className="inline-flex items-center text-xs font-medium text-accent-purple bg-accent-purple/10 px-2 py-1 rounded border border-accent-purple/20">
+                                                <span className="inline-flex items-center text-xs font-medium text-accent-teal bg-accent-teal/10 px-2 py-1 rounded border border-accent-teal/20">
                                                     Tool: {item.relatedModule}
                                                 </span>
                                             )}
@@ -204,7 +204,7 @@ export const WorkshopFacilitator: React.FC<WorkshopFacilitatorProps> = ({ initia
                                             {activeItemIndex !== i && (
                                                 <button 
                                                     onClick={() => startItem(i)}
-                                                    className="p-1.5 rounded-full bg-accent-purple/20 text-accent-purple hover:bg-accent-purple/30 dark:bg-accent-purple/20 dark:text-accent-purple dark:hover:bg-accent-purple/30 transition-colors"
+                                                    className="p-1.5 rounded-full bg-accent-teal/20 text-accent-teal hover:bg-accent-teal/30 dark:bg-accent-teal/20 dark:text-accent-teal dark:hover:bg-accent-teal/30 transition-colors"
                                                     title="Start Timer"
                                                 >
                                                     <PlayIcon className="h-4 w-4" />

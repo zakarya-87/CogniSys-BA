@@ -103,7 +103,7 @@ export const CortexView: React.FC<CortexViewProps> = ({ initiatives, onSelectIni
             case 'Initiative': return '#00d4ff'; // accent-cyan
             case 'Person': return '#10B981'; // accent-emerald
             case 'Risk': return '#EF4444'; // accent-red
-            case 'Tech': return '#8B5CF6'; // accent-purple
+            case 'Tech': return '#00D4AA'; // accent-teal
             case 'Sector': return '#F59E0B'; // accent-amber
             default: return '#94A3B8'; // text-muted-dark
         }
@@ -114,15 +114,15 @@ export const CortexView: React.FC<CortexViewProps> = ({ initiatives, onSelectIni
             <div className="flex-1 relative bg-surface-light dark:bg-surface-dark bg-grid-pattern overflow-hidden">
                 {/* Top Left Toolbar */}
                 <div className="absolute top-6 left-6 flex gap-3 z-20">
-                    <div className="bg-surface-light/80 dark:bg-surface-dark/80 backdrop-blur-md border border-border-light dark:border-border-dark rounded-2xl p-1.5 shadow-xl flex flex-col gap-1.5">
-                        <button className="p-2.5 hover:bg-accent-purple/10 dark:hover:bg-accent-purple/20 rounded-xl transition-all text-text-muted-light dark:text-text-muted-dark hover:text-accent-purple" title="Select">
+                    <div className="glass-card p-1.5 shadow-xl flex flex-col gap-1.5">
+                        <button className="p-3 hover:bg-accent-teal/10 dark:hover:bg-accent-teal/20 rounded-xl transition-all text-text-muted-light dark:text-text-muted-dark hover:text-accent-teal" title="Select">
                             <MousePointer2 className="w-5 h-5" />
                         </button>
-                        <button className="p-2.5 hover:bg-accent-purple/10 dark:hover:bg-accent-purple/20 rounded-xl transition-all text-text-muted-light dark:text-text-muted-dark hover:text-accent-purple" title="Pan">
+                        <button className="p-3 hover:bg-accent-teal/10 dark:hover:bg-accent-teal/20 rounded-xl transition-all text-text-muted-light dark:text-text-muted-dark hover:text-accent-teal" title="Pan">
                             <Hand className="w-5 h-5" />
                         </button>
                         <div className="h-px bg-border-light dark:bg-border-dark mx-2" />
-                        <button className="p-2.5 bg-accent-purple/10 text-accent-purple rounded-xl transition-all shadow-inner" title="Filter Nodes">
+                        <button className="p-3 bg-accent-teal/10 text-accent-teal rounded-xl transition-all shadow-inner" title="Filter Nodes">
                             <Filter className="w-5 h-5" />
                         </button>
                     </div>
@@ -130,23 +130,23 @@ export const CortexView: React.FC<CortexViewProps> = ({ initiatives, onSelectIni
 
                 {/* Bottom Right Controls */}
                 <div className="absolute bottom-8 right-8 flex gap-4 z-20">
-                    <div className="bg-surface-light/80 dark:bg-surface-dark/80 backdrop-blur-md border border-border-light dark:border-border-dark rounded-2xl p-1.5 shadow-xl flex items-center gap-2">
-                        <button className="p-2 hover:bg-accent-purple/10 dark:hover:bg-accent-purple/20 rounded-xl transition-all text-text-muted-light dark:text-text-muted-dark hover:text-accent-purple">
+                    <div className="glass-card p-1.5 shadow-xl flex items-center gap-2">
+                        <button className="p-2.5 hover:bg-accent-teal/10 dark:hover:bg-accent-teal/20 rounded-xl transition-all text-text-muted-light dark:text-text-muted-dark hover:text-accent-teal">
                             <Minus className="w-4 h-4" />
                         </button>
                         <span className="text-[10px] px-3 font-bold text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">100%</span>
-                        <button className="p-2 hover:bg-accent-purple/10 dark:hover:bg-accent-purple/20 rounded-xl transition-all text-text-muted-light dark:text-text-muted-dark hover:text-accent-purple">
+                        <button className="p-2.5 hover:bg-accent-teal/10 dark:hover:bg-accent-teal/20 rounded-xl transition-all text-text-muted-light dark:text-text-muted-dark hover:text-accent-teal">
                             <Plus className="w-4 h-4" />
                         </button>
                     </div>
-                    <button className="bg-accent-purple hover:bg-accent-purple/90 text-white p-3.5 rounded-2xl shadow-xl shadow-accent-purple/20 transition-all hover:scale-105 active:scale-95">
+                    <button className="bg-accent-teal hover:bg-accent-teal/90 text-primary p-3.5 rounded-2xl shadow-xl shadow-accent-teal/20 transition-all hover:scale-105 active:scale-95">
                         <Maximize2 className="w-5 h-5" />
                     </button>
                 </div>
 
                 {/* Bottom Left Legend */}
                 <div className="absolute bottom-8 left-8 z-20">
-                    <div className="bg-surface-light/80 dark:bg-surface-dark/80 backdrop-blur-md border border-border-light dark:border-border-dark rounded-2xl p-5 shadow-xl">
+                    <div className="glass-card p-5 shadow-xl">
                         <h4 className="text-[10px] font-bold uppercase text-text-muted-light dark:text-text-muted-dark tracking-[0.2em] mb-4">Entity Taxonomy</h4>
                         <div className="space-y-3">
                             <div className="flex items-center gap-3 group cursor-help">
@@ -174,7 +174,7 @@ export const CortexView: React.FC<CortexViewProps> = ({ initiatives, onSelectIni
                     {loading ? (
                         <div className="flex flex-col items-center justify-center h-full space-y-6">
                             <div className="relative">
-                              <div className="absolute inset-0 bg-accent-purple/20 blur-2xl rounded-full animate-pulse" />
+                              <div className="absolute inset-0 bg-accent-teal/20 blur-2xl rounded-full animate-pulse" />
                               <Spinner />
                             </div>
                             <p className="text-sm font-bold text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest animate-pulse">{t('cortex.analyzing')}</p>
@@ -206,7 +206,7 @@ export const CortexView: React.FC<CortexViewProps> = ({ initiatives, onSelectIni
                                     };
                                     build();
                                 }}
-                                className="w-full py-4 bg-accent-purple text-white font-bold rounded-2xl shadow-xl shadow-accent-purple/20 hover:bg-accent-purple/90 transition-all uppercase tracking-widest text-xs"
+                                className="w-full py-4 bg-accent-teal text-primary font-bold rounded-2xl shadow-xl shadow-accent-teal/20 hover:bg-accent-teal/90 transition-all uppercase tracking-widest text-xs"
                             >
                                 {t('cortex.retry')}
                             </button>
@@ -235,21 +235,21 @@ export const CortexView: React.FC<CortexViewProps> = ({ initiatives, onSelectIni
                                 <line x1="250" x2="150" y1="150" y2="150"></line>
                             </g>
                             <g className="cursor-pointer hover:scale-110 transition-transform duration-300" transform="translate(400, 300)">
-                                <circle className="glow-node" fill="#0F172A" r="40" stroke="#00d4ff" strokeWidth="2"></circle>
+                                <circle className="glow-node" fill="#0F172A" r="40" stroke="#00D4AA" strokeWidth="2"></circle>
                                 <circle fill="#00d4ff" opacity="0.1" r="30"></circle>
                                 <text fill="#E2E8F0" fontFamily="Inter" fontSize="10" fontWeight="bold" textAnchor="middle" x="0" y="5">AI Transformation</text>
                                 <text fill="#94A3B8" fontFamily="Inter" fontSize="8" textAnchor="middle" x="0" y="18">Core Program</text>
                             </g>
                             <g className="cursor-pointer hover:scale-110 transition-transform duration-300" transform="translate(250, 150)">
-                                <circle fill="#0F172A" r="25" stroke="#00d4ff" strokeWidth="2"></circle>
+                                <circle fill="#0F172A" r="25" stroke="#00D4AA" strokeWidth="2"></circle>
                                 <text fill="#E2E8F0" fontFamily="Inter" fontSize="9" textAnchor="middle" x="0" y="4">Agritech</text>
                             </g>
                             <g className="cursor-pointer hover:scale-110 transition-transform duration-300" transform="translate(150, 150)">
-                                <circle fill="#1E293B" r="15" stroke="#8B5CF6" strokeWidth="2"></circle>
+                                <circle fill="#1E293B" r="15" stroke="#00D4AA" strokeWidth="2"></circle>
                                 <image clipPath="circle(15px at 15px 15px)" height="30" href="https://randomuser.me/api/portraits/women/44.jpg" width="30" x="-15" y="-15"/>
                             </g>
                             <g className="cursor-pointer hover:scale-110 transition-transform duration-300" transform="translate(550, 150)">
-                                <circle fill="#0F172A" r="25" stroke="#00d4ff" strokeWidth="2"></circle>
+                                <circle fill="#0F172A" r="25" stroke="#00D4AA" strokeWidth="2"></circle>
                                 <text fill="#E2E8F0" fontFamily="Inter" fontSize="9" textAnchor="middle" x="0" y="4">Logistics</text>
                             </g>
                             <g className="cursor-pointer hover:scale-110 transition-transform duration-300" transform="translate(200, 400)">
@@ -261,7 +261,7 @@ export const CortexView: React.FC<CortexViewProps> = ({ initiatives, onSelectIni
                                 <text fill="#E2E8F0" fontFamily="Inter" fontSize="8" textAnchor="middle" x="0" y="4">Cloud Infra</text>
                             </g>
                             <g className="cursor-pointer hover:scale-110 transition-transform duration-300" transform="translate(600, 350)">
-                                <circle fill="#1E293B" r="18" stroke="#8B5CF6" strokeWidth="2"></circle>
+                                <circle fill="#1E293B" r="18" stroke="#00D4AA" strokeWidth="2"></circle>
                                 <image clipPath="circle(18px at 18px 18px)" height="36" href="https://randomuser.me/api/portraits/men/32.jpg" width="36" x="-18" y="-18"/>
                             </g>
                             <g transform="translate(225, 275)">
@@ -277,7 +277,7 @@ export const CortexView: React.FC<CortexViewProps> = ({ initiatives, onSelectIni
             <aside className="w-96 bg-surface-light dark:bg-surface-dark border-l border-border-light dark:border-border-dark flex flex-col z-30 shadow-2xl">
                 <div className="p-8 border-b border-border-light dark:border-border-dark bg-surface-darker/5 dark:bg-surface-darker/20">
                     <div className="flex items-center gap-3 mb-2">
-                        <Brain className="text-accent-purple w-7 h-7" />
+                        <Brain className="text-accent-teal w-7 h-7" />
                         <h2 className="text-xl font-bold text-text-main-light dark:text-text-main-dark tracking-tight">{t('cortex.insights')}</h2>
                     </div>
                     <p className="text-[10px] font-bold text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">{t('cortex.stream')}</p>
@@ -287,16 +287,16 @@ export const CortexView: React.FC<CortexViewProps> = ({ initiatives, onSelectIni
                     <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-2xl p-5 shadow-sm hover:shadow-md transition-all group">
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-2">
-                              <Zap className="w-3 h-3 text-accent-purple" />
-                              <span className="text-[10px] font-bold uppercase tracking-widest text-accent-purple">{t('cortex.pattern')}</span>
+                              <Zap className="w-3 h-3 text-accent-teal" />
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-accent-teal">{t('cortex.pattern')}</span>
                             </div>
                             <span className="text-[10px] font-bold text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">2m ago</span>
                         </div>
                         <h3 className="text-base font-bold text-text-main-light dark:text-text-main-dark mb-2 tracking-tight">{t('cortex.bottleneck')}</h3>
                         <p className="text-sm text-text-muted-light dark:text-text-muted-dark leading-relaxed mb-6">
-                            Initiatives <span className="text-accent-purple font-bold">Agritech</span> and <span className="text-accent-purple font-bold">Logistics</span> both rely on 'Cloud Infra' in Q3, exceeding available capacity by 15%.
+                            Initiatives <span className="text-accent-teal font-bold">Agritech</span> and <span className="text-accent-teal font-bold">Logistics</span> both rely on 'Cloud Infra' in Q3, exceeding available capacity by 15%.
                         </p>
-                        <button className="w-full flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest bg-surface-darker/5 dark:bg-surface-darker/20 hover:bg-accent-purple hover:text-white text-text-main-light dark:text-text-main-dark py-3 rounded-xl border border-border-light dark:border-border-dark transition-all group-hover:border-accent-purple/50">
+                        <button className="w-full flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest bg-surface-darker/5 dark:bg-surface-darker/20 hover:bg-accent-teal hover:text-primary text-text-main-light dark:text-text-main-dark py-3 rounded-xl border border-border-light dark:border-border-dark transition-all group-hover:border-accent-teal/50">
                             Run Simulation
                             <ChevronRight className="w-3 h-3" />
                         </button>
@@ -315,11 +315,11 @@ export const CortexView: React.FC<CortexViewProps> = ({ initiatives, onSelectIni
                         </p>
                     </div>
                     
-                    <div className="bg-accent-purple/5 dark:bg-accent-purple/10 border border-accent-purple/20 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all group">
+                    <div className="bg-accent-teal/5 dark:bg-accent-teal/10 border border-accent-teal/20 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all group">
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-2">
-                              <Lightbulb className="w-3 h-3 text-accent-purple" />
-                              <span className="text-[10px] font-bold uppercase tracking-widest text-accent-purple">{t('cortex.opportunity')}</span>
+                              <Lightbulb className="w-3 h-3 text-accent-teal" />
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-accent-teal">{t('cortex.opportunity')}</span>
                             </div>
                         </div>
                         <h3 className="text-base font-bold text-text-main-light dark:text-text-main-dark mb-2 tracking-tight">{t('cortex.reusable')}</h3>
@@ -331,8 +331,8 @@ export const CortexView: React.FC<CortexViewProps> = ({ initiatives, onSelectIni
                 
                 <div className="p-6 border-t border-border-light dark:border-border-dark bg-surface-darker/5 dark:bg-surface-darker/30">
                     <div className="relative group">
-                        <textarea className="w-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-2xl pl-5 pr-14 py-4 text-sm focus:ring-2 focus:ring-accent-purple focus:border-transparent resize-none h-24 text-text-main-light dark:text-text-main-dark transition-all shadow-inner placeholder:text-text-muted-light/50 dark:placeholder:text-text-muted-dark/50" placeholder={t('cortex.ask')}></textarea>
-                        <button className="absolute bottom-4 right-4 p-2.5 bg-accent-purple text-white rounded-xl hover:bg-accent-purple/90 transition-all shadow-lg shadow-accent-purple/20 active:scale-90">
+                        <textarea className="w-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-2xl pl-5 pr-14 py-4 text-sm focus:ring-2 focus:ring-accent-teal focus:border-transparent resize-none h-24 text-text-main-light dark:text-text-main-dark transition-all shadow-inner placeholder:text-text-muted-light/50 dark:placeholder:text-text-muted-dark/50" placeholder={t('cortex.ask')}></textarea>
+                        <button className="absolute bottom-4 right-4 p-2.5 bg-accent-teal text-primary rounded-xl hover:bg-accent-teal/90 transition-all shadow-lg shadow-accent-teal/20 active:scale-90">
                             <Send className="w-4 h-4" />
                         </button>
                     </div>

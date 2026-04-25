@@ -73,7 +73,7 @@ const KpiCard: React.FC<{ kpi: TKpi; onClick: () => void; isSelected: boolean }>
     return (
         <div 
             onClick={onClick}
-            className={`p-8 rounded-3xl cursor-pointer transition-all border-2 group ${isSelected ? 'bg-surface-light dark:bg-surface-darker border-accent-purple shadow-2xl shadow-accent-purple/20 -translate-y-1' : 'bg-surface-light dark:bg-surface-dark border-border-light dark:border-border-dark hover:border-accent-purple/50 hover:shadow-xl hover:-translate-y-1'}`}
+            className={`p-8 rounded-3xl cursor-pointer transition-all border-2 group ${isSelected ? 'bg-surface-light dark:bg-surface-darker border-accent-teal shadow-2xl shadow-accent-teal/20 -translate-y-1' : 'bg-surface-light dark:bg-surface-dark border-border-light dark:border-border-dark hover:border-accent-teal/50 hover:shadow-xl hover:-translate-y-1'}`}
         >
             <div className="flex justify-between items-baseline mb-6">
                 <p className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">{kpi.name}</p>
@@ -175,8 +175,8 @@ const ForecastChart: React.FC<{ forecast: TKpiForecast }> = ({ forecast }) => {
                 </ResponsiveContainer>
             </div>
             
-            <div className="mt-8 p-8 bg-accent-purple/5 dark:bg-accent-purple/10 border-l-4 border-accent-purple rounded-2xl shadow-inner">
-                <h4 className="text-[10px] font-black text-accent-purple uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+            <div className="mt-8 p-8 bg-accent-teal/5 dark:bg-accent-teal/10 border-l-4 border-accent-teal rounded-2xl shadow-inner">
+                <h4 className="text-[10px] font-black text-accent-teal uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
                     <Zap className="h-4 w-4" /> {t('intelligenceCenter.aiPredictiveInsight')}
                 </h4>
                 <p className="text-sm font-medium text-text-main-light dark:text-text-main-dark leading-relaxed italic">"{forecast.insight}"</p>
@@ -303,8 +303,8 @@ export const IntelligenceCenter: React.FC<{ initiatives: TInitiative[]; onCreate
             <div className="bg-surface-dark dark:bg-surface-darker rounded-[2.5rem] p-12 text-white shadow-2xl relative overflow-hidden border border-border-dark group">
                 <div className="relative z-10">
                     <div className="flex items-center gap-6 mb-12">
-                        <div className="p-5 bg-accent-purple/20 rounded-3xl backdrop-blur-xl border border-accent-purple/30 shadow-2xl group-hover:scale-110 transition-transform duration-500">
-                            <Brain className="h-10 w-10 text-accent-purple" />
+                        <div className="p-5 bg-accent-teal/20 rounded-3xl backdrop-blur-xl border border-accent-teal/30 shadow-2xl group-hover:scale-110 transition-transform duration-500">
+                            <Brain className="h-10 w-10 text-accent-teal" />
                         </div>
                         <div>
                             <h2 className="text-4xl font-black tracking-tighter">{t('intelligenceCenter.executiveBriefing')}</h2>
@@ -314,7 +314,7 @@ export const IntelligenceCenter: React.FC<{ initiatives: TInitiative[]; onCreate
 
                     {isBriefingLoading ? (
                         <div className="flex items-center gap-6 animate-pulse py-10">
-                            <RefreshCw className="h-8 w-8 animate-spin text-accent-purple" />
+                            <RefreshCw className="h-8 w-8 animate-spin text-accent-teal" />
                             <span className="text-2xl font-black tracking-tight text-text-muted-dark">{t('intelligenceCenter.synthesizing')}</span>
                         </div>
                     ) : briefing ? (
@@ -337,14 +337,14 @@ export const IntelligenceCenter: React.FC<{ initiatives: TInitiative[]; onCreate
                                             ))}
                                         </ul>
                                     </div>
-                                    <div className="bg-surface-darker/40 backdrop-blur-xl rounded-3xl p-8 border border-border-dark shadow-inner hover:border-accent-purple/30 transition-colors">
-                                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-purple mb-6 flex items-center gap-3">
+                                    <div className="bg-surface-darker/40 backdrop-blur-xl rounded-3xl p-8 border border-border-dark shadow-inner hover:border-accent-teal/30 transition-colors">
+                                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-teal mb-6 flex items-center gap-3">
                                             <CheckCircle2 className="h-5 w-5" /> {t('intelligenceCenter.topPriorities')}
                                         </h3>
                                         <ul className="space-y-4">
                                             {briefing.priorities.map((item, i) => (
                                                 <li key={i} className="text-sm font-bold flex items-start gap-4 text-text-muted-dark leading-relaxed">
-                                                    <span className="mt-2 w-2 h-2 rounded-full bg-accent-purple shrink-0 shadow-[0_0_10px_rgba(139,92,246,0.5)]" />
+                                                    <span className="mt-2 w-2 h-2 rounded-full bg-accent-teal shrink-0 shadow-[0_0_10px_rgba(139,92,246,0.5)]" />
                                                     {item}
                                                 </li>
                                             ))}
@@ -394,7 +394,7 @@ export const IntelligenceCenter: React.FC<{ initiatives: TInitiative[]; onCreate
                 <div className="lg:col-span-2 bg-surface-light dark:bg-surface-dark p-10 rounded-[2.5rem] shadow-sm border border-border-light dark:border-border-dark">
                     <div className="flex justify-between items-center mb-10">
                         <h2 className="text-3xl font-black text-text-main-light dark:text-text-main-dark flex items-center gap-4 tracking-tighter">
-                            <BarChart3 className="h-8 w-8 text-accent-purple" />
+                            <BarChart3 className="h-8 w-8 text-accent-teal" />
                             {t('intelligenceCenter.liveKpiDashboard')}
                         </h2>
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted-light dark:text-text-muted-dark bg-surface-darker/5 dark:bg-surface-darker/20 px-4 py-1.5 rounded-full border border-border-light dark:border-border-dark">{t('intelligenceCenter.updatedRealTime')}</span>
@@ -468,22 +468,22 @@ export const IntelligenceCenter: React.FC<{ initiatives: TInitiative[]; onCreate
                 {/* Predictive Analytics & Insights */}
                 <div className="bg-surface-light dark:bg-surface-dark p-10 rounded-[2.5rem] shadow-sm border border-border-light dark:border-border-dark flex flex-col">
                     <h2 className="text-3xl font-black text-text-main-light dark:text-text-main-dark flex items-center gap-4 mb-10 tracking-tighter">
-                        <TrendingUp className="h-9 w-9 text-accent-purple" />
+                        <TrendingUp className="h-9 w-9 text-accent-teal" />
                         {t('intelligenceCenter.predictiveAnalytics')}
                     </h2>
                     {isForecasting || isKpiInsightLoading ? (
                         <div className="flex-grow flex flex-col items-center justify-center min-h-[500px]">
                             <div className="relative">
                                 <Spinner />
-                                <Brain className="h-6 w-6 text-accent-purple absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+                                <Brain className="h-6 w-6 text-accent-teal absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
                             </div>
-                            <p className="mt-8 text-accent-purple font-black uppercase tracking-[0.3em] text-xs animate-pulse">{t('intelligenceCenter.runningForecast')}</p>
+                            <p className="mt-8 text-accent-teal font-black uppercase tracking-[0.3em] text-xs animate-pulse">{t('intelligenceCenter.runningForecast')}</p>
                         </div>
                     ) : (forecast && kpiInsights) ? (
                         <div className="flex-grow space-y-12 animate-in fade-in duration-500">
                             <div>
                                 <h3 className="text-xl font-black text-text-main-light dark:text-text-main-dark mb-8 uppercase tracking-[0.2em] flex items-center gap-3">
-                                    <div className="w-2 h-8 bg-accent-purple rounded-full" />
+                                    <div className="w-2 h-8 bg-accent-teal rounded-full" />
                                     {t('intelligenceCenter.forecastTitle', { kpiName: forecast.kpiName })}
                                 </h3>
                                 <ForecastChart forecast={forecast} />
@@ -492,8 +492,8 @@ export const IntelligenceCenter: React.FC<{ initiatives: TInitiative[]; onCreate
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pt-10 border-t border-border-light dark:border-border-dark">
                                 <div className="space-y-4">
                                     <h4 className="text-[11px] font-black text-text-main-light dark:text-text-main-dark mb-6 flex items-center gap-3 uppercase tracking-[0.2em]">
-                                        <div className="p-2 bg-accent-purple/10 rounded-xl">
-                                            <Brain className="h-5 w-5 text-accent-purple" />
+                                        <div className="p-2 bg-accent-teal/10 rounded-xl">
+                                            <Brain className="h-5 w-5 text-accent-teal" />
                                         </div>
                                         {t('intelligenceCenter.strategicAnalysis')}
                                     </h4>
@@ -528,8 +528,8 @@ export const IntelligenceCenter: React.FC<{ initiatives: TInitiative[]; onCreate
                                 </h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     {kpiInsights.recommendations.map((rec, i) => (
-                                        <div key={i} className="flex items-start gap-4 text-xs font-black text-text-muted-light dark:text-text-muted-dark p-4 bg-surface-light dark:bg-surface-dark rounded-2xl border border-border-light dark:border-border-dark shadow-sm hover:border-accent-purple/30 transition-all hover:shadow-md">
-                                            <CheckCircle2 className="h-5 w-5 text-accent-purple mt-0.5 shrink-0" />
+                                        <div key={i} className="flex items-start gap-4 text-xs font-black text-text-muted-light dark:text-text-muted-dark p-4 bg-surface-light dark:bg-surface-dark rounded-2xl border border-border-light dark:border-border-dark shadow-sm hover:border-accent-teal/30 transition-all hover:shadow-md">
+                                            <CheckCircle2 className="h-5 w-5 text-accent-teal mt-0.5 shrink-0" />
                                             {rec}
                                         </div>
                                     ))}
@@ -553,7 +553,7 @@ export const IntelligenceCenter: React.FC<{ initiatives: TInitiative[]; onCreate
                             </h2>
                             <p className="text-lg font-medium text-text-muted-light dark:text-text-muted-dark mt-2">{t('intelligenceCenter.aiDrivenGrowth')}</p>
                         </div>
-                        <Button onClick={handleGenerate} disabled={isLoading} className="px-10 py-4 rounded-2xl shadow-2xl hover:shadow-accent-purple/40 transition-all active:scale-95 font-black uppercase tracking-widest text-xs">
+                        <Button onClick={handleGenerate} disabled={isLoading} className="px-10 py-4 rounded-2xl shadow-2xl hover:shadow-accent-teal/40 transition-all active:scale-95 font-black uppercase tracking-widest text-xs">
                             {isLoading ? <Spinner /> : <><RefreshCw className="h-5 w-5 mr-3 animate-spin-slow" /> {t('intelligenceCenter.generate')}</>}
                         </Button>
                     </div>
@@ -569,11 +569,11 @@ export const IntelligenceCenter: React.FC<{ initiatives: TInitiative[]; onCreate
                     {recommendations ? (
                         <div className="space-y-8 animate-in fade-in duration-500">
                             {recommendations.map(rec => (
-                                <div key={rec.id} className="bg-surface-light dark:bg-surface-darker/30 p-8 rounded-3xl border border-border-light dark:border-border-dark hover:shadow-2xl hover:border-accent-purple/40 transition-all group relative overflow-hidden">
+                                <div key={rec.id} className="bg-surface-light dark:bg-surface-darker/30 p-8 rounded-3xl border border-border-light dark:border-border-dark hover:shadow-2xl hover:border-accent-teal/40 transition-all group relative overflow-hidden">
                                     <div className="flex items-start justify-between gap-6 mb-6">
                                         <div className="flex items-center gap-5">
-                                            <div className="p-4 bg-surface-light dark:bg-surface-dark rounded-2xl shadow-xl border border-border-light dark:border-border-dark group-hover:border-accent-purple/50 transition-colors">
-                                                <MessageSquareQuote className="h-6 w-6 text-accent-purple" />
+                                            <div className="p-4 bg-surface-light dark:bg-surface-dark rounded-2xl shadow-xl border border-border-light dark:border-border-dark group-hover:border-accent-teal/50 transition-colors">
+                                                <MessageSquareQuote className="h-6 w-6 text-accent-teal" />
                                             </div>
                                             <div>
                                                 <h3 className="text-xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">{rec.title}</h3>
@@ -587,12 +587,12 @@ export const IntelligenceCenter: React.FC<{ initiatives: TInitiative[]; onCreate
                                     <Button 
                                         onClick={() => onCreateInitiative(rec.title, rec.justification)}
                                         variant="outline"
-                                        className="w-full py-4 text-[11px] font-black uppercase tracking-[0.2em] border-2 rounded-2xl hover:bg-accent-purple hover:text-white hover:border-accent-purple transition-all group-hover:shadow-lg"
+                                        className="w-full py-4 text-[11px] font-black uppercase tracking-[0.2em] border-2 rounded-2xl hover:bg-accent-teal hover:text-white hover:border-accent-teal transition-all group-hover:shadow-lg"
                                     >
                                         <Plus className="h-4 w-4 mr-3" /> {t('intelligenceCenter.convertToInitiative')}
                                     </Button>
                                     <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-10 transition-opacity">
-                                        <Sparkles className="h-12 w-12 text-accent-purple" />
+                                        <Sparkles className="h-12 w-12 text-accent-teal" />
                                     </div>
                                 </div>
                             ))}

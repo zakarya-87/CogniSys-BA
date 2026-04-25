@@ -55,7 +55,7 @@ export const ValuePropCanvas: React.FC<ValuePropCanvasProps> = ({ initiative }) 
             <div className="flex justify-between items-start mb-6">
                 <div>
                     <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <HeartIcon className="h-7 w-7 text-accent-purple" />
+                        <HeartIcon className="h-7 w-7 text-accent-teal" />
                         Intelligent Value Proposition Canvas
                     </h2>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -72,7 +72,7 @@ export const ValuePropCanvas: React.FC<ValuePropCanvasProps> = ({ initiative }) 
                             type="text" 
                             value={product}
                             onChange={(e) => setProduct(e.target.value)}
-                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus:ring-2 focus:ring-accent-purple"
+                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus:ring-2 focus:ring-accent-teal"
                             placeholder="e.g. Premium Subscription"
                         />
                     </div>
@@ -82,7 +82,7 @@ export const ValuePropCanvas: React.FC<ValuePropCanvasProps> = ({ initiative }) 
                             type="text" 
                             value={segment}
                             onChange={(e) => setSegment(e.target.value)}
-                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus:ring-2 focus:ring-accent-purple"
+                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus:ring-2 focus:ring-accent-teal"
                             placeholder="e.g. Small Business Owners"
                         />
                     </div>
@@ -105,8 +105,8 @@ export const ValuePropCanvas: React.FC<ValuePropCanvasProps> = ({ initiative }) 
                         <>
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[500px]">
                                 {/* Left: Value Map (Square) */}
-                                <div className="border-2 border-accent-purple/20 dark:border-accent-purple/30 rounded-xl p-4 flex flex-col bg-white dark:bg-gray-900 relative">
-                                    <div className="absolute top-2 left-2 text-sm font-bold text-accent-purple uppercase tracking-widest">Value Map (Product)</div>
+                                <div className="border-2 border-accent-teal/20 dark:border-accent-teal/30 rounded-xl p-4 flex flex-col bg-white dark:bg-gray-900 relative">
+                                    <div className="absolute top-2 left-2 text-sm font-bold text-accent-teal uppercase tracking-widest">Value Map (Product)</div>
                                     
                                     <div className="flex-grow grid grid-rows-2 gap-2 mt-6">
                                         <div className="grid grid-cols-2 gap-2">
@@ -150,7 +150,7 @@ export const ValuePropCanvas: React.FC<ValuePropCanvasProps> = ({ initiative }) 
                                                  <CanvasSection 
                                                     title="Jobs to be Done" 
                                                     items={canvas.customerProfile?.jobs || []} 
-                                                    color="bg-accent-purple/10 dark:bg-accent-purple/20 border-accent-purple/20 dark:border-accent-purple/30 text-accent-purple"
+                                                    color="bg-accent-teal/10 dark:bg-accent-teal/20 border-accent-teal/20 dark:border-accent-teal/30 text-accent-teal"
                                                     icon="🔨"
                                                 />
                                             </div>
@@ -167,14 +167,14 @@ export const ValuePropCanvas: React.FC<ValuePropCanvasProps> = ({ initiative }) 
                                 </div>
                             </div>
 
-                            <div className="bg-accent-purple/10 dark:bg-accent-purple/20 p-4 rounded-lg border border-accent-purple/20 flex items-center justify-between">
+                            <div className="bg-accent-teal/10 dark:bg-accent-teal/20 p-4 rounded-lg border border-accent-teal/20 flex items-center justify-between">
                                 <div>
-                                    <h3 className="font-bold text-accent-purple mb-1">Product-Market Fit Analysis</h3>
-                                    <p className="text-sm text-accent-purple/80">{canvas.analysis}</p>
+                                    <h3 className="font-bold text-accent-teal mb-1">Product-Market Fit Analysis</h3>
+                                    <p className="text-sm text-accent-teal/80">{canvas.analysis}</p>
                                 </div>
-                                <div className="text-center ml-4 pl-4 border-l border-accent-purple/20 dark:border-accent-purple/30">
-                                    <div className="text-xs font-bold text-accent-purple/60 uppercase">Fit Score</div>
-                                    <div className="text-3xl font-black text-accent-purple">{canvas.fitScore}%</div>
+                                <div className="text-center ml-4 pl-4 border-l border-accent-teal/20 dark:border-accent-teal/30">
+                                    <div className="text-xs font-bold text-accent-teal/60 uppercase">Fit Score</div>
+                                    <div className="text-3xl font-black text-accent-teal">{canvas.fitScore}%</div>
                                 </div>
                             </div>
                         </>

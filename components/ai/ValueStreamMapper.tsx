@@ -62,7 +62,7 @@ export const ValueStreamMapper: React.FC<ValueStreamMapperProps> = ({ initiative
             <div className="flex justify-between items-start mb-6">
                 <div>
                     <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <ChartBarIcon className="h-7 w-7 text-accent-purple" />
+                        <ChartBarIcon className="h-7 w-7 text-accent-teal" />
                         Intelligent Value Stream Mapper
                     </h2>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -77,7 +77,7 @@ export const ValueStreamMapper: React.FC<ValueStreamMapperProps> = ({ initiative
                 </label>
                 <div className="flex gap-4">
                     <textarea 
-                        className="flex-grow p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-purple"
+                        className="flex-grow p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-accent-teal"
                         rows={2}
                         value={processDesc}
                         onChange={(e) => setProcessDesc(e.target.value)}
@@ -97,12 +97,12 @@ export const ValueStreamMapper: React.FC<ValueStreamMapperProps> = ({ initiative
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* Efficiency Card */}
-                        <div className="bg-accent-purple/10 dark:bg-accent-purple/20 p-4 rounded-lg border border-accent-purple/20 text-center">
-                            <h3 className="text-sm font-bold text-accent-purple uppercase tracking-wide">Flow Efficiency</h3>
-                            <div className="text-4xl font-black text-accent-purple mt-2">
+                        <div className="bg-accent-teal/10 dark:bg-accent-teal/20 p-4 rounded-lg border border-accent-teal/20 text-center">
+                            <h3 className="text-sm font-bold text-accent-teal uppercase tracking-wide">Flow Efficiency</h3>
+                            <div className="text-4xl font-black text-accent-teal mt-2">
                                 {analysis.flowEfficiency.toFixed(1)}%
                             </div>
-                            <p className="text-xs text-accent-purple/80 mt-1">
+                            <p className="text-xs text-accent-teal/80 mt-1">
                                 {analysis.flowEfficiency < 15 ? 'Low - High Waste' : analysis.flowEfficiency > 40 ? 'Excellent' : 'Average'}
                             </p>
                         </div>

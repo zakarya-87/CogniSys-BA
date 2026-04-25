@@ -18,7 +18,7 @@ const CommandIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http:/
 const ArrowRightIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75" /></svg>;
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavigate, onAction, selectedInitiative }) => {
-  const { organizations } = useCatalyst();
+  const { organizations, toggleFocusMode, isFocusModeActive } = useCatalyst();
   const currentOrg = organizations[0];
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -36,6 +36,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
   // Define commands based on context
   const getCommands = () => {
     const commands = [
+      { id: 'focus-mode', label: isFocusModeActive ? 'Exit Focus Mode' : 'Enter Focus Mode', group: 'View', action: () => { toggleFocusMode(); } },
       { id: 'home', label: 'Go to Dashboard', group: 'Navigation', action: () => onNavigate('dashboard') },
       { id: 'initiatives', label: 'Go to Initiatives List', group: 'Navigation', action: () => onNavigate('initiatives') },
       { id: 'projectHub', label: 'Go to Project Hub', group: 'Navigation', action: () => onNavigate('projectHub') },

@@ -1,6 +1,8 @@
 import { ModelRouter, ModelType } from './ModelRouter';
 import { PromptManager } from './PromptManager';
+import { ValidationService } from '../services/ValidationService';
 import { TInitiative, TWorkBreakdown } from '../../types';
+import { jsonrepair } from 'jsonrepair';
 
 export class WBSGeneratorAgent {
   private router = new ModelRouter();
@@ -15,7 +17,11 @@ export class WBSGeneratorAgent {
       Sector: ${initiative.sector}
       
       Generate a hierarchical WBS with at least 3 levels (Phases, Tasks, Sub-tasks).
-      Include 'estimatedDuration', 'complexity' (Low, Medium, High), and 'dependencies'.
+      Include 'effort' (total hours per node), 'duration' (days), 'complexity' (Low, Medium, High), and 'dependencies'.
+      
+      IMPORTANT MATH RULE: 
+      - The 'effort' of a parent node MUST be the exact sum of the 'effort' of its children.
+      - Total 'effort' at the root must be comprehensive.
     `;
 
     const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
@@ -25,15 +31,26 @@ export class WBSGeneratorAgent {
     for (const provider of providerChain) {
       try {
         const response = await this.router.generateContent(fullPrompt, provider);
-        const jsonStr = response.replace(/```json|```/g, '').trim();
-        return JSON.parse(jsonStr) as TWorkBreakdown;
+        
+        // Use jsonrepair for robustness
+        const rawJson = response.text.replace(/```json|```/g, '').trim();
+        const repairedJson = jsonrepair(rawJson);
+        const wbsData = JSON.parse(repairedJson) as TWorkBreakdown;
+
+        // Predictive Validation Layer (HIVE-03)
+        const validation = ValidationService.validateWBS(wbsData as any);
+        if (!validation.isValid) {
+          throw new Error(`Mathematical validation failed: ${validation.errors.join('; ')}`);
+        }
+
+        return wbsData;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        console.warn(`WBSGeneratorAgent: provider ${provider} failed, trying next...`, lastError.message);
+        console.warn(`WBSGeneratorAgent: provider ${provider} failed or invalid, trying next...`, lastError.message);
       }
     }
 
-    throw new Error(`WBSGeneratorAgent: all providers failed. Last error: ${lastError?.message}`);
+    throw new Error(`WBSGeneratorAgent: all providers failed or output invalid math. Last error: ${lastError?.message}`);
   }
 }
 

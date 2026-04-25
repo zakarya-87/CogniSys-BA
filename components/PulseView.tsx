@@ -42,7 +42,7 @@ const ActivityCard: React.FC<{ activity: TActivity }> = ({ activity }) => {
                         </div>
                     </div>
                     <div className="text-sm font-medium text-text-main-light dark:text-text-main-dark leading-relaxed">
-                        <span className="font-black text-accent-purple uppercase tracking-wider text-[11px] mr-2">[{activity.initiativeTitle}]</span> {activity.description}
+                        <span className="font-black text-accent-teal uppercase tracking-wider text-[11px] mr-2">[{activity.initiativeTitle}]</span> {activity.description}
                     </div>
 
                     {/* Comments Thread */}
@@ -84,13 +84,13 @@ export const PulseView: React.FC = () => {
         <div className="h-full flex flex-col p-8 bg-surface-light dark:bg-surface-dark animate-in fade-in duration-700">
              <div className="flex justify-between items-center mb-10">
                 <div className="flex items-center gap-5">
-                    <div className="p-4 bg-accent-purple/10 rounded-2xl">
-                        <Bell className="h-10 w-10 text-accent-purple" />
+                    <div className="p-4 bg-accent-teal/10 rounded-2xl">
+                        <Bell className="h-10 w-10 text-accent-teal" />
                     </div>
                     <div>
                         <h1 className="text-3xl font-black text-text-main-light dark:text-text-main-dark tracking-tighter flex items-center gap-3">
                             The Pulse
-                            <Sparkles className="h-5 w-5 text-accent-purple animate-pulse" />
+                            <Sparkles className="h-5 w-5 text-accent-teal animate-pulse" />
                         </h1>
                         <p className="text-text-muted-light dark:text-text-muted-dark mt-1 font-medium">Enterprise Activity Stream & AI Collaboration Feed.</p>
                     </div>

@@ -4,8 +4,19 @@ import mermaid from 'mermaid';
 // Initialize mermaid
 mermaid.initialize({
   startOnLoad: false,
-  theme: 'default', // You can change this to 'dark', 'forest', etc.
-  securityLevel: 'loose', // Allows for more flexibility in diagrams
+  theme: 'base',
+  themeVariables: {
+    primaryColor: '#22d3ee',
+    primaryTextColor: '#fff',
+    primaryBorderColor: '#22d3ee',
+    lineColor: '#52525b',
+    secondaryColor: '#a855f7',
+    tertiaryColor: '#10b981',
+    mainBkg: 'rgba(0,0,0,0.4)',
+    nodeBorder: 'rgba(34,211,238,0.2)',
+    fontFamily: 'Inter, system-ui, sans-serif'
+  },
+  securityLevel: 'loose',
 });
 
 interface MermaidProps {

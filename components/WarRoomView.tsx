@@ -43,7 +43,7 @@ export const WarRoomView: React.FC = () => {
                     <button className="px-4 py-2 bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-border-dark text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2">
                         <span className="material-icons-outlined text-base">pause</span> Pause Debate
                     </button>
-                    <button className="px-4 py-2 bg-accent-purple hover:bg-accent-purple/80 text-white text-sm font-medium rounded-md shadow-lg shadow-accent-purple/20 transition-all flex items-center gap-2">
+                    <button className="px-4 py-2 bg-accent-teal hover:bg-accent-teal/80 text-white text-sm font-medium rounded-md shadow-lg shadow-accent-teal/20 transition-all flex items-center gap-2">
                         <span className="material-icons-outlined text-base">gavel</span> Force Consensus
                     </button>
                 </div>
@@ -77,23 +77,23 @@ export const WarRoomView: React.FC = () => {
                                 <line stroke="url(#line-gradient)" strokeWidth="2" x1="50%" x2="50%" y1="50%" y2="75%"></line>
                                 <line stroke="url(#line-gradient)" strokeWidth="2" x1="50%" x2="25%" y1="50%" y2="50%"></line>
                             </svg>
-                            <div className="relative z-10 w-32 h-32 rounded-full border-2 border-accent-purple/30 bg-surface-light dark:bg-surface-dark flex flex-col items-center justify-center text-center p-2 shadow-2xl shadow-accent-purple/10">
-                                <div className="absolute inset-0 rounded-full border border-accent-purple/20 animate-ping opacity-20"></div>
-                                <span className="material-icons-round text-3xl text-accent-purple mb-1">hub</span>
+                            <div className="relative z-10 w-32 h-32 rounded-full border-2 border-accent-teal/30 bg-surface-light dark:bg-surface-dark flex flex-col items-center justify-center text-center p-2 shadow-2xl shadow-accent-teal/10">
+                                <div className="absolute inset-0 rounded-full border border-accent-teal/20 animate-ping opacity-20"></div>
+                                <span className="material-icons-round text-3xl text-accent-teal mb-1">hub</span>
                                 <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">Nexus</span>
                                 <span className="text-xs font-bold text-gray-800 dark:text-white leading-tight">Strategic<br/>Core</span>
                             </div>
                             <div className="absolute top-[10%] left-1/2 -translate-x-1/2 flex flex-col items-center animate-float">
                                 <div className="relative group">
-                                    <div className="w-16 h-16 rounded-full bg-surface-light dark:bg-surface-dark border-2 border-accent-purple flex items-center justify-center agent-glow-purple transition-transform transform group-hover:scale-110">
-                                        <span className="material-icons-round text-2xl text-accent-purple">psychology</span>
+                                    <div className="w-16 h-16 rounded-full bg-surface-light dark:bg-surface-dark border-2 border-accent-teal flex items-center justify-center agent-glow-purple transition-transform transform group-hover:scale-110">
+                                        <span className="material-icons-round text-2xl text-accent-teal">psychology</span>
                                     </div>
-                                    <div className="absolute -top-2 -right-2 w-5 h-5 bg-accent-purple rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2 border-background-dark">!</div>
-                                    <div className="absolute top-0 left-20 w-64 p-3 bg-surface-light dark:bg-surface-dark/90 backdrop-blur-md rounded-lg rounded-tl-none border border-accent-purple/30 shadow-xl z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                                    <div className="absolute -top-2 -right-2 w-5 h-5 bg-accent-teal rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2 border-background-dark">!</div>
+                                    <div className="absolute top-0 left-20 w-64 p-3 bg-surface-light dark:bg-surface-dark/90 backdrop-blur-md rounded-lg rounded-tl-none border border-accent-teal/30 shadow-xl z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                                         <p className="text-xs text-gray-300">Synthesizing risk vectors. The consolidation strategy aligns with 78% of Q4 KPIs.</p>
                                     </div>
                                 </div>
-                                <span className="mt-2 text-xs font-bold text-accent-purple">Orchestrator</span>
+                                <span className="mt-2 text-xs font-bold text-accent-teal">Orchestrator</span>
                                 <span className="text-[10px] text-gray-500">System Lead</span>
                             </div>
                             <div className="absolute right-[10%] top-1/2 -translate-y-1/2 flex flex-col items-center animate-float" style={{ animationDelay: '1s' }}>
@@ -107,12 +107,12 @@ export const WarRoomView: React.FC = () => {
                             </div>
                             <div className="absolute bottom-[10%] left-1/2 -translate-x-1/2 flex flex-col items-center animate-float" style={{ animationDelay: '0.5s' }}>
                                 <div className="relative group">
-                                    <div className="w-14 h-14 rounded-full bg-surface-light dark:bg-surface-dark border-2 border-accent-purple flex items-center justify-center agent-glow-purple transition-transform transform group-hover:scale-110">
-                                        <span className="material-icons-round text-2xl text-accent-purple">shield</span>
+                                    <div className="w-14 h-14 rounded-full bg-surface-light dark:bg-surface-dark border-2 border-accent-teal flex items-center justify-center agent-glow-purple transition-transform transform group-hover:scale-110">
+                                        <span className="material-icons-round text-2xl text-accent-teal">shield</span>
                                     </div>
                                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent-emerald rounded-full border-2 border-background-dark"></div>
                                 </div>
-                                <span className="mt-2 text-xs font-bold text-accent-purple">Guardian</span>
+                                <span className="mt-2 text-xs font-bold text-accent-teal">Guardian</span>
                                 <span className="text-[10px] text-gray-500">Compliance</span>
                             </div>
                             <div className="absolute left-[10%] top-1/2 -translate-y-1/2 flex flex-col items-center animate-float" style={{ animationDelay: '1.5s' }}>
@@ -139,7 +139,7 @@ export const WarRoomView: React.FC = () => {
                     <div className="flex-1 bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl p-5 flex flex-col">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide flex items-center gap-2">
-                                <span className="material-icons-outlined text-accent-purple">auto_graph</span>
+                                <span className="material-icons-outlined text-accent-teal">auto_graph</span>
                                 Consensus Synthesis
                             </h3>
                             <span className="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 text-xs px-2 py-0.5 rounded-full font-medium">Forming... 68%</span>
@@ -147,11 +147,11 @@ export const WarRoomView: React.FC = () => {
                         <div className="flex-1 flex gap-6">
                             <div className="flex-1 space-y-3">
                                 <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                                    Current trajectory favors <strong className="text-accent-purple">Product Consolidation</strong>. Scout reports market saturation in adjacent sectors, reducing expansion viability. However, Sentry flags a <span className="text-accent-red">significant risk</span> of competitor leapfrogging if R&D budget is cut. 
+                                    Current trajectory favors <strong className="text-accent-teal">Product Consolidation</strong>. Scout reports market saturation in adjacent sectors, reducing expansion viability. However, Sentry flags a <span className="text-accent-red">significant risk</span> of competitor leapfrogging if R&D budget is cut. 
                                 </p>
                                 <div className="bg-gray-100 dark:bg-surface-darker p-3 rounded-lg border border-gray-200 dark:border-border-dark">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="material-icons-outlined text-sm text-accent-purple">lightbulb</span>
+                                        <span className="material-icons-outlined text-sm text-accent-teal">lightbulb</span>
                                         <span className="text-xs font-bold text-gray-700 dark:text-gray-200">Emerging Recommendation:</span>
                                     </div>
                                     <p className="text-xs text-gray-500 dark:text-gray-400">Hybrid approach: Consolidate core product lines while maintaining a lean "Skunkworks" team for exploratory expansion.</p>
@@ -164,7 +164,7 @@ export const WarRoomView: React.FC = () => {
                                         <span className="text-gray-900 dark:text-white">82%</span>
                                     </div>
                                     <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full overflow-hidden">
-                                        <div className="bg-accent-purple h-full rounded-full" style={{ width: '82%' }}></div>
+                                        <div className="bg-accent-teal h-full rounded-full" style={{ width: '82%' }}></div>
                                     </div>
                                 </div>
                                 <div>
@@ -204,13 +204,13 @@ export const WarRoomView: React.FC = () => {
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4">
                         <div className="flex gap-3">
                             <div className="flex-shrink-0 mt-1">
-                                <div className="w-8 h-8 rounded-full bg-accent-purple/20 flex items-center justify-center border border-accent-purple/30 text-accent-purple">
+                                <div className="w-8 h-8 rounded-full bg-accent-teal/20 flex items-center justify-center border border-accent-teal/30 text-accent-teal">
                                     <span className="material-icons-round text-sm">psychology</span>
                                 </div>
                             </div>
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-xs font-bold text-accent-purple">Orchestrator</span>
+                                    <span className="text-xs font-bold text-accent-teal">Orchestrator</span>
                                     <span className="text-[10px] text-gray-500">11:42 AM</span>
                                 </div>
                                 <div className="bg-white dark:bg-gray-800 p-3 rounded-lg rounded-tl-none border border-gray-100 dark:border-border-dark shadow-sm">
@@ -256,13 +256,13 @@ export const WarRoomView: React.FC = () => {
                         </div>
                         <div className="flex gap-3">
                             <div className="flex-shrink-0 mt-1">
-                                <div className="w-8 h-8 rounded-full bg-accent-purple/20 flex items-center justify-center border border-accent-purple/30 text-accent-purple">
+                                <div className="w-8 h-8 rounded-full bg-accent-teal/20 flex items-center justify-center border border-accent-teal/30 text-accent-teal">
                                     <span className="material-icons-round text-sm">shield</span>
                                 </div>
                             </div>
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-xs font-bold text-accent-purple">Guardian</span>
+                                    <span className="text-xs font-bold text-accent-teal">Guardian</span>
                                     <span className="text-[10px] text-gray-500">11:46 AM</span>
                                 </div>
                                 <div className="bg-white dark:bg-gray-800 p-3 rounded-lg rounded-tl-none border border-gray-100 dark:border-border-dark shadow-sm">
@@ -279,8 +279,8 @@ export const WarRoomView: React.FC = () => {
                     </div>
                     <div className="p-3 border-t border-gray-200 dark:border-border-dark bg-white dark:bg-surface-dark">
                         <div className="relative">
-                            <input className="w-full bg-gray-100 dark:bg-surface-darker border-none rounded-md py-2 pl-3 pr-10 text-xs text-gray-900 dark:text-white focus:ring-1 focus:ring-accent-purple" placeholder="Inject human feedback..." type="text" />
-                            <button className="absolute right-2 top-1.5 text-accent-purple hover:text-accent-purple/80">
+                            <input className="w-full bg-gray-100 dark:bg-surface-darker border-none rounded-md py-2 pl-3 pr-10 text-xs text-gray-900 dark:text-white focus:ring-1 focus:ring-accent-teal" placeholder="Inject human feedback..." type="text" />
+                            <button className="absolute right-2 top-1.5 text-accent-teal hover:text-accent-teal/80">
                                 <span className="material-icons-round text-sm">send</span>
                             </button>
                         </div>
@@ -289,7 +289,7 @@ export const WarRoomView: React.FC = () => {
             </div>
             
             <div className="fixed bottom-6 right-6 z-50">
-                <button className="w-12 h-12 bg-accent-purple hover:bg-accent-purple/90 rounded-full shadow-lg shadow-accent-purple/30 flex items-center justify-center text-white transition-transform hover:scale-105">
+                <button className="w-12 h-12 bg-accent-teal hover:bg-accent-teal/90 rounded-full shadow-lg shadow-accent-teal/30 flex items-center justify-center text-white transition-transform hover:scale-105">
                     <span className="material-icons-round">auto_awesome</span>
                 </button>
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center border-2 border-background-dark">3</div>
