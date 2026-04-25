@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { TOrganization, TProject } from '../types';
 import { useAuth } from './AuthContext';
 import { firestoreWatchOrganization } from '../services/firestoreService';
@@ -54,6 +54,7 @@ export const OrgProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setProjectsNextCursor(data.nextCursor);
       } catch (e) {
         logger.error('Failed to fetch projects', e);
+        setApiError('Failed to fetch projects');
       }
     };
 
@@ -104,6 +105,8 @@ export const OrgProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       const payload = { ...project, id: project.id || `proj-${Date.now()}` };
       await ProjectAPI.create(orgId, payload);
+      // Add the new project to local state immediately so it appears in the UI
+      setProjects(prev => [payload as TProject, ...prev]);
     } catch (e: any) {
       logger.error('Failed to create project', e);
       setApiError('Failed to create project');
@@ -111,20 +114,20 @@ export const OrgProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, []);
 
+  const contextValue = useMemo(() => ({
+    organizations, 
+    projects, 
+    loading,
+    loadingMore,
+    apiError, 
+    projectsNextCursor,
+    addOrganization, 
+    addProject,
+    loadMoreProjects
+  }), [organizations, projects, loading, loadingMore, apiError, projectsNextCursor, addOrganization, addProject, loadMoreProjects]);
+
   return (
-    <OrgContext.Provider 
-      value={{ 
-        organizations, 
-        projects, 
-        loading,
-        loadingMore,
-        apiError, 
-        projectsNextCursor,
-        addOrganization, 
-        addProject,
-        loadMoreProjects
-      }}
-    >
+    <OrgContext.Provider value={contextValue}>
       {children}
     </OrgContext.Provider>
   );

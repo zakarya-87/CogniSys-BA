@@ -12,7 +12,7 @@ export class InitiativeController {
       const initiative = parseBody(CreateInitiativeSchema, req.body, res);
       if (!initiative) return;
       const userId = req.user?.uid ?? 'anonymous';
-      await initiativeService.createInitiative(initiative as any, userId, auditContextFromRequest(req));
+      await initiativeService.createInitiative(initiative as Record<string, unknown>, userId, auditContextFromRequest(req));
       res.status(201).json({ message: 'Initiative created successfully' });
     } catch (error) {
       safeError(res, error, 'InitiativeController.create');
@@ -22,7 +22,7 @@ export class InitiativeController {
   static async listByOrg(req: Request, res: Response) {
     try {
       const { orgId } = req.params as { orgId: string };
-      const limit = parseInt(req.query.limit as string) || 20;
+      const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 20, 1), 100);
       const cursor = req.query.cursor as string | undefined;
 
       const { data, nextCursor } = await initiativeService.getInitiativesByOrgPaginated(orgId, limit, cursor);
@@ -35,7 +35,7 @@ export class InitiativeController {
   static async listByProject(req: Request, res: Response) {
     try {
       const { projectId } = req.params as { projectId: string };
-      const limit = parseInt(req.query.limit as string) || 20;
+      const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 20, 1), 100);
       const cursor = req.query.cursor as string | undefined;
 
       const { data, nextCursor } = await initiativeService.getInitiativesByProjectPaginated(projectId, limit, cursor);
@@ -56,8 +56,8 @@ export class InitiativeController {
       const before = await initiativeService.getInitiativeById(initiativeId);
       await initiativeService.updateInitiative(
         initiativeId,
-        (before ?? {}) as any,
-        data as any,
+        (before ?? {}) as Record<string, unknown>,
+        data as Record<string, unknown>,
         orgId,
         userId,
         auditContextFromRequest(req),
